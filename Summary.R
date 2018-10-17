@@ -134,7 +134,7 @@ inclSOKBio <- TRUE
 doAdjWidth <- FALSE
 
 # Location of herring databases (catch, biosamples, spawn, etc)
-dirDBs <- file.path( "..", "Herring", "Data" )
+dirDBs <- file.path( "..", "Data" )
 
 # Location of the shapefiles
 #dirShape <- file.path( "\\\\dcbcpbsna01a", "hdata$", "Kristen", 
@@ -142,7 +142,7 @@ dirDBs <- file.path( "..", "Herring", "Data" )
 dirShape <- file.path( dirDBs, "Polygons" )
 
 # Databases: remote (i.e., H:\) or local
-dbLoc <- "Remote"
+dbLoc <- "Local"
 
 # Database name
 dbName <- "HSA_Program_v6.2.mdb"
