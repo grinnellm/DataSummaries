@@ -133,10 +133,13 @@ inclSOKBio <- TRUE
 # Adjust understory spawn width due to lead line shrinkage
 doAdjWidth <- FALSE
 
+# Location of herring databases (catch, biosamples, spawn, etc)
+dirDBs <- file.path( "..", "Herring", "Data" )
+
 # Location of the shapefiles
 #dirShape <- file.path( "\\\\dcbcpbsna01a", "hdata$", "Kristen", 
 #    "Herring_Shapefiles" )
-dirShape <- file.path( "..", "Data", "Polygons" )
+dirShape <- file.path( dirDBs, "Polygons" )
 
 # Databases: remote (i.e., H:\) or local
 dbLoc <- "Remote"
@@ -263,18 +266,18 @@ adjWidthFrac <- 0.075 # 0.15
 
 # File name for dive transect XY
 diveLoc <- list(
-  loc=file.path("..", "Data"),
+  loc=dirDBs,
   fn="dive_transects_with_lat_long_June2_2017.xlsx" )
 
 # Location and names of lookup tables with catch codes
 codesLoc <- list(
-  loc=file.path("..", "Data"),
+  loc=dirDBs,
   fns=list(tDisposal="tDisposal.csv", tGear="tGear.csv", 
     tSource="tSource.csv", tPeriod="tPeriod.csv") )
 
 # Location and name of the location database and tables
 areaLoc <- list(
-  loc=file.path("..", "Data", dbLoc),
+  loc=file.path(dirDBs, dbLoc),
   db=dbName,
   fns=list(sections="Sections", locations="Location") )
 
@@ -286,33 +289,33 @@ shapesLoc <- list(
 
 # Location and name of the catch database and tables
 catchLoc <- list(
-  loc=file.path("..", "Data", dbLoc),
+  loc=file.path(dirDBs, dbLoc),
   db=dbName,
   fns=list(tCatch="tCatchData", hCatch="HailCatch", sokCatch="SpawnOnKelp") )
 
 # Location and name of the biological database and tables
 bioLoc <- list(
-  loc=file.path("..", "Data", dbLoc),
+  loc=file.path(dirDBs, dbLoc),
   db=dbName,
   fns=list(samples="sample", fish="fish", bmc="BMcCarter") )
 
 # Location and name of the surface database and tables
 surfLoc <- list(
-  loc=file.path("..", "Data", dbLoc),
+  loc=file.path(dirDBs, dbLoc),
   db=dbName, 
   fns=list(regionStd="RegionStd", sectionStd="SectionStd", poolStd="PoolStd", 
     surface="tSSSurface", intensity="Intensity", allSpawn="tSSAllspawn") )
 
 # Location and name of the macrocystis database and tables
 macroLoc <- list(
-  loc=file.path("..", "Data", dbLoc),
+  loc=file.path(dirDBs, dbLoc),
   db=dbName,
   fns=list(allSpawn="tSSAllspawn", plants="tSSMacPlant", 
     transects="tSSMacTrans") )
 
 # Location and name of the macrocystis database and tables
 underLoc <- list(
-  loc=file.path("..", "Data", dbLoc),
+  loc=file.path(dirDBs, dbLoc),
   db=dbName,
   fns=list(allSpawn="tSSAllspawn", algTrans="tSSVegTrans", 
     stations="tSSStations", algae="tSSVegetation", 
