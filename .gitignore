@@ -1,36 +1,31 @@
-# History files
+### General ###
+*.pptx
+*.bat
+*.xlsx
+*.7z
+*.pdf
+*.csv
+*.dat
+
+### R files ###
 .Rhistory
-.Rapp.history
+*.RData
+*.Rproj
 
-# Session Data files
-.RData
+### LaTeX files ###
+*.tex
+*.rnw
+*.log
+*.bbl
+*.synctex.gz
 
-# Example code in package build process
-*-Ex.R
+### Temporary (for this year) ###
+DataSummary.pdf
+DataSummaryJS.pdf
+ModelSummary*.pdf
+Document/
 
-# Output files from R CMD build
-/*.tar.gz
+### Miscelaneous ###
+.Rproj.user
+Animations/
 
-# Output files from R CMD check
-/*.Rcheck/
-
-# RStudio files
-.Rproj.user/
-
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
-
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
-.httr-oauth
-
-# knitr and R markdown default cache directories
-/*_cache/
-/cache/
-
-# Temporary files created by R markdown
-*.utf8.md
-*.knit.md
-
-# Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
-rsconnect/
