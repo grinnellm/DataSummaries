@@ -94,7 +94,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
   "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "plyr", 
   "lettercase", "ggforce", "viridis", "ggthemes") ) 
 
-##### Controls ##### 
+##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); or minor (A27, A2W, JS)
 if( !exists('region') )  region <- "HG"
