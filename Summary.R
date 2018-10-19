@@ -1,5 +1,5 @@
-###############################################################################
-# 
+##### Header #####
+ 
 # Author:       Matthew H. Grinnell
 # Affiliation:  Pacific Biological Station, Fisheries and Oceans Canada (DFO) 
 # Group:        Quantitative Assessment Methods Section, Science
@@ -33,8 +33,6 @@
 #
 # Versions: Version 1 used the spawn index calculated in the database. Version 
 # 2 sources the script 'SpawnIndex.R', and does not rely on the database.
-# 
-###############################################################################
 
 # TODO:
 # 1. Get better section shapefile polygons (i.e., contiguous with no holes or 
@@ -67,9 +65,7 @@
 #     the mean of the surrounding values, not just the preceding values. Maybe
 #     go with six (three on either side).
 
-########################
 ##### Housekeeping #####
-########################
 
 # General options
 rm( list=ls( ) )      # Clear the workspace
@@ -98,10 +94,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
   "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "plyr", 
   "lettercase", "ggforce", "viridis", "ggthemes") ) 
 
-
-#################### 
 ##### Controls ##### 
-#################### 
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); or minor (A27, A2W, JS)
 if( !exists('region') )  region <- "HG"
@@ -157,10 +150,7 @@ outCRS <- "+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 +lon_0=-126 +x_0=1000000
 # Geographic projection
 geoProj <- "Projection: BC Albers (NAD 1983)"
 
-
-######################
 ##### Parameters #####
-######################
 
 # Year range: include data
 yrRange <- 1951:2018
@@ -259,10 +249,7 @@ adjWidthYrs <- 2003:2013
 # Amount to adjust the width (lead line shrinkage; 0.15 adds 15%)
 adjWidthFrac <- 0.075 # 0.15
 
-
-##################
 #### Sources #####
-##################
 
 # File name for dive transect XY
 diveLoc <- list(
@@ -321,10 +308,7 @@ underLoc <- list(
     stations="tSSStations", algae="tSSVegetation", 
     typeAlg="tSSTypeVegetation") )
 
-
-#####################
 ##### Functions #####
-#####################
 
 # Load helper functions
 source( file="Functions.R" )
@@ -332,10 +316,7 @@ source( file="Functions.R" )
 # Load spawn index functions
 source( file=file.path("..", "HerringSpawnIndex", "SpawnIndex.R") )
 
-
-################
 ##### Data #####
-################
 
 # Breaks for years
 yrBreaks <- seq( from=round_any(x=min(yrRange), accuracy=10, f=floor), 
@@ -682,9 +663,7 @@ spawnSummary <- spawnRaw %>%
 # Write to disc
 write_csv( x=spawnSummary, path=paste("Spawn", region, ".csv", sep="") )
 
-##################
 ##### Update #####
-##################
 
 # Update catch data (more wrangling)
 UpdateCatchData <- function( dat, a ) {
@@ -859,10 +838,7 @@ UpdateBioData <- function( dat, rYr ) {
 # Update biological data
 bio <- UpdateBioData( dat=bioRaw, rYr=2014 )
 
-
-################ 
 ##### Main ##### 
-################     
 
 # Calculate commercial catch in current year
 catchCommUseYr <- catch %>%
@@ -1392,10 +1368,7 @@ siYearLoc <- spawnRaw %>%
   ungroup( ) %>%
   complete( Year=yrRange )
 
-
-##################
 ##### Region #####
-##################
 
 # If region is Haida Gwaii
 if( region == "HG" ) {
@@ -1630,10 +1603,7 @@ if( region == "A2W" ) {
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
 }  # End if region is Area 2 West
 
-
-################
 ##### ADMB #####
-################
 
 # Make ADMB input data: catch (t*10^3)
 catchADMB <- catch %>%
@@ -1869,10 +1839,7 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
 WriteInputFile( pADMB=parsADMB, cADMB=catchADMB, sADMB=spawnADMB,
   nADMB=numAgedADMB, wADMB=weightAgeADMB )
 
-
-###################
 ##### Figures #####
-###################
 
 # Progress message
 cat( "Printing figures... " )
@@ -2536,10 +2503,7 @@ if( makeAnimation ) {
 # Update progress
 cat( "done\n" )
 
-
-###################
 ##### xTables #####
-###################
 
 # Format regions table
 xRegions <- regions %>%
@@ -2595,7 +2559,6 @@ print( x=xHarvestSOK, file=file.path(regName, "HarvestSOK.tex"),
 #    myTheme + 
 #    ggsave( filename=paste("BiomassSOK", regName, ".png", sep=""), 
 #        width=figWidth, height=figWidth*0.67 )
-###### End stuff for the stock assessment research document #####
 
 # Format number of biosamples
 xBioNum <- bioNum %>%
@@ -2711,10 +2674,7 @@ xSpatialGroup <- spatialGroup %>%
 # Write the spatial table (longtable) to disc
 WriteLongTable( dat=xSpatialGroup, fn=file.path(regName, "SpatialGroup.tex") )
 
-
-#################
 ##### LaTeX #####
-#################
 
 # Number of years in the time series
 nYrs <- length( yrRange )
@@ -2883,10 +2843,7 @@ qYrs <- list(
 ageTableAlign <- paste( c("{l", rep("r", times=length(ageRange)), "}"), 
   collapse="" )
 
-
-##################
 ##### Tables #####
-##################
 
 # Progress message
 cat( "Writing tables... " )
@@ -2953,19 +2910,13 @@ write_csv( x=allHarvSOK,
 # Update progress
 cat( "done\n" )
 
-
-##################
 ##### Output #####
-##################
 
 # Save the workspace image 
 save.image( file=file.path(regName, 
   paste("Image.", regName, ".RData", sep="")) ) 
 
-
-################
 ##### QAQC #####
-################
 
 ## Missing spatial groups: sections and statistical areas
 #areaNoGroup <- areas %>%
@@ -3000,10 +2951,7 @@ save.image( file=file.path(regName,
 #    mutate( Catch=round(Catch, digits=1) ) %>%
 #    write_csv( path="CatchNoGroup.csv", append=ifelse(r==1, FALSE, TRUE) )
 
-
-############### 
 ##### End ##### 
-############### 
 
 # Print end of file message and elapsed time
 cat( "End of file Summary.R: ", sep="" ) ;  print( Sys.time( ) - sTime )
