@@ -309,7 +309,7 @@ underLoc <- list(
 
 ##### Functions #####
 
-# Load helper functions (from GitHub)
+# Load helper functions
 source( file=file.path( "..", "HerringFunctions", "Functions.R") )
 
 # Load spawn index functions
