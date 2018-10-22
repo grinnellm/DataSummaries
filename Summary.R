@@ -9,7 +9,7 @@
 # Code name:    Summary.R
 # Version:      2.0
 # Date started: Jun 03, 2016
-# Date edited:  Jul 13, 2018
+# Date edited:  Oct 22, 2018
 # 
 # Overview: 
 # Generate tables and figures for annual Pacific Herring preliminary data
