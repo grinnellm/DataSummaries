@@ -91,7 +91,7 @@ UsePackages <- function( pkgs, locn="https://cran.rstudio.com/" ) {
 UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp", 
   "maptools", "rgdal", "rgeos", "raster", "xtable", "cowplot", "grid", 
   "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "plyr", 
-  "lettercase", "ggforce", "viridis", "ggthemes") ) 
+  "lettercase", "ggforce", "viridis", "ggthemes", "devtools") ) 
 
 ##### Controls #####
 
@@ -309,8 +309,8 @@ underLoc <- list(
 
 ##### Functions #####
 
-# Load helper functions
-source( file="Functions.R" )
+# Load helper functions (from GitHub)
+source_url( url="https://github.com/grinnellm/HerringFunctions/blob/master/Functions.R" )
 
 # Load spawn index functions
 source( file=file.path("..", "HerringSpawnIndex", "SpawnIndex.R") )
