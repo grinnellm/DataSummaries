@@ -1,5 +1,4 @@
 ##### Header #####
- 
 # Author:       Matthew H. Grinnell
 # Affiliation:  Pacific Biological Station, Fisheries and Oceans Canada (DFO) 
 # Group:        Quantitative Assessment Methods Section, Science
