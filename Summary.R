@@ -96,7 +96,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); or minor (A27, A2W, JS)
-if( !exists('region') )  region <- "PRD"
+if( !exists('region') )  region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1914,7 +1914,7 @@ RegionMap <- BaseMap +
   labs( fill="Group" ) +
   theme( legend.position=c(0.01, 0.01), legend.justification=c(0, 0) ) +
   ggsave( filename=file.path(regName, "Region.pdf"), width=figWidth, 
-    height=min(7.5, 6.5/shapes$xyRatio) ) 
+    height=min(7.5, 6.5/shapes$xyRatio) )
 
 # Plot catch by year and gear type (i.e., period)
 catchGearPlot <- ggplot( data=catch, aes(x=Year, y=Catch) ) + 

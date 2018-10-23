@@ -1,4 +1,4 @@
-###############################################################################
+##### Header #####
 # 
 # Author:       Matthew H. Grinnell
 # Affiliation:  Pacific Biological Station, Fisheries and Oceans Canada (DFO) 
@@ -19,34 +19,30 @@
 # 
 # Notes: 
 # Comment-out the 'clear workspace' line in 'Summary.R'.
-#
-###############################################################################
 
-
-########################
 ##### Housekeeping #####
-########################
 
 # General options
 rm( list=ls( ) )         # Clear the workspace
 sTimeAll <- Sys.time( )  # Start the timer
 graphics.off( )          # Turn graphics off
 
+# Make packages available
+UsePackages( pkgs=c("foreach", "doSNOW") )
 
-#################### 
 ##### Controls ##### 
-####################
 
 # Region names
 regionNames <- c( "HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W" )
 
+# Initialize some cores
+# clust <- makeCluster( 4 )
+# registerDoSNOW( cluster )
 
-################ 
 ##### Main ##### 
-################     
 
-# Load helper function
-source( file="Functions.R" )
+# Load helper functions
+source( file=file.path( "..", "HerringFunctions", "Functions.R") )
 
 # Message re data summaries
 cat( "Summarising data for", length(regionNames), "regions:",
@@ -100,11 +96,10 @@ RunSummary <- function( reg, ... ) {
 ## Close the cluster
 #stopCluster( cl=clust )
 
+##### End #####
 
-
-############### 
-##### End ##### 
-############### 
+# Stop the cluster
+# stopCluster( clust )
 
 # Print end of file message and elapsed time
 cat( "End of file RunSummaries.R: ", sep="" ) ;  print( Sys.time( ) - sTimeAll )
