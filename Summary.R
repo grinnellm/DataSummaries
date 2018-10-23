@@ -96,7 +96,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); or minor (A27, A2W, JS)
-if( !exists('region') )  region <- "HG"
+if( !exists('region') )  region <- "PRD"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -134,7 +134,7 @@ dirDBs <- file.path( "..", "Data" )
 dirShape <- file.path( dirDBs, "Polygons" )
 
 # Databases: remote (i.e., H:\ for hdata$) or local (e.g., C:\)
-dbLoc <- "Remote"
+dbLoc <- "Local"
 
 # Database name
 dbName <- "HSA_Program_v6.2.mdb"
@@ -311,6 +311,7 @@ underLoc <- list(
 
 # Load helper functions
 source( file=file.path( "..", "HerringFunctions", "Functions.R") )
+# source_url( url="https://github.com/grinnellm/HerringFunctions/blob/master/Functions.R" )
 
 # Load spawn index functions
 source( file=file.path("..", "HerringSpawnIndex", "SpawnIndex.R") )
@@ -398,16 +399,26 @@ LoadCatchData <- function( where ) {
   cat( "Loading catch data... " )
   # Establish connection with access
   accessDB <- odbcConnectAccess( access.file=file.path(where$loc, where$db) )
-  # Access the tCatch worksheet and wrangle
-  tCatch <- sqlFetch( channel=accessDB, sqtable=where$fns$tCatch ) %>%
+  # Access the tCatch worksheet
+  tCatch <- sqlFetch( channel=accessDB, sqtable=where$fns$tCatch )
+  # Error if data was not fetched
+  if( class(tCatch) != "data.frame" )
+    stop( "No data available in MS Access connection" )
+  # Wrangle catch
+  tCatch <- tCatch %>%
     mutate( Year=Season2Year(Season), Source=rep("Tab", times=n()) ) %>%
     left_join( y=areas, by="LocationCode" ) %>%
     filter( Section %in% areas$Section ) %>%
     group_by( Year, Source, Section, GearCode, DisposalCode ) %>%
     summarise( Catch=SumNA(Catch) ) %>%
     ungroup( )
-  # Access the hail worksheet and wrangle
-  hCatch <- sqlFetch( channel=accessDB, sqtable=where$fns$hCatch ) %>%
+  # Access the hail worksheet
+  hCatch <- sqlFetch( channel=accessDB, sqtable=where$fns$hCatch ) 
+  # Error if data was not fetched
+  if( class(hCatch) != "data.frame" )
+    stop( "No data available in MS Access connection" )
+  # Wrangle catch
+  hCatch <- hCatch %>%
     filter( Active == 1, Section %in% areas$Section ) %>%
     mutate( Year=Season2Year(Season), Catch=CatchTons*convFac$st2t,
       Source=rep("Hail", times=n()) ) %>%
@@ -415,7 +426,12 @@ LoadCatchData <- function( where ) {
     summarise( Catch=SumNA(Catch) ) %>%
     ungroup( )
   # Access the sok worksheet
-  sokCatch <- sqlFetch( channel=accessDB, sqtable=where$fns$sokCatch ) %>%
+  sokCatch <- sqlFetch( channel=accessDB, sqtable=where$fns$sokCatch ) 
+  # Error if data was not fetched
+  if( class(sokCatch) != "data.frame" )
+    stop( "No data available in MS Access connection" )
+  # Wrangle sok
+  sokCatch <- sokCatch %>%
     mutate( Year=Season2Year(Season), Source=rep("SOK", times=n()) ) %>%
     rename( Catch=ProductLanded ) %>%
     filter( Section %in% areas$Section ) %>%
@@ -465,6 +481,9 @@ LoadBioData <- function( where, XY ) {
   accessDB <- odbcConnectAccess( access.file=file.path(where$loc, where$db) )
   # Access the sample worksheet
   sampleDat <- sqlFetch( channel=accessDB, sqtable=where$fns$samples )
+  # Error if data was not fetched
+  if( class(sampleDat) != "data.frame" )
+    stop( "No data available in MS Access connection" )
   # Grab the spatial info and process
   sampleSP <- sampleDat %>%
     transmute( X=ifelse(is.na(Set_Longitude), 0, Set_Longitude),
@@ -487,8 +506,13 @@ LoadBioData <- function( where, XY ) {
     select( Year, Month, Sample, Representative, LocationCode, Eastings, 
       Northings, SourceCode, GearCode ) %>%
     as_tibble( )
-  # Access the fish worksheet and wrangle
-  fish <- sqlFetch( channel=accessDB, sqtable=where$fns$fish ) %>%
+  # Access the fish worksheet
+  fish <- sqlFetch( channel=accessDB, sqtable=where$fns$fish ) 
+  # Error if data was not fetched
+  if( class(fish) != "data.frame" )
+    stop( "No data available in MS Access connection" )
+  # Wrangle biosamples
+  fish <- fish %>%
     rename( Sample=isamp, Fish=fish, Length=len, Weight=wgt, Sex=sex_alpha, 
       MaturityCode=mat_code, DualAge=dual_age, 
       GonadLength=gonad_len, GonadWeight=gonad_wgt ) %>%
