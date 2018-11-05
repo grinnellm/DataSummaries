@@ -27,8 +27,8 @@ rm( list=ls( ) )         # Clear the workspace
 sTimeAll <- Sys.time( )  # Start the timer
 graphics.off( )          # Turn graphics off
 
-# Make packages available
-UsePackages( pkgs=c("foreach", "doSNOW") )
+# # Make packages available
+# UsePackages( pkgs=c("foreach", "doSNOW") )
 
 ##### Controls ##### 
 
