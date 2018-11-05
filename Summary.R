@@ -96,7 +96,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); or minor (A27, A2W, JS)
-if( !exists('region') )  region <- "SoG"
+if( !exists('region') )  region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -874,7 +874,7 @@ catchCommUseYr <- catch %>%
 
 # Calculate commercial SoK harvest and biomass
 harvestSOK <- catchRaw %>%
-  filter( DisposalCode == 2 ) %>%
+  filter( DisposalCode == 2, Source=="SOK" ) %>%
   group_by( Year ) %>%
   summarise( Harvest=SumNA(Catch) ) %>%
   ungroup( ) %>%
@@ -2564,7 +2564,7 @@ print( x=xHarvestSOK, file=file.path(regName, "HarvestSOK.tex"),
   include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 
 ###### This stuff is for the stock assessment research document #####
-#write_csv( x=allHarvSOK, path=paste("allHarvSOK", regName, ".csv", sep="") )
+# write_csv( x=allHarvSOK, path=paste("allHarvSOK", regName, ".csv", sep="") )
 #pSOK1 <- ggplot( data=allHarvSOK, aes(x=Year, y=Harvest) ) +
 #    geom_bar( stat="identity", aes(fill=Year==max(yrRange)) ) +
 #    scale_fill_grey( start=0.5, end=0 ) +
