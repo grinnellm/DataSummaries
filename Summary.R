@@ -55,8 +55,6 @@
 # 14. Look at age composition of reduction fishery catch (i.e., did they catch
 #     a fair number of age-1/immature fish?).
 # 15. Show the full time-series of data for figures (1951 to present).
-# 16. Make a new figure showing spawn index by survey type: surface, 
-#     Macrocystis, and understory.
 # 17. Catch figure: zoom into last few years (maybe last 10, or all of the post-
 #     reduction era).
 # 18. Consider another method to impute missing values for length- and weight-
@@ -67,6 +65,8 @@
 ##### Housekeeping #####
 
 # General options
+# Tesing automatic solution to commenting out rm( list=ls() )
+# if( basename(sys.frame(1)$ofile)=="Summary.R" )
 rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
@@ -96,7 +96,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); or minor (A27, A2W, JS)
-if( !exists('region') )  region <- "HG"
+if( !exists('region') )  region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1191,7 +1191,10 @@ CalcSpawnSummary <- function( dat, g ) {
     summarise( 
       TotalLength=SumNA(Length), 
       MeanWidth=MeanNA(Width), 
-      MeanLayers=MeanNA(c(SurfLyrs, MacroLyrs, UnderLyrs)), 
+      MeanLayers=MeanNA(c(SurfLyrs, MacroLyrs, UnderLyrs)),
+      MacroSI=SumNA(MacroSI),
+      SurfSI=SumNA(SurfSI),
+      UnderSI=SumNA(UnderSI),
       TotalSI=SumNA(c(MacroSI, SurfSI, UnderSI)) ) %>%
     ungroup( )
   # Get the full year range
@@ -1223,6 +1226,16 @@ spawnYr <- CalcSpawnSummary( dat=spawnRaw, g=c("Year") )
 # Smaller subset for figures: spawn by year
 spawnYrFig <- spawnYr %>% 
   filter( Year >= firstYrFig )
+
+# Wrangle spawn by type to long
+spawnYrFigType <- spawnYrFig %>%
+  select( Year, MacroSI, SurfSI, UnderSI, Survey ) %>%
+  rename( Macrocystis=MacroSI, Surface=SurfSI, Understory=UnderSI ) %>%
+  gather( "Macrocystis", "Surface", "Understory", key="Type", value="SI" ) %>%
+  mutate( Type=factor(Type, 
+    levels=c("Surface", "Macrocystis", "Understory")), 
+    Survey=factor(Survey, levels=c("Surface", "Dive"))) %>%
+  arrange( Year, Survey, Type )
 
 # Smaller subset for table: spawn by year
 spawnYrTab <- spawnYr %>%
@@ -2193,7 +2206,19 @@ plot_grid( spawnLengthPlot, spawnWidthPlot, spawnLayersPlot, align="v", ncol=1,
   ggsave( filename=file.path(regName, "SpawnDimensions.pdf"), width=figWidth, 
     height=figWidth*1.25 )
 
-# TODO: Plot here showing spawn index by survey type: surface, macro, under
+# Plot spawn index by survey type: surface, macro, under
+spawnIndexTypePlot <- ggplot( data=spawnYrFigType, aes(x=Year, y=SI) ) +
+  geom_point( aes(shape=Survey) ) +
+  geom_line( aes(group=Survey) ) +
+  labs( y=expression(paste("Spawn index (t"%*%10^3, ")", sep="")) )  +
+  scale_x_continuous( breaks=yrBreaks ) +
+  scale_y_continuous( labels=function(x) comma(x/1000) ) +
+  expand_limits( x=c(firstYrFig-0.5, max(yrRange)+0.5), y=0 ) +
+  facet_grid( Type ~ . ) +
+  myTheme +
+  theme( legend.position="top" ) +
+  ggsave( filename=file.path(regName, "SpawnIndexType.pdf"), width=figWidth, 
+    height=figWidth*1.25 )
 
 # Plot total spawn index by year
 spawnIndexPlot <- ggplot( data=spawnYrFig, aes(x=Year, y=TotalSI) ) +
