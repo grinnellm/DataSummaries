@@ -2218,7 +2218,7 @@ spawnIndexTypePlot <- ggplot( data=spawnYrFigType, aes(x=Year, y=SI) ) +
   myTheme +
   theme( legend.position="top" ) +
   ggsave( filename=file.path(regName, "SpawnIndexType.pdf"), width=figWidth, 
-    height=figWidth*1.25 )
+    height=figWidth*1.2 )
 
 # Plot total spawn index by year
 spawnIndexPlot <- ggplot( data=spawnYrFig, aes(x=Year, y=TotalSI) ) +
