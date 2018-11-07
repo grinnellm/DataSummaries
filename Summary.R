@@ -104,6 +104,7 @@ SoGN <- c( 132, 135, 140:143, 171, 172, 151, 152, 161:165, 280, 291, 292 )
 Area23 <- c( 230:233, 239 )
 Area25 <- c( 250:253, 259 )
 Tlaamin <- c( 135, 141, 151, 152, 161:163 )
+Area15 <- c( 150:159 )
 
 # Select a subset of sections (or NA for all)
 sectionSub <- NA
