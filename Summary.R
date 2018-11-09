@@ -1900,7 +1900,40 @@ BCMap <- ggplot( data=shapes$landAllCropDF, aes(x=Eastings, y=Northings) ) +
   scale_y_continuous( labels=function(x) comma(x/1000), expand=c(0, 0) ) +
   myTheme +
   ggsave( filename=file.path(regName, "BC.pdf"), width=figWidth, 
+    height=min(7, 5.75/shapes$xyAllRatio) ) 
+
+# Make a french version if requested
+if( makeFrench ) {
+  # Make a png in the main folder
+  BCMap +  ggsave( filename=file.path("BC.png"), width=figWidth, 
     height=min(7, 5.75/shapes$xyAllRatio) )
+  # French SAR names (short)
+  frenchSARs <- data.frame( 
+    Region=c("HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W"),
+    RegionFR=c("HG", "DPR", "CC", "DG", "COIV", "Z27", "Z2O") )
+  # Attach french names
+  shapes$regCentDF <- shapes$regCentDF %>%
+    left_join( y=frenchSARs, by="Region" )
+  # Plot the BC coast and regions
+  BCMapFR <- ggplot( data=shapes$landAllCropDF, aes(x=Eastings, y=Northings) ) +
+    geom_polygon( data=shapes$landAllCropDF, aes(group=group), 
+      fill="lightgrey" ) +
+    geom_point( data=shapes$extAllDF, colour="transparent" ) +
+    geom_path( data=shapes$regAllDF, aes(group=Region), size=0.75, 
+      colour="black" ) + 
+    geom_label( data=shapes$regCentDF, alpha=0.5, aes(label=RegionFR) ) +
+    annotate( geom="text", x=1100000, y=800000, label="Colombie-\nBritannique",
+      size=5 ) +
+    annotate( geom="text", x=650000, y=550000, label="Océan\nPacifique", 
+      size=5 ) +
+    coord_equal( ) +
+    labs( x="Abcsisses (km)", y="Ordonnées (km)", caption=geoProj ) +
+    scale_x_continuous( labels=function(x) comma(x/1000), expand=c(0, 0) ) + 
+    scale_y_continuous( labels=function(x) comma(x/1000), expand=c(0, 0) ) +
+    myTheme +
+    ggsave( filename=file.path("BC-FR.png"), width=figWidth, 
+      height=min(7, 5.75/shapes$xyAllRatio) )
+}
 
 # Create a base map for the region
 BaseMap <- ggplot( data=shapes$landCropDF, aes(x=Eastings, y=Northings) ) +
