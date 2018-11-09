@@ -151,6 +151,9 @@ outCRS <- "+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 +lon_0=-126 +x_0=1000000
 # Geographic projection
 geoProj <- "Projection: BC Albers (NAD 1983)"
 
+# Make French figures
+makeFrench <- FALSE
+
 ##### Parameters #####
 
 # Year range: include data
@@ -1904,7 +1907,7 @@ BCMap <- ggplot( data=shapes$landAllCropDF, aes(x=Eastings, y=Northings) ) +
 
 # Make a french version if requested
 if( makeFrench ) {
-  # Make a png in the main folder
+  # Make a png map in the main folder (english)
   BCMap +  ggsave( filename=file.path("BC.png"), width=figWidth, 
     height=min(7, 5.75/shapes$xyAllRatio) )
   # French SAR names (short)
@@ -1914,7 +1917,7 @@ if( makeFrench ) {
   # Attach french names
   shapes$regCentDF <- shapes$regCentDF %>%
     left_join( y=frenchSARs, by="Region" )
-  # Plot the BC coast and regions
+  # Plot the BC coast and regions (french)
   BCMapFR <- ggplot( data=shapes$landAllCropDF, aes(x=Eastings, y=Northings) ) +
     geom_polygon( data=shapes$landAllCropDF, aes(group=group), 
       fill="lightgrey" ) +
@@ -1933,7 +1936,7 @@ if( makeFrench ) {
     myTheme +
     ggsave( filename=file.path("BC-FR.png"), width=figWidth, 
       height=min(7, 5.75/shapes$xyAllRatio) )
-}
+}  # End if making french
 
 # Create a base map for the region
 BaseMap <- ggplot( data=shapes$landCropDF, aes(x=Eastings, y=Northings) ) +
