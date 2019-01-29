@@ -96,7 +96,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); or minor (A27, A2W, JS)
-if( !exists('region') )  region <- "SoG"
+if( !exists('region') )  region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -2943,8 +2943,9 @@ cat( "Writing tables... " )
 ## Write raw biological data to a csv
 #write_csv( x=bioRaw, path=file.path(regName, "BioRaw.csv") )
 #
-## Write raw spawn data to a csv
-#write_csv( x=spawnRaw, path=file.path(regName, "SpawnRaw.csv") )
+## Write raw spawn data to a csv (choose one)
+# write_csv( x=spawnRaw, path=file.path(regName, "SpawnRaw.csv") )
+# write_csv( x=spawnRaw, path="SpawnRaw.csv", append=ifelse(r==1, FALSE, TRUE) )
 #
 ## Write catch data to a csv
 #write_csv( x=catch, path=file.path(regName, "Catch.csv") )
