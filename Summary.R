@@ -96,7 +96,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); or minor (A27, A2W, JS)
-if( !exists('region') )  region <- "HG"
+if( !exists('region') )  region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -623,9 +623,9 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
     full_join( y=allSpawn, by=c("Year", "Region", "StatArea", "Section", 
       "LocationCode", "SpawnNumber") ) %>%
     select( Year, Region, StatArea, Group, Section, LocationCode, 
-      LocationName, SpawnNumber, Eastings, Northings, Start, End, Length, 
-      Width, Depth, Method, SurfLyrs, SurfSI, MacroLyrs, MacroSI, UnderLyrs, 
-      UnderSI ) %>%
+      LocationName, SpawnNumber, Eastings, Northings, Longitude, Latitude, 
+      Start, End, Length, Width, Depth, Method, SurfLyrs, SurfSI, MacroLyrs, 
+      MacroSI, UnderLyrs, UnderSI ) %>%
     mutate( Year=as.integer(Year), StartDOY=yday(Start), 
       EndDOY=yday(End), Decade=paste(Year%/%10*10, "s", sep="") ) %>%
     arrange( Year, Region, StatArea, Section, LocationCode, SpawnNumber, 
@@ -676,6 +676,15 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
 # Load spawn data
 spawnRaw <- LoadSpawnData( whereSurf=surfLoc, whereMacro=macroLoc, 
   whereUnder=underLoc, XY=transectXY )
+
+# # For Kristen, CC spawn
+# spawnRaw %>% 
+#   select( Year, Region, StatArea, Section, LocationCode, LocationName, 
+#     SpawnNumber, Eastings, Northings, Longitude, Latitude, SurfSI, MacroSI,
+#     UnderSI ) %>% 
+#   filter( Year>=2014 ) %>% 
+#   arrange(Year, Region, StatArea, Section, LocationCode ) %>% 
+#   write_csv( path="SpawnCC.csv" )
 
 # For comparing tweaks to the SpawnIndex script
 spawnSummary <- spawnRaw %>%
