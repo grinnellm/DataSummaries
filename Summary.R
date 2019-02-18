@@ -2072,18 +2072,6 @@ propAgedPlot <- ggplot( data=numAgedYear, aes(x=Year)  ) +
   myTheme +
   theme( legend.position="top", axis.text.x=element_blank() )
 
-# TODO: Omit this plot -- shows the same as the first one, and it's harder to understand
-# Plot proportion-at-age by year (second plot)
-propAgedPlot2 <- ggplot( data=numAgedYear, aes(x=Year, y=Proportion) ) +
-  scale_x_continuous( breaks=yrBreaks ) +
-  geom_bar( aes(fill=factor(Age)), stat="identity", width=1 ) + 
-  labs( x=NULL, y="Proportion-at-age", fill="Age" ) +
-  scale_fill_viridis( guide=guide_legend(nrow=1), discrete=TRUE ) +
-  expand_limits( x=yrRange ) +
-  annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, hjust=-0.1 ) +
-  myTheme +
-  theme( axis.text.x=element_blank(), legend.position="top" )
-
 # Plot number aged by year
 numAgedPlot <- ggplot( data=numAgedYear, aes(x=Year, y=Number) ) +
   geom_bar( stat="identity", width=0.9 ) +
@@ -2091,14 +2079,14 @@ numAgedPlot <- ggplot( data=numAgedYear, aes(x=Year, y=Number) ) +
   scale_x_continuous( breaks=yrBreaks ) +
   scale_y_continuous( labels=function(x) comma(x/1000) ) +
   expand_limits( x=yrRange, y=0 ) +
-  annotate( geom="text", x=-Inf, y=Inf, label="(c)", vjust=1.3, hjust=-0.1 ) +
+  annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, hjust=-0.1 ) +
   myTheme
 
 # Arrange and save the proportion-at-age and number aged plots
-pnPlots <- plot_grid( propAgedPlot, propAgedPlot2, numAgedPlot, align="v", 
-  ncol=1, rel_heights=c(1, 1, 0.7) ) +
+pnPlots <- plot_grid( propAgedPlot, numAgedPlot, align="v", 
+  ncol=1, rel_heights=c(1, 0.7) ) +
   ggsave( filename=file.path(regName, "ProportionAged.pdf"), width=figWidth, 
-    height=figWidth*1.25 )
+    height=figWidth )
 
 # Plot weight-at-age by year
 weightAgePlot <- ggplot( data=muWeightAge ) + 
