@@ -105,6 +105,7 @@ Area23 <- c( 230:233, 239 )
 Area25 <- c( 250:253, 259 )
 Tlaamin <- c( 135, 141, 151, 152, 161:163 )
 Area15 <- c( 150:159 )
+AllHG <- c( 0:6, 11, 12, 21:25 )
 
 # Select a subset of sections (or NA for all)
 sectionSub <- NA
