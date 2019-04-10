@@ -67,7 +67,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm( list=ls( ) )      # Clear the workspace
+# rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -126,7 +126,7 @@ inclTestGNBio <- FALSE
 inclSOKBio <- TRUE
 
 # Adjust understory spawn width due to lead line shrinkage
-doAdjWidth <- FALSE
+doAdjWidth <- TRUE
 
 # Location of herring databases (catch, biosamples, spawn, etc)
 dirDBs <- file.path( "..", "Data" )
@@ -248,11 +248,22 @@ parsProd <- list(
 # Start year for catch validation program (not currently used)
 validCatch <- list( RoeGN=1998, RoeSN=1999 )
 
-# Years to adjust width (lead line shrinkage)
-adjWidthYrs <- 2003:2013
-
-# Amount to adjust the width (lead line shrinkage; 0.15 adds 15%)
-adjWidthFrac <- 0.075 # 0.15
+# Correction factors for understory spawn width (by year and region)
+adjWidthFacs <- read_csv(file=
+    "Year, HG, PRD, CC, SoG, WCVI, A27, A2W
+  2003, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
+  2004, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
+  2005, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
+  2006, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
+  2007, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
+  2008, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
+  2009, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
+  2010, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
+  2011, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
+  2012, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
+  2013, 1.15, 1.15, 1.075, 1.075, 1.075, 1, 1.15
+  2014, 1.15, 1.15, 1, 1, 1, 1, 1.15", 
+  col_types=cols("i", "d", "d", "d", "d", "d", "d", "d") )
 
 #### Sources #####
 
