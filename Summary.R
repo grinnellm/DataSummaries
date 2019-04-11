@@ -125,9 +125,6 @@ inclTestGNBio <- FALSE
 # Include spawn on kelp biological data
 inclSOKBio <- TRUE
 
-# Adjust understory spawn width due to lead line shrinkage
-doAdjWidth <- TRUE
-
 # Location of herring databases (catch, biosamples, spawn, etc)
 dirDBs <- file.path( "..", "Data" )
 
