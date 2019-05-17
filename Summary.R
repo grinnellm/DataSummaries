@@ -67,7 +67,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-# rm( list=ls( ) )      # Clear the workspace
+rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -902,8 +902,7 @@ harvestSOK <- catchRaw %>%
   ungroup( ) %>%
   # Covert harvest (lb) to spawning biomass (t)
   mutate( Biomass=CalcBiomassSOK(SOK=Harvest*convFac$lb2kg, 
-    eggKelpProp=parsProd$eggKelpProp, 
-    eggBrineProp=parsProd$eggBrineProp, 
+    eggKelpProp=parsProd$eggKelpProp, eggBrineProp=parsProd$eggBrineProp, 
     eggWt=parsProd$eggWt, ECF=ECF) ) %>%
   complete( Year=yrRange, fill=list(Harvest=0, Biomass=0) ) %>%
   arrange( Year )
@@ -2999,6 +2998,14 @@ write_csv( x=allHarvSOK,
 #
 ## Write the spawn summary
 #write_csv( x=spawnYrF, path=paste("RawIndex", regName, ".csv", sep="") )
+
+# # Spawn for Luke
+# spawnRawOut <- spawnRaw %>%
+#   select( Year, Region, StatArea, Section, LocationCode, LocationName,
+#     SpawnNumber, Eastings, Northings, Longitude, Latitude, Start, End, Method, 
+#     SurfSI, MacroSI, UnderSI ) %>%
+#   arrange( Year, Region, StatArea, Section, LocationCode, SpawnNumber ) %>%
+#   write_csv( path=paste("SpawnIndex", regName, ".csv", sep="") )
 
 # Update progress
 cat( "done\n" )
