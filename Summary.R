@@ -96,7 +96,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); or minor (A27, A2W, JS)
-if( !exists('region') )  region <- "PRD"
+if( !exists('region') )  region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -134,7 +134,7 @@ dirDBs <- file.path( "..", "Data" )
 dirShape <- file.path( dirDBs, "Polygons" )
 
 # Databases: remote (i.e., H:\ for hdata$) or local (e.g., C:\)
-dbLoc <- "Local"
+dbLoc <- "Remote"
 
 # Database name
 dbName <- "HSA_Program_v6.2.mdb"
@@ -2949,8 +2949,13 @@ cat( "Writing tables... " )
 #write_csv( x=bioRaw, path=file.path(regName, "BioRaw.csv") )
 #
 ## Write raw spawn data to a csv (choose one)
-# write_csv( x=spawnRaw, path=file.path(regName, "SpawnRaw.csv") )
-# write_csv( x=spawnRaw, path="SpawnRaw.csv", append=ifelse(r==1, FALSE, TRUE) )
+# spawnRaw %>%
+#   select( Year, Region, StatArea, Section, LocationCode, LocationName, 
+#     SpawnNumber, Eastings, Northings, Longitude, Latitude, Method, SurfSI,
+#     MacroSI, UnderSI, Survey ) %>%
+#   arrange( Year, Region, StatArea, Section, LocationCode, SpawnNumber ) %>%
+#   write_csv( path=file.path(regName, "SpawnRaw.csv") )
+#   write_csv( path="SpawnRaw.csv", append=ifelse(r==1, FALSE, TRUE) )
 #
 ## Write catch data to a csv
 #write_csv( x=catch, path=file.path(regName, "Catch.csv") )
