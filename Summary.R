@@ -67,7 +67,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm( list=ls( ) )      # Clear the workspace
+# rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -1243,6 +1243,15 @@ CalcSpawnSummary <- function( dat, g ) {
 
 # Calculate spawn summary by year
 spawnYr <- CalcSpawnSummary( dat=spawnRaw, g=c("Year") )
+
+# sYr <- spawnYr %>%
+#   filter( !is.na(TotalSI) ) %>%
+#   complete( Year=full_seq(Year, 1) ) %>%
+#   arrange( Year )
+# p <- ggplot( data=sYr, aes(x=Year, y=TotalSI) ) + 
+#   geom_line( )  + 
+#   labs(title=paste(range(sYr$Year), collapse=" - "), y="Spawn index (t)" ) +
+#   ggsave( filename=paste("SpawnIndex", regName, ".pdf", sep="") )
 
 # Smaller subset for figures: spawn by year
 spawnYrFig <- spawnYr %>% 
