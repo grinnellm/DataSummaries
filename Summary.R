@@ -67,7 +67,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-# rm( list=ls( ) )      # Clear the workspace
+rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -155,7 +155,7 @@ makeFrench <- FALSE
 ##### Parameters #####
 
 # Year range: include data
-yrRange <- 1951:2018
+yrRange <- 1951:2019
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -1242,7 +1242,11 @@ CalcSpawnSummary <- function( dat, g ) {
 }  # End CalcSpawnSummary function
 
 # Calculate spawn summary by year
-spawnYr <- CalcSpawnSummary( dat=spawnRaw, g=c("Year") )
+spawnYr <- CalcSpawnSummary( dat=spawnRaw, g=c("Year") ) %>%
+  mutate( PctChange=PercentChange(TotalSI),
+    PctDiff=PercentDifference(TotalSI),
+    PctChange=ifelse(Year==newSurvYr, NA, PctChange),
+    PctDiff=ifelse(Year==newSurvYr, NA, PctDiff) )
 
 # sYr <- spawnYr %>%
 #   filter( !is.na(TotalSI) ) %>%
@@ -2169,7 +2173,7 @@ spawnByLocPlot <- BaseMap +
     aes(label=paste("Sec", Section, sep=" ")) ) +
   geom_point( data=spawnByLocXY, aes(colour=TotalSI), alpha=0.75, size=4 ) +
   scale_colour_viridis( labels=comma ) +
-  labs( colour="Spawn/nindex (t)" ) +
+  labs( colour="Spawn\nindex (t)" ) +
   theme( legend.justification=c(0, 0), 
     legend.position=if(region == "PRD") "right" else c(0.01, 0.01) ) +
   ggsave( filename=file.path(regName, "SpawnByLoc.pdf"), width=figWidth, 
@@ -2333,12 +2337,29 @@ spawnPercentSecStackPlot <- ggplot( data=spawnYrSecFig,
   myTheme +
   theme( legend.position="top" )
 
+# Plot percent change in spawn by year
+spawnChangePlot <- ggplot( data=spawnYrFig, 
+  mapping=aes(x=Year, y=PctDiff) ) +
+  geom_bar( aes(fill=PctDiff>=0), stat="identity" ) +
+  annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, hjust=-0.1 ) +
+  scale_fill_viridis( discrete=TRUE ) +
+  scale_x_continuous( breaks=yrBreaks ) +
+  labs( y="Percent difference" ) +
+  guides( fill=FALSE ) +
+  myTheme
+
 # Arrange and save the index and proportion plots
 ipPlots <- plot_grid( spawnIndexPlot, spawnPercentSAStackPlot, 
   spawnPercentSecStackPlot, align="v", ncol=1, 
   rel_heights=c(2.1, 2.5, 2.5) ) +
   ggsave( filename=file.path(regName, "SpawnIndexPercent.pdf"), 
     width=figWidth, height=6.9 ) 
+
+# Arrange and save the spawn index and percent change plots
+pctPlots <- plot_grid( spawnIndexPlot, spawnChangePlot, align="v", ncol=1, 
+  rel_heights=c(2.1, 2.1) ) +
+  ggsave( filename=file.path(regName, "SpawnIndexChange.pdf"), width=figWidth,
+    height=figWidth )
 
 # Plot percent contribution by Section faceted by Stat Area or Group
 PlotPCSecSA <- function( dat ) {
