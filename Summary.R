@@ -2344,7 +2344,7 @@ spawnChangePlot <- ggplot( data=spawnYrFig,
   annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, hjust=-0.1 ) +
   scale_fill_viridis( discrete=TRUE ) +
   scale_x_continuous( breaks=yrBreaks ) +
-  labs( y="Percent difference" ) +
+  labs( y="Percent difference (%)" ) +
   guides( fill=FALSE ) +
   myTheme
 
