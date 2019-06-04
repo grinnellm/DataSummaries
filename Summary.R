@@ -2269,7 +2269,7 @@ spawnIndexTypePlot <- ggplot( data=spawnYrFigType, aes(x=Year, y=SI) ) +
   scale_x_continuous( breaks=yrBreaks ) +
   scale_y_continuous( labels=function(x) comma(x/1000) ) +
   expand_limits( x=c(firstYrFig-0.5, max(yrRange)+0.5), y=0 ) +
-  facet_grid( Type ~ ., scales="free_y" ) +
+  facet_grid( Type ~ ., scales="free_y", labeller=label_both ) +
   myTheme +
   theme( legend.position="top" ) +
   ggsave( filename=file.path(regName, "SpawnIndexType.pdf"), width=figWidth, 
