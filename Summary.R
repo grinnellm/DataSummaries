@@ -155,7 +155,7 @@ makeFrench <- FALSE
 ##### Parameters #####
 
 # Year range: include data
-yrRange <- 1951:2019
+yrRange <- 1951:2018
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -1243,8 +1243,8 @@ CalcSpawnSummary <- function( dat, g ) {
 
 # Calculate spawn summary by year
 spawnYr <- CalcSpawnSummary( dat=spawnRaw, g=c("Year") ) %>%
-  mutate( PctChange=PercentChange(TotalSI),
-    PctDiff=PercentDifference(TotalSI),
+  mutate( PctChange=DeltaPercent(TotalSI, type="PctChange"),
+    PctDiff=DeltaPercent(TotalSI, type="PctDiff"),
     PctChange=ifelse(Year==newSurvYr, NA, PctChange),
     PctDiff=ifelse(Year==newSurvYr, NA, PctDiff) )
 
