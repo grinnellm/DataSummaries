@@ -95,8 +95,8 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 
 ##### Controls #####
 
-# Select region(s): major (HG, PRD, CC, SoG, WCVI); or minor (A27, A2W, JS)
-if( !exists('region') )  region <- "SoG"
+# Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
+if( !exists('region') )  region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1674,6 +1674,14 @@ if( region == "A2W" ) {
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
 }  # End if region is Area 2 West
 
+# If region is all
+if( region == "All" ) {
+  # Plot spawn timing by Stat Area
+  spawnTimingGroup <- FALSE
+  # Determine the spatial distribution of spawn
+  propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
+}  # End if region is all
+
 ##### ADMB #####
 
 # Make ADMB input data: catch (t*10^3)
@@ -2977,15 +2985,17 @@ cat( "Writing tables... " )
 ## Write raw biological data to a csv
 #write_csv( x=bioRaw, path=file.path(regName, "BioRaw.csv") )
 #
-## Write raw spawn data to a csv (choose one)
-# spawnRaw %>%
-#   select( Year, Region, StatArea, Section, LocationCode, LocationName, 
-#     SpawnNumber, Eastings, Northings, Longitude, Latitude, Method, SurfSI,
-#     MacroSI, UnderSI, Survey ) %>%
-#   arrange( Year, Region, StatArea, Section, LocationCode, SpawnNumber ) %>%
-#   write_csv( path=file.path(regName, "SpawnRaw.csv") )
-#   write_csv( path="SpawnRaw.csv", append=ifelse(r==1, FALSE, TRUE) )
-#
+# Write raw spawn data to a csv (choose one) for the FIND app
+if( region == "All" ) {
+  # Copy this file to the data folder in the FIND app
+  spawnRaw %>%
+    select( Year, Region, StatArea, Section, LocationCode, LocationName,
+      SpawnNumber, Eastings, Northings, Longitude, Latitude, Method, SurfSI,
+      MacroSI, UnderSI, Survey ) %>%
+    arrange( Year, Region, StatArea, Section, LocationCode, SpawnNumber ) %>%
+    write_csv( path=file.path(regName, "SpawnRaw.csv") )
+}  # End if all regions
+
 ## Write catch data to a csv
 #write_csv( x=catch, path=file.path(regName, "Catch.csv") )
 #
