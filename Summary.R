@@ -2992,7 +2992,7 @@ if( region == "All" ) {
     select( Year, Region, StatArea, Section, LocationCode, LocationName,
       SpawnNumber, Eastings, Northings, Longitude, Latitude, Method, SurfSI,
       MacroSI, UnderSI, Survey ) %>%
-    arrange( Year, Region, StatArea, Section, LocationCode, SpawnNumber ) %>%
+    arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
     write_csv( path=file.path(regName, "SpawnRaw.csv") )
 }  # End if all regions
 
