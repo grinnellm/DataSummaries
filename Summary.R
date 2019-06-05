@@ -61,6 +61,7 @@
 #     at-age: for the values that are not at the start of the time series, use 
 #     the mean of the surrounding values, not just the preceding values. Maybe
 #     go with six (three on either side).
+# 19. Add option to analyses more than one SAR at a time (in addition to 'All').
 
 ##### Housekeeping #####
 
