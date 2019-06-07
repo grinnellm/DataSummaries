@@ -97,7 +97,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "All"
+if( !exists('region') )  region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -135,7 +135,7 @@ dirDBs <- file.path( "..", "Data" )
 dirShape <- file.path( dirDBs, "Polygons" )
 
 # Databases: remote (i.e., H:\ for hdata$) or local (e.g., C:\)
-dbLoc <- "Remote"
+dbLoc <- "Local"
 
 # Database name
 dbName <- "HSA_Program_v6.2.mdb"
