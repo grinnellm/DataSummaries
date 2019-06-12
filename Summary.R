@@ -896,13 +896,16 @@ bio <- UpdateBioData( dat=bioRaw, rYr=2014 )
 ##### Overlay #####
 
 # Check area data for inconsistent spatial overlays
-overAreas <- CheckSpatialOverlay( pts=areas, shape=shapes$secAllSPDF )
+overAreas <- CheckSpatialOverlay( pts=areas, shape=shapes$secAllSPDF,
+  type="Location" )
 
 # Check spawn data for inconsistent spatial overlays
-overSpawn <- CheckSpatialOverlay( pts=spawnRaw, shape=shapes$secAllSPDF )
+overSpawn <- CheckSpatialOverlay( pts=spawnRaw, shape=shapes$secAllSPDF,
+  type="Spawn")
 
 # Check biosample data for inconsistent spatial overlays
-overBio <- CheckSpatialOverlay( pts=bioRaw, shape=shapes$secAllSPDF )
+overBio <- CheckSpatialOverlay( pts=bioRaw, shape=shapes$secAllSPDF,
+  type="Biosample")
 
 ##### Main ##### 
 
