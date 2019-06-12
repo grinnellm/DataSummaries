@@ -280,8 +280,8 @@ codesLoc <- list(
 areaLoc <- list(
   loc=file.path(dirDBs, dbLoc),
   db=dbName,
-  fns=list(sections="Sections", locationsPrimary="Location_Bmccarter", 
-    locationsSecondary="Location") )
+  fns=list(sections="Sections", locationsFirst="Location_Bmccarter", 
+    locationsSecond="Location") )
 
 # Location(s) and names of the Sections and land shapefiles
 shapesLoc <- list(
@@ -503,9 +503,12 @@ LoadBioData <- function( where, XY ) {
   # Grab the spatial info and process
   sampleSP <- sampleDat %>%
     transmute( X=ifelse(is.na(Set_Longitude), 0, Set_Longitude),
-      Y=ifelse(is.na(Set_Latitude), 0, Set_Latitude))
+      Y=ifelse(is.na(Set_Latitude), 0, Set_Latitude) )
   # Put X and Y into a spatial points object
   sPts <- SpatialPoints( coords=sampleSP, proj4string=CRS(inCRS) )
+  # Save the original points
+  sPtsOrig <- as_tibble( sPts ) %>%
+    rename( Longitude=X, Latitude=Y )
   # Convert X and Y from WGS to Albers
   sPtsAlb <- spTransform( x=sPts, CRSobj=CRS(outCRS) )
   # Extract spatial info
@@ -513,6 +516,7 @@ LoadBioData <- function( where, XY ) {
   # Extract relevant sample data
   samples <- sampleDat %>%
     cbind( dfAlb ) %>%
+    cbind( sPtsOrig ) %>%
     rename( LocationCode=loc_code, Sample=isamp, Month=month,
       Representative=Representative_Set, SourceCode=source_code, 
       GearCode=gear_code ) %>%
@@ -520,7 +524,7 @@ LoadBioData <- function( where, XY ) {
       Eastings=ifelse(is.na(Set_Longitude), Set_Longitude, X),
       Northings=ifelse(is.na(Set_Latitude), Set_Latitude, Y) ) %>%
     select( Year, Month, Sample, Representative, LocationCode, Eastings, 
-      Northings, SourceCode, GearCode ) %>%
+      Northings, Longitude, Latitude, SourceCode, GearCode ) %>%
     as_tibble( )
   # Access the fish worksheet
   fish <- sqlFetch( channel=accessDB, sqtable=where$fns$fish ) 
@@ -544,12 +548,15 @@ LoadBioData <- function( where, XY ) {
   raw <- fishSamples %>%
     filter( LocationCode %in% areas$LocationCode ) %>%
     left_join( y=areas, by="LocationCode" ) %>%
-    mutate( Eastings=ifelse(is.na(Eastings.x), Eastings.y, Eastings.x),
-      Northings=ifelse(is.na(Northings.x), Northings.y, Northings.x)) %>%
+    mutate(
+      Eastings=ifelse(is.na(Eastings.x), Eastings.y, Eastings.x),
+      Northings=ifelse(is.na(Northings.x), Northings.y, Northings.x),
+      Longitude=ifelse(is.na(Longitude.x), Longitude.y, Longitude.x),
+      Latitude=ifelse(is.na(Latitude.x), Latitude.y, Latitude.x) ) %>%
     select( Year, Month, Region, StatArea, Group, Section, LocationCode, 
-      LocationName, Eastings, Northings, Sample, Representative, SourceCode, 
-      GearCode, Fish, Length, Weight, Sex, MaturityCode, Age, DualAge, 
-      GonadLength, GonadWeight ) %>%
+      LocationName, Eastings, Northings, Longitude, Latitude, Sample,
+      Representative, SourceCode, GearCode, Fish, Length, Weight, Sex,
+      MaturityCode, Age, DualAge, GonadLength, GonadWeight ) %>%
     arrange( Year, Month, Region, StatArea, Group, Section, LocationCode, 
       Sample, Fish )
   # Clip the extent
@@ -885,6 +892,17 @@ UpdateBioData <- function( dat, rYr ) {
 
 # Update biological data
 bio <- UpdateBioData( dat=bioRaw, rYr=2014 )
+
+##### Overlay #####
+
+# Check area data: locations
+oddAreas <- CheckAreas( pts=areas, shape=shapes$secAllSPDF )
+
+# Check area data: spawn
+oddSpawn <- CheckAreas( pts=spawnRaw, shape=shapes$secAllSPDF )
+
+# Check area data: biosamples
+oddBio <- CheckAreas( pts=bioRaw, shape=shapes$secAllSPDF )
 
 ##### Main ##### 
 
@@ -2987,15 +3005,22 @@ cat( "Writing tables... " )
 ## Write raw biological data to a csv
 #write_csv( x=bioRaw, path=file.path(regName, "BioRaw.csv") )
 #
-# Write raw spawn data to a csv (choose one) for the FIND app
+# If looking at all regions
 if( region == "All" ) {
-  # Copy this file to the data folder in the FIND app
+  # Write raw spawn data to a csv for the FIND app
   spawnRaw %>%
     select( Year, Region, StatArea, Section, LocationCode, LocationName,
       SpawnNumber, Eastings, Northings, Longitude, Latitude, Method, SurfSI,
       MacroSI, UnderSI, Survey ) %>%
     arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
     write_csv( path=file.path(regName, "SpawnRaw.csv") )
+  # Write the locations with spatial inconsistencies
+  oddAreas %>%
+    write_csv( path=file.path(regName, "OddAreas.csv") )
+  oddSpawn %>%
+    write_csv( path=file.path(regName, "OddSpawn.csv") )
+  oddBio %>%
+    write_csv( path=file.path(regName, "OddBio.csv") )
 }  # End if all regions
 
 ## Write catch data to a csv
