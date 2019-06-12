@@ -97,7 +97,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "SoG"
+if( !exists('region') )  region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -551,8 +551,8 @@ LoadBioData <- function( where, XY ) {
     mutate(
       Eastings=ifelse(is.na(Eastings.x), Eastings.y, Eastings.x),
       Northings=ifelse(is.na(Northings.x), Northings.y, Northings.x),
-      Longitude=ifelse(is.na(Longitude.x), Longitude.y, Longitude.x),
-      Latitude=ifelse(is.na(Latitude.x), Latitude.y, Latitude.x) ) %>%
+      Longitude=ifelse(Longitude.x==0, Longitude.y, Longitude.x),
+      Latitude=ifelse(Latitude.x==0, Latitude.y, Latitude.x) ) %>%
     select( Year, Month, Region, StatArea, Group, Section, LocationCode, 
       LocationName, Eastings, Northings, Longitude, Latitude, Sample,
       Representative, SourceCode, GearCode, Fish, Length, Weight, Sex,
@@ -895,14 +895,14 @@ bio <- UpdateBioData( dat=bioRaw, rYr=2014 )
 
 ##### Overlay #####
 
-# Check area data: locations
-oddAreas <- CheckAreas( pts=areas, shape=shapes$secAllSPDF )
+# Check area data for inconsistent spatial overlays
+overAreas <- CheckSpatialOverlay( pts=areas, shape=shapes$secAllSPDF )
 
-# Check area data: spawn
-oddSpawn <- CheckAreas( pts=spawnRaw, shape=shapes$secAllSPDF )
+# Check spawn data for inconsistent spatial overlays
+overSpawn <- CheckSpatialOverlay( pts=spawnRaw, shape=shapes$secAllSPDF )
 
-# Check area data: biosamples
-oddBio <- CheckAreas( pts=bioRaw, shape=shapes$secAllSPDF )
+# Check biosample data for inconsistent spatial overlays
+overBio <- CheckSpatialOverlay( pts=bioRaw, shape=shapes$secAllSPDF )
 
 ##### Main ##### 
 
@@ -3015,12 +3015,10 @@ if( region == "All" ) {
     arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
     write_csv( path=file.path(regName, "SpawnRaw.csv") )
   # Write the locations with spatial inconsistencies
-  oddAreas %>%
-    write_csv( path=file.path(regName, "OddAreas.csv") )
-  oddSpawn %>%
-    write_csv( path=file.path(regName, "OddSpawn.csv") )
-  oddBio %>%
-    write_csv( path=file.path(regName, "OddBio.csv") )
+  spatialInconsistent <- bind_rows( overAreas, overSpawn, overBio ) %>%
+    distinct( ) %>%
+    arrange( StatAreaLoc, SectionLoc, LocationCode ) %>%
+    write_csv( path=file.path(regName, "SpatialInconsistent.csv") )
 }  # End if all regions
 
 ## Write catch data to a csv
