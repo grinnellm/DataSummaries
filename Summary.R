@@ -155,7 +155,7 @@ makeFrench <- FALSE
 
 ##### Parameters #####
 
-# Year range: include data
+# Year range to include data (data starts at 1928; 1951 for stock assessment)
 yrRange <- 1951:2018
 
 # Age range: omit below, plus group above
@@ -167,7 +167,7 @@ ageShow <- 3
 # Number of years to calculate running mean
 nRoll <- 5
 
-# Conversion factors: short tons to tonnes, feet to metres, pound to kilograms
+# Conversion factors: short tons to tonnes, feet to metres, pounds to kilograms
 convFac <- list( st2t=0.90718474, ft2m=0.3048, lb2kg=0.453592 )
 
 # First year of data to include in summary tables
