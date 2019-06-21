@@ -97,7 +97,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "SoG"
+if( !exists('region') )  region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -156,7 +156,7 @@ makeFrench <- FALSE
 ##### Parameters #####
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- 1951:2018
+yrRange <- 1951:2019
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -1003,6 +1003,11 @@ GetSampleNumType <- function( dat ) {
     rename( Use=SampleSource ) %>%
     select( Type, Gear, Use, Number ) %>%
     arrange( Type, Gear, Use )
+  # Update for SOK samples: Gear==Seine and Use==Other
+  # TODO: Make sure this is always true (i.e., are the instances when Use should
+  # stay 'Other' when Gear is Seine?)
+  res <- res %>%
+    mutate( Use=ifelse(Gear=="Seine" & Use=="Other", "SOK", Use) )
   # Replace NA with 0
   res[is.na(res)] <- 0
   # If there are no rows
@@ -1280,12 +1285,8 @@ spawnYr <- CalcSpawnSummary( dat=spawnRaw, g=c("Year") ) %>%
 #   labs(title=paste(range(sYr$Year), collapse=" - "), y="Spawn index (t)" ) +
 #   ggsave( filename=paste("SpawnIndex", regName, ".pdf", sep="") )
 
-# Smaller subset for figures: spawn by year
-spawnYrFig <- spawnYr %>% 
-  filter( Year >= firstYrFig )
-
 # Wrangle spawn by type to long
-spawnYrFigType <- spawnYrFig %>%
+spawnYrType <- spawnYr %>%
   select( Year, MacroSI, SurfSI, UnderSI, Survey ) %>%
   rename( Macrocystis=MacroSI, Surface=SurfSI, Understory=UnderSI ) %>%
   gather( "Macrocystis", "Surface", "Understory", key="Type", value="SI" ) %>%
@@ -1309,20 +1310,12 @@ spawnYrSec <- CalcSpawnSummary( dat=spawnRaw, g=c("Year", "Section") ) %>%
   mutate( Section=formatC(Section, width=3, flag="0"),
     StatArea=formatC(StatArea, width=2, flag="0") )
 
-# Smaller subset for figures: spawn by year
-spawnYrSecFig <- spawnYrSec %>%
-  filter( Year >= firstYrFig )
-
 # Calculate spawn summary by year and statistical area
 spawnYrSA <- CalcSpawnSummary( dat=spawnRaw, g=c("Year", "StatArea") ) %>%
   group_by( Year ) %>%
   mutate( PercSI=100*TotalSI/SumNA(TotalSI) ) %>%
   ungroup( ) %>%
   mutate( StatArea=formatC(StatArea, width=2, flag="0") )
-
-# Smaller subset for figures: spawn by year
-spawnYrSAFig <- spawnYrSA %>%
-  filter( Year >= firstYrFig )
 
 # Calculate the proportion of spawn by group or statistical area
 CalcPropSpawn <- function( dat, g, yrs1=max(yrRange):(max(yrRange)-4),
@@ -1567,9 +1560,6 @@ if( region == "SoG" ) {
     group_by( Year ) %>%
     mutate( PercSI=100*TotalSI/SumNA(TotalSI) ) %>%
     ungroup( )
-  # Smaller subset for figures: spawn by year
-  spawnYrGrpFig <- spawnYrGrp %>%
-    filter( Year >= firstYrFig )
   # Weight by catch type
   weightCatch <- bio %>%
     filter( GearCode == 29, StatArea %in% c(14, 17) ) %>%
@@ -2245,7 +2235,7 @@ spawnTimingPlot <- ggplot( data=spawnRaw, aes(x=StartDOY) ) +
     height=figWidth*1.25 )
 
 # Plot total spawn length by year
-spawnLengthPlot <- ggplot( data=spawnYrFig, aes(x=Year, y=TotalLength) ) +
+spawnLengthPlot <- ggplot( data=spawnYr, aes(x=Year, y=TotalLength) ) +
   geom_point( aes(shape=Survey) ) + 
   geom_line( aes(group=Survey) ) +
   #    geom_smooth( method=smLine, colour="black", level=ciLevel ) +
@@ -2260,7 +2250,7 @@ spawnLengthPlot <- ggplot( data=spawnYrFig, aes(x=Year, y=TotalLength) ) +
   theme( axis.text.x=element_blank(), legend.position="top" )
 
 # Plot mean spawn width by year
-spawnWidthPlot <- ggplot( data=spawnYrFig, aes(x=Year, y=MeanWidth) ) +
+spawnWidthPlot <- ggplot( data=spawnYr, aes(x=Year, y=MeanWidth) ) +
   geom_point( aes(shape=Survey) ) + 
   geom_line( aes(group=Survey) ) +
   #    geom_smooth( method=smLine, colour="black", level=ciLevel ) +
@@ -2274,7 +2264,7 @@ spawnWidthPlot <- ggplot( data=spawnYrFig, aes(x=Year, y=MeanWidth) ) +
   theme( axis.text.x=element_blank() )
 
 # Plot mean layers of spawn by year
-spawnLayersPlot <- ggplot( data=spawnYrFig, aes(x=Year, y=MeanLayers) ) +
+spawnLayersPlot <- ggplot( data=spawnYr, aes(x=Year, y=MeanLayers) ) +
   geom_point( aes(shape=Survey) ) + 
   geom_line( aes(group=Survey) ) +
   #    geom_smooth( method=smLine, colour="black", level=ciLevel ) +
@@ -2293,7 +2283,7 @@ plot_grid( spawnLengthPlot, spawnWidthPlot, spawnLayersPlot, align="v", ncol=1,
     height=figWidth*1.25 )
 
 # Plot spawn index by survey type: surface, macro, under
-spawnIndexTypePlot <- ggplot( data=spawnYrFigType, aes(x=Year, y=SI) ) +
+spawnIndexTypePlot <- ggplot( data=spawnYrType, aes(x=Year, y=SI) ) +
   geom_point( aes(shape=Survey) ) +
   geom_line( aes(group=Survey) ) +
   labs( y=expression(paste("Spawn index (t"%*%10^3, ")", sep="")) )  +
@@ -2304,10 +2294,10 @@ spawnIndexTypePlot <- ggplot( data=spawnYrFigType, aes(x=Year, y=SI) ) +
   myTheme +
   theme( legend.position="top" ) +
   ggsave( filename=file.path(regName, "SpawnIndexType.pdf"), width=figWidth, 
-    height=figWidth*1.2 )
+    height=figWidth*1.15 )
 
 # Plot total spawn index by year
-spawnIndexPlot <- ggplot( data=spawnYrFig, aes(x=Year, y=TotalSI) ) +
+spawnIndexPlot <- ggplot( data=spawnYr, aes(x=Year, y=TotalSI) ) +
   geom_point( aes(shape=Survey) ) + 
   geom_line( aes(group=Survey) ) +
   #    geom_smooth( method=smLine, colour="black", level=ciLevel ) +
@@ -2321,9 +2311,9 @@ spawnIndexPlot <- ggplot( data=spawnYrFig, aes(x=Year, y=TotalSI) ) +
   theme( axis.text.x=element_blank(), legend.position="top" )
 
 # If using groups
-if( exists("spawnYrGrpFig") ) { 
+if( exists("spawnYrGrp") ) { 
   # Plot percent spawn index by group
-  spawnPercentSAStackPlot <- ggplot( data=spawnYrGrpFig, 
+  spawnPercentSAStackPlot <- ggplot( data=spawnYrGrp, 
     aes(x=Year, y=PercSI, fill=Group) ) +
     geom_bar( stat="identity", width=1, colour="black", size=0.1 ) +
     labs( x=NULL, y="Spawn index (%)", fill="Group" ) + 
@@ -2337,7 +2327,7 @@ if( exists("spawnYrGrpFig") ) {
     theme( legend.position="top", axis.text.x=element_blank() )
 } else {  # End if using groups, otherwise stat areas
   # Plot percent spawn index by group (stat areas)
-  spawnPercentSAStackPlot <- ggplot( data=spawnYrSAFig, 
+  spawnPercentSAStackPlot <- ggplot( data=spawnYrSA, 
     aes(x=Year, y=PercSI, fill=StatArea) ) +
     geom_bar( stat="identity", width=1, colour="black", size=0.1 ) +
     labs( x=NULL, y="Spawn index (%)", fill="SA" ) + 
@@ -2352,10 +2342,10 @@ if( exists("spawnYrGrpFig") ) {
 }  # End if using stat areas
 
 # Determine the number of sections
-nSecCol <- n_distinct( spawnYrSecFig$Section )
+nSecCol <- n_distinct( spawnYrSec$Section )
 
 # Plot proportion of spawn in each section and year
-spawnPercentSecStackPlot <- ggplot( data=spawnYrSecFig, 
+spawnPercentSecStackPlot <- ggplot( data=spawnYrSec, 
   aes(x=Year, y=PercSI, fill=Section) ) +
   geom_bar( stat="identity", width=1, colour="black", size=0.1 ) +
   labs( y="Spawn index (%)" ) + 
@@ -2369,7 +2359,7 @@ spawnPercentSecStackPlot <- ggplot( data=spawnYrSecFig,
   theme( legend.position="top" )
 
 # Plot percent change in spawn by year
-spawnChangePlot <- ggplot( data=spawnYrFig, mapping=aes(x=Year, y=PctChange) ) +
+spawnChangePlot <- ggplot( data=spawnYr, mapping=aes(x=Year, y=PctChange) ) +
   geom_bar( aes(fill=PctChange>=0), stat="identity" ) +
   annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, hjust=-0.1 ) +
   scale_fill_viridis( discrete=TRUE ) +
@@ -2398,7 +2388,7 @@ PlotPCSecSA <- function( dat ) {
   # Start a list to hold plots
   pList <- list( )
   # Set group name
-  gName <- ifelse( exists("spawnYrGrpFig"), "Group", "SA" )
+  gName <- ifelse( exists("spawnYrGrp"), "Group", "SA" )
   # Get unique group names
   uGroups <- unique( dat[[gName]] )[order(unique(dat[[gName]]))]
   # Get the number of plots
@@ -2450,10 +2440,10 @@ PlotPCSecSA <- function( dat ) {
 }  # End PlotPCSecSA function
 
 # Get the list of plots showing percent contribution
-plotGridPCs <- PlotPCSecSA( dat=spawnYrSecFig )
+plotGridPCs <- PlotPCSecSA( dat=spawnYrSec )
 
 # Plot proportion of spawn in each section and year
-spawnPercentPanelPlot <- ggplot( data=spawnYrSecFig, 
+spawnPercentPanelPlot <- ggplot( data=spawnYrSec, 
   aes(x=Year, y=PercSI, fill=Year==max(yrRange)) ) +
   geom_bar( stat="identity" ) +
   labs( y="Spawn index (%)" ) + 
@@ -2463,13 +2453,13 @@ spawnPercentPanelPlot <- ggplot( data=spawnYrSecFig,
   expand_limits( x=c(firstYrFig, max(yrRange)) ) +
   facet_wrap( ~ Section, labeller=label_both, drop=TRUE, ncol=3 ) +
   myTheme +
-  theme( legend.position="none" ) +
+  theme( legend.position="none", axis.text.x=element_text(angle=45, hjust=1) ) +
   ggsave( filename=file.path(regName, "SpawnPercentPanel.pdf"), 
     width=figWidth, 
-    height=min(7.5, 1.5*(ceiling(n_distinct(spawnYrSecFig$Section)/3))) )
+    height=min(7.5, 1.5*(ceiling(n_distinct(spawnYrSec$Section)/3))) )
 
 # Plot index of spawn in each section and year
-spawnIndexPanelPlot <- ggplot( data=spawnYrSecFig, 
+spawnIndexPanelPlot <- ggplot( data=spawnYrSec, 
   aes(x=Year, y=TotalSI, fill=Year==max(yrRange)) ) +
   geom_bar( stat="identity" ) +
   labs( y=expression(paste("Spawn index (t"%*%10^3, ")", sep="")) ) + 
@@ -2482,7 +2472,7 @@ spawnIndexPanelPlot <- ggplot( data=spawnYrSecFig,
   theme( legend.position="none" ) +
   ggsave( filename=file.path(regName, "SpawnIndexPanel.pdf"), 
     width=figWidth, 
-    height=min(7.9, 1.5*(ceiling(n_distinct(spawnYrSecFig$Section)/3))) )
+    height=min(7.9, 1.5*(ceiling(n_distinct(spawnYrSec$Section)/3))) )
 
 # If length by sampling protocol
 if( exists("lenAgeSample") ) {
@@ -2873,7 +2863,7 @@ if( nrow(spawnByLoc) == 0 )  tfSpawnByLoc <- "\\togglefalse{spawnByLoc}"
 if( nrow(spawnByLocXY) == 0 )  tfSpawnByLocXY <- "\\togglefalse{spawnByLocXY}"
 
 # If spawn index is summarized by group: set the group name
-if( exists("spawnYrGrpFig") )  
+if( exists("spawnYrGrp") )  
   spawnIndexGroupName <- list( a="Group", b="Group" )
 
 # If spawn depth by year and statistical area: set toggle to true
@@ -2920,13 +2910,13 @@ if( region == "CC" ) {
   # Turn the toggle to true: show spatial table with group info
   tfSpatialGroup <- "\\toggletrue{spatialGroup}"
   # Create a legend for Groups
-  spawnIndexGroupLegend <- "Legend: `6\\&7' is Statistical Areas 6 and 7; and
-      `8' is Statistical Area 8."
+  spawnIndexGroupLegend <- "Legend: `06\\&07' is Statistical Areas 06 and 07;
+       and `08' is Statistical Area 08."
   # Get print friendly values: historic years
   histYrs <- paste( range(yrsRatioHist), collapse=" and " )
   # Get print friendly values: historic ratio
   histRat <- propNumBioHist %>% 
-    filter( Group == 8 ) %>% 
+    filter( Group == "08" ) %>% 
     select( SampWt ) %>% 
     mutate( SampWt=SampWt*100 ) %>% 
     round( digits=1 )
@@ -2963,7 +2953,7 @@ if( nSampThisYr > 0 ) {
 }  # End if there were no samples
 
 # Largest spawn contributor this year
-pSpawnThisYr <- spawnYrSecFig %>%
+pSpawnThisYr <- spawnYrSec %>%
   filter( Year == max(yrRange) ) %>%
   slice( which.max(PercSI) ) %>%
   mutate( Percent=round(PercSI) ) %>%
