@@ -1954,7 +1954,7 @@ BCMap <- ggplot( data=shapes$landAllCropDF, aes(x=Eastings, y=Northings) ) +
   scale_y_continuous( labels=function(x) comma(x/1000), expand=c(0, 0) ) +
   myTheme +
   ggsave( filename=file.path(regName, "BC.pdf"), width=figWidth, 
-    height=min(7, 5.75/shapes$xyAllRatio) ) 
+    height=min(6.9, 5.75/shapes$xyAllRatio) ) 
 
 # Make a french version if requested
 if( makeFrench ) {
