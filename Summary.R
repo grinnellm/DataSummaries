@@ -97,7 +97,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "PRD"
+if( !exists('region') )  region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1636,7 +1636,50 @@ if( region == "WCVI" ) {
   yrsNearshore <- bioRaw %>% 
     filter( SourceCode==2, GearCode==1 ) %>% 
     select( Year ) %>% 
-    distinct( ) 
+    distinct( )
+  # Get nearshore data by year and age
+  nearYearAge <- bioRaw %>%
+    filter( SourceCode==2, GearCode==1, Representative==1 ) %>%
+    group_by( Year, Age ) %>%
+    summarise( Number=n(), Weight=MeanNA(Weight), Length=MeanNA(Length) ) %>%
+    mutate( Proportion=Number/SumNA(Number) ) %>%
+    ungroup( ) %>%
+    mutate( Year=as.character(Year) ) %>%
+    select( Year, Age, Number, Proportion, Weight, Length )
+  # Get nearshore data: total
+  nearAge <- bioRaw %>%
+    filter( SourceCode==2, GearCode==1, Representative==1 ) %>%
+    group_by( Age ) %>%
+    summarise( Number=n(), Weight=MeanNA(Weight), Length=MeanNA(Length) ) %>%
+    mutate( Proportion=Number/SumNA(Number) ) %>%
+    ungroup( ) %>%
+    mutate( Year="Total" ) %>%
+    select( Year, Age, Number, Proportion, Weight, Length )
+  # Combine totals with annual stats
+  nearAll <- bind_rows( nearYearAge, nearAge ) %>%
+    complete( Age=ageRange ) %>%
+    # filter( !is.na(Year) ) %>%
+    arrange( Year, Age )
+  # Nearshore number-at-age
+  nearNum <- nearAll %>%
+    select( Year, Age, Number ) %>%
+    spread( key=Age, value=Number, drop=FALSE, fill=0 ) %>%
+    filter( !is.na(Year) )
+  # Nearshore proportion-at-age
+  nearProp <- nearAll %>%
+    select( Year, Age, Proportion ) %>%
+    spread( key=Age, value=Proportion, drop=FALSE, fill=0 ) %>%
+    filter( !is.na(Year) )
+  # Nearshore weight-at-age
+  nearWt <- nearAll %>%
+    select( Year, Age, Weight ) %>%
+    spread( key=Age, value=Weight ) %>%
+    filter( !is.na(Year) )
+  # Nearshore length-at-age
+  nearLen <- nearAll %>%
+    select( Year, Age, Length ) %>%
+    spread( key=Age, value=Length ) %>%
+    filter( !is.na(Year) )
   # Get length at age for the two sampling protocols
   lenAgeSample <- bioRaw %>%
     filter( Year %in% yrsNearshore$Year, SourceCode %in% c(2, 5), 
@@ -2747,6 +2790,30 @@ if( exists("deltaNumAgeYr") & exists("deltaPropAgeYr") &
     xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
   # Write length-at-age to disc
   print( x=xDeltaLenAgeYr, file=file.path(regName, "DeltaLenAgeYr.tex"),
+    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+  # Format number-at-age: annuals and total
+  xNearNum <- nearNum %>%
+    xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
+  # Write number-at-age to disc
+  print( x=xNearNum, file=file.path(regName, "NearNum.tex"),
+    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+  # Format proportion-at-age: annuals and total
+  xNearProp <- nearProp %>%
+    xtable( digits=c(0, 0, rep(3, times=length(ageRange))) )
+  # Write proportion-at-age to disc
+  print( x=xNearProp, file=file.path(regName, "NearProp.tex"),
+    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+  # Format weight-at-age: annuals and total
+  xNearWt <- nearWt %>%
+    xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
+  # Write weight-at-age to disc
+  print( x=xNearWt, file=file.path(regName, "NearWt.tex"),
+    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+  # Format length-at-age: annuals and total
+  xNearLen <- nearLen %>%
+    xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
+  # Write length-at-age to disc
+  print( x=xNearLen, file=file.path(regName, "NearLen.tex"),
     include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 }  # End if number-, proportion-, weight-, and length-at-age
 
