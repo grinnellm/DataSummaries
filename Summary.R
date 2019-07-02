@@ -97,7 +97,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "CC"
+if( !exists('region') )  region <- "PRD"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1486,7 +1486,7 @@ if( region == "PRD" ) {
     mutate( Catch=format(Catch, big.mark=",", digits=0, scientific=FALSE),
       Catch=ifelse(Gear == privGearCatch, "WP", Catch) )
   # Years with SOK data that are not releasable
-  privYrsSOK <- 2016
+  privYrsSOK <- c( 2016, 2019 )
   # Remove SoK data for certain years due to privacy concerns
   harvestSOK <- harvestSOK %>%
     mutate( 
