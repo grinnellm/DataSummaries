@@ -68,7 +68,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm( list=ls( ) )      # Clear the workspace
+# rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -97,7 +97,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "WCVI"
+if( !exists('region') )  region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1466,6 +1466,8 @@ if( region == "HG" ) {
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="Group" )
+  # Dummy variable
+  yrsNearshore <- NULL
 }  # End if region is Haida Gwaii
 
 # If region is Prince Rupert District
@@ -1501,6 +1503,8 @@ if( region == "PRD" ) {
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
+  # Dummy variable
+  yrsNearshore <- NULL
 }  # End if region is Prince Rupert District
 
 # If region is Cental Coast
@@ -1551,6 +1555,8 @@ if( region == "CC" ) {
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
+  # Dummy variable
+  yrsNearshore <- NULL
 } # End if region is Central Coast
 
 # If region is Strait of Georgia
@@ -1578,6 +1584,8 @@ if( region == "SoG" ) {
   spawnTimingGroup <- TRUE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="Group" )
+  # Dummy variable
+  yrsNearshore <- NULL
 } # End if region is Strait of Georgia
 
 # If region is West Coast of Vancouver Island
@@ -1709,6 +1717,8 @@ if( region == "A27" ) {
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
+  # Dummy variable
+  yrsNearshore <- NULL
 }  # End if region is Area 27
 
 # If region is Area 2 West
@@ -1729,6 +1739,8 @@ if( region == "A2W" ) {
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
+  # Dummy variable
+  yrsNearshore <- NULL
 }  # End if region is Area 2 West
 
 # If region is all
