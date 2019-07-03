@@ -68,7 +68,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-# rm( list=ls( ) )      # Clear the workspace
+rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -97,7 +97,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "HG"
+if( !exists('region') )  region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1467,7 +1467,7 @@ if( region == "HG" ) {
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="Group" )
   # Dummy variable
-  yrsNearshore <- NULL
+  yrsNearshore <- 0
 }  # End if region is Haida Gwaii
 
 # If region is Prince Rupert District
@@ -1504,7 +1504,7 @@ if( region == "PRD" ) {
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
   # Dummy variable
-  yrsNearshore <- NULL
+  yrsNearshore <- 0
 }  # End if region is Prince Rupert District
 
 # If region is Cental Coast
@@ -1556,7 +1556,7 @@ if( region == "CC" ) {
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
   # Dummy variable
-  yrsNearshore <- NULL
+  yrsNearshore <- 0
 } # End if region is Central Coast
 
 # If region is Strait of Georgia
@@ -1585,7 +1585,7 @@ if( region == "SoG" ) {
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="Group" )
   # Dummy variable
-  yrsNearshore <- NULL
+  yrsNearshore <- 0
 } # End if region is Strait of Georgia
 
 # If region is West Coast of Vancouver Island
@@ -1641,10 +1641,11 @@ if( region == "WCVI" ) {
   # Plot spawn timing by Stat Area
   spawnTimingGroup <- FALSE
   # Determine years for the FN nearshore pilot study
-  yrsNearshore <- bioRaw %>% 
+  yrsNearshore <- bioRaw %>%
     filter( SourceCode==2, GearCode==1 ) %>% 
     select( Year ) %>% 
-    distinct( )
+    distinct( ) %>%
+    pull( Year )
   # Get nearshore data by year and age
   nearYearAge <- bioRaw %>%
     filter( SourceCode==2, GearCode==1, Representative==1 ) %>%
@@ -1690,10 +1691,10 @@ if( region == "WCVI" ) {
     filter( !is.na(Year) )
   # Get length at age for the two sampling protocols
   lenAgeSample <- bioRaw %>%
-    filter( Year %in% yrsNearshore$Year, SourceCode %in% c(2, 5), 
+    filter( Year %in% yrsNearshore, SourceCode %in% c(2, 5), 
       Representative == 1 ) %>%
     left_join( y=tSource, by="SourceCode" ) %>%
-    select( SampleSource2, StatArea, Age, Length ) %>%
+    select( Year, SampleSource2, StatArea, Age, Length ) %>%
     rename( SA=StatArea )
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
@@ -1718,7 +1719,7 @@ if( region == "A27" ) {
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
   # Dummy variable
-  yrsNearshore <- NULL
+  yrsNearshore <- 0
 }  # End if region is Area 27
 
 # If region is Area 2 West
@@ -1740,7 +1741,7 @@ if( region == "A2W" ) {
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
   # Dummy variable
-  yrsNearshore <- NULL
+  yrsNearshore <- 0
 }  # End if region is Area 2 West
 
 # If region is all
@@ -2556,6 +2557,19 @@ if( exists("lenAgeSample") ) {
     theme( legend.position="top" ) +
     facet_grid( SA ~ ., labeller=label_both ) +
     ggsave( filename=file.path(regName, "LengthAgeSampleSA.pdf"), 
+      width=figWidth, height=figWidth )
+  # Compare age distributions by year and stat area
+  ageDistSamplePlotSA <- ggplot( data=lenAgeSample,
+    mapping=aes(x=Year, y=Age, fill=SampleSource2,
+      group=interaction(Year, SampleSource2)) ) +
+    geom_boxplot( outlier.colour="black", size=0.25 ) + 
+    labs( fill="Sample" )  +
+    scale_x_continuous( breaks=pretty_breaks() ) +
+    scale_fill_viridis( discrete=TRUE, alpha=0.5 ) +
+    myTheme +
+    theme( legend.position="top" ) +
+    facet_grid( SA ~ ., labeller=label_both ) +
+    ggsave( filename=file.path(regName, "AgeDistSampleSA.pdf"), 
       width=figWidth, height=figWidth )
 }  # End if length by sampling protocol
 
