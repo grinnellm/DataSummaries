@@ -3012,9 +3012,9 @@ if( region == "CC" ) {
 }  # End if not Central Coast
 
 # If number-, proportion-, weight-, and length-at-age: set the toggle to true
-if( exists("deltaNumAgeYr") & exists("deltaPropAgeYr") & 
-    exists("deltaWtAgeYr") & exists("deltaLenAgeYr") & exists("nearNum") &
-    exists("nearProp") & exists("nearWt") & exists("nearLen") )  
+if( exists("deltaNumAgeYr") & exists("deltaPropAgeYr") & exists("deltaWtAgeYr") 
+  & exists("deltaLenAgeYr") & exists("nearNum") & exists("nearProp") & 
+    exists("nearWt") & exists("nearLen") )  
   tfNumPropWtAge <- "\\toggletrue{numPropWtAge}"
 
 # Number of samples: this year
