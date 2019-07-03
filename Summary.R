@@ -1685,7 +1685,8 @@ if( region == "WCVI" ) {
     filter( Year %in% yrsNearshore$Year, SourceCode %in% c(2, 5), 
       Representative == 1 ) %>%
     left_join( y=tSource, by="SourceCode" ) %>%
-    select( SampleSource2, Age, Length )
+    select( SampleSource2, StatArea, Age, Length ) %>%
+    rename( SA=StatArea )
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
 }  # End if region is West Coast of Vancouver Island
@@ -2531,6 +2532,19 @@ if( exists("lenAgeSample") ) {
     theme( legend.position="top" ) +
     ggsave( filename=file.path(regName, "LengthAgeSample.pdf"), 
       width=figWidth, height=figWidth*0.67 )
+  # Compare the two sampling protocols by StatArea (length)
+  lenAgeSamplePlotSA <- ggplot( data=lenAgeSample, 
+    aes(x=Age, y=Length, fill=SampleSource2, 
+      group=interaction(Age, SampleSource2)) ) + 
+    geom_boxplot( outlier.colour="black", size=0.25 ) + 
+    labs( y="Length (mm)", fill="Sample" )  +
+    scale_x_continuous( breaks=pretty_breaks() ) +
+    scale_fill_viridis( discrete=TRUE, alpha=0.5 ) +
+    myTheme +
+    theme( legend.position="top" ) +
+    facet_grid( SA ~ ., labeller=label_both ) +
+    ggsave( filename=file.path(regName, "LengthAgeSampleSA.pdf"), 
+      width=figWidth, height=figWidth )
 }  # End if length by sampling protocol
 
 # If spawn depth by year and statistical area
@@ -2766,7 +2780,8 @@ print( x=xBioTypeNum, file=file.path(regName, "BioTypeNum.tex"),
 
 # Number-, proportion-, weight- and length-at-age
 if( exists("deltaNumAgeYr") & exists("deltaPropAgeYr") & 
-    exists("deltaWtAgeYr") & exists("deltaLenAgeYr") ) {
+    exists("deltaWtAgeYr") & exists("deltaLenAgeYr") & exists("nearNum") &
+    exists("nearProp") & exists("nearWt") & exists("nearLen") ) {
   # Format number-at-age
   xDeltaNumAgeYr <- deltaNumAgeYr %>%
     xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
@@ -2998,7 +3013,8 @@ if( region == "CC" ) {
 
 # If number-, proportion-, weight-, and length-at-age: set the toggle to true
 if( exists("deltaNumAgeYr") & exists("deltaPropAgeYr") & 
-    exists("deltaWtAgeYr") & exists("deltaLenAgeYr") )  
+    exists("deltaWtAgeYr") & exists("deltaLenAgeYr") & exists("nearNum") &
+    exists("nearProp") & exists("nearWt") & exists("nearLen") )  
   tfNumPropWtAge <- "\\toggletrue{numPropWtAge}"
 
 # Number of samples: this year
