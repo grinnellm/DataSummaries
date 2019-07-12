@@ -134,6 +134,9 @@ dirDBs <- file.path( "..", "Data" )
 #    "Herring_Shapefiles" )
 dirShape <- file.path( dirDBs, "Polygons" )
 
+# Location of privacy data
+dirPriv <- file.path( dirDBs, "Privacy" )
+
 # Databases: remote (i.e., H:\ for hdata$) or local (e.g., C:\)
 dbLoc <- "Local"
 
@@ -260,8 +263,8 @@ adjWidthFacs <- read_csv(file=
   2011, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
   2012, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
   2013, 1.15, 1.15, 1.075, 1.075, 1.075, 1, 1.15
-  2014, 1.15, 1.15, 1, 1, 1, 1, 1.15", 
-  col_types=cols("i", "d", "d", "d", "d", "d", "d", "d") )
+  2014, 1.15, 1.15, 1, 1, 1, 1, 1.15",
+  col_types=cols() )
 
 #### Sources #####
 
@@ -322,6 +325,11 @@ underLoc <- list(
   fns=list(allSpawn="tSSAllspawn", algTrans="tSSVegTrans", 
     stations="tSSStations", algae="tSSVegetation", 
     typeAlg="tSSTypeVegetation") )
+
+# Location and name of catch and harvest privacy data
+privLoc <- list( 
+  loc=file.path(dirPriv),
+  fn=list(Region="PrivacyRegion.csv", StatArea="PrivacyStatArea.csv") )
 
 ##### Functions #####
 
@@ -1988,6 +1996,38 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
 WriteInputFile( pADMB=parsADMB, cADMB=catchADMB, sADMB=spawnADMB,
   nADMB=numAgedADMB, wADMB=weightAgeADMB )
 
+##### Privacy #####
+
+# Load catch and harvest (i.e., SOK) privacy info
+LoadPrivacy <- function( where, spat ) {
+  # Load the privacy data: region
+  privRegion <- read_csv( file=file.path(where$loc, where$fn$Region),
+    col_types=cols() ) %>%
+    filter( Region %in% areas$Region ) %>%
+    mutate( Private=TRUE )
+  # Null if there are no rows for region
+  if( nrow(privRegion) == 0 )  privRegion <- NULL
+  # Load the privacy data: stat area
+  privStatArea <- read_csv( file=file.path(where$loc, where$fn$StatArea),
+    col_types=cols() ) %>%
+    filter( StatArea %in% areas$StatArea ) %>%
+    mutate( Private=TRUE )
+  # Null if there are no rows for stat area
+  if( nrow(privStatArea) == 0 )  privStatArea <- NULL
+  # Return the data
+  return( privDat=list(region=privRegion, statArea=privStatArea) )
+}  # End LoadPrivacy function
+
+# Load catch privacy data (if any)
+privDat <- LoadPrivacy( where=privLoc, spat="Region" )
+
+# Apply privacy to catch data
+catchPriv <- catch %>%
+  left_join( y=privDat$region, by=c("Region", "Year", "Gear") ) %>%
+  replace_na( replace=list(Private=FALSE) ) %>%
+  mutate( Gear=factor(Gear, levels=tPeriod$Gear),
+    CatchPriv=ifelse(Private, 0, Catch) )
+
 ##### Figures #####
 
 # Progress message
@@ -2076,12 +2116,16 @@ RegionMap <- BaseMap +
     height=min(7.5, 6.5/shapes$xyRatio) )
 
 # Plot catch by year and gear type (i.e., period)
-catchGearPlot <- ggplot( data=catch, aes(x=Year, y=Catch) ) + 
+catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) + 
   geom_bar( stat="identity", position="stack", aes(fill=Gear) ) +
+  geom_point( data=filter(catchPriv, Private), aes(x=Year, colour=Gear), y=0, 
+    shape=8 ) +
   labs( y=expression(paste("Catch (t"%*%10^3, ")", sep="")) )  +
   scale_x_continuous( breaks=yrBreaks ) +
   scale_y_continuous( labels=function(x) comma(x/1000) ) +
   scale_fill_viridis( discrete=TRUE ) +
+  scale_colour_viridis( discrete=TRUE ) +
+  # guides( colour=FALSE ) +
   expand_limits( x=yrRange, y=0 ) +
   facet_zoom( xy=Year>=firstYrFig, zoom.size=1, horizontal=FALSE,
     show.area=FALSE ) +
