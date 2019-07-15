@@ -97,7 +97,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "SoG"
+if( !exists('region') )  region <- "PRD"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1467,6 +1467,53 @@ siYearLoc <- spawnRaw %>%
   ungroup( ) %>%
   complete( Year=yrRange )
 
+##### Privacy #####
+
+# Load catch and harvest (i.e., SOK) privacy info
+LoadPrivacy <- function( where, spat ) {
+  # Load the privacy data: region
+  privRegion <- read_csv( file=file.path(where$loc, where$fn$Region),
+    col_types=cols() ) %>%
+    filter( Region %in% areas$Region ) %>%
+    mutate( Private=TRUE )
+  # Null if there are no rows for region
+  if( nrow(privRegion) == 0 )  privRegion <- NULL
+  # Load the privacy data: stat area
+  privStatArea <- read_csv( file=file.path(where$loc, where$fn$StatArea),
+    col_types=cols() ) %>%
+    filter( StatArea %in% areas$StatArea ) %>%
+    mutate( Private=TRUE )
+  # Null if there are no rows for stat area
+  if( nrow(privStatArea) == 0 )  privStatArea <- NULL
+  # Return the data
+  return( privDat=list(region=privRegion, statArea=privStatArea) )
+}  # End LoadPrivacy function
+
+# Load catch privacy data (if any)
+privDat <- LoadPrivacy( where=privLoc )
+
+# Apply privacy to catch data
+catchPriv <- catch %>%
+  left_join( y=filter(privDat$region, Gear!="SOK"),
+    by=c("Region", "Year", "Gear") ) %>%
+  replace_na( replace=list(Private=FALSE) ) %>%
+  mutate( Gear=factor(Gear, levels=tPeriod$Gear),
+    CatchPriv=ifelse(Private, 0, Catch) )
+
+# Years with SOK data that are not releasable
+privYrsSOK <- privDat$region %>%
+  filter( Gear=="SOK" ) %>%
+  select( Year ) %>%
+  pull( )
+
+# Remove SOK data for certain years due to privacy concerns
+harvestSOK <- harvestSOK %>%
+  mutate( 
+    Harvest=format(Harvest, big.mark=",", digits=0, scientific=FALSE),
+    Biomass=format(Biomass, big.mark=",", digits=0, scientific=FALSE),
+    Harvest=ifelse(Year %in% privYrsSOK, "WP", Harvest), 
+    Biomass=ifelse(Year %in% privYrsSOK, "WP", Biomass) )
+
 ##### Region #####
 
 # If region is Haida Gwaii
@@ -1488,26 +1535,19 @@ if( region == "PRD" ) {
   catchStatArea <- catch %>%
     group_by( Year, StatArea ) %>%
     summarise( Catch=SumNA(Catch) ) %>%
-    ungroup( )
-  # Smaller subset for figures: catch by year and stat area
-  catchStatAreaFig <- catchStatArea %>%
-    rename( SA=StatArea ) %>%
-    filter( Year >= firstYrFig )
+    ungroup( ) %>%
+    mutate( SA=formatC(StatArea, flag="0", width=2) )
+  # Apply privacy to catch data
+  catchStatAreaPriv <- catchStatArea %>%
+    left_join( y=privDat$statArea, by=c("StatArea", "Year") ) %>%
+    replace_na( replace=list(Private=FALSE) ) %>%
+    mutate( CatchPriv=ifelse(Private, 0, Catch) )
   # Use with catch data that are not releasable ("None" if all OK)
   privGearCatch <- "None"
   # Remove catch data for certain uses due to privacy concerns
   catchCommUseYr <- catchCommUseYr %>%
     mutate( Catch=format(Catch, big.mark=",", digits=0, scientific=FALSE),
       Catch=ifelse(Gear == privGearCatch, "WP", Catch) )
-  # Years with SOK data that are not releasable
-  privYrsSOK <- c( 2016, 2019 )
-  # Remove SoK data for certain years due to privacy concerns
-  harvestSOK <- harvestSOK %>%
-    mutate( 
-      Harvest=format(Harvest, big.mark=",", digits=0, scientific=FALSE),
-      Biomass=format(Biomass, big.mark=",", digits=0, scientific=FALSE),
-      Harvest=ifelse(Year %in% privYrsSOK, "WP", Harvest), 
-      Biomass=ifelse(Year %in% privYrsSOK, "WP", Biomass) )
   # Remove Group info
   spatialGroup <- spatialGroup %>%
     select( -Group )
@@ -1714,15 +1754,6 @@ if( region == "WCVI" ) {
 
 # If region is Area 27
 if( region == "A27" ) {
-  # Years with SOK data that are not releasable
-  privYrsSOK <- 2010:2014
-  # Remove SoK data for certain years due to privacy concerns
-  harvestSOK <- harvestSOK %>%
-    mutate( 
-      Harvest=format(Harvest, big.mark=",", digits=0, scientific=FALSE),
-      Biomass=format(Biomass, big.mark=",", digits=0, scientific=FALSE),
-      Harvest=ifelse(Year %in% privYrsSOK, "WP", Harvest), 
-      Biomass=ifelse(Year %in% privYrsSOK, "WP", Biomass) )
   # Remove Group info
   spatialGroup <- spatialGroup %>%
     select( -Group )
@@ -1736,15 +1767,6 @@ if( region == "A27" ) {
 
 # If region is Area 2 West
 if( region == "A2W" ) {
-  # Years with SOK data that are not releasable
-  privYrsSOK <- c( 2009, 2012:2014 )
-  # Remove SoK data for certain years due to privacy concerns
-  harvestSOK <- harvestSOK %>%
-    mutate( 
-      Harvest=format(Harvest, big.mark=",", digits=0, scientific=FALSE),
-      Biomass=format(Biomass, big.mark=",", digits=0, scientific=FALSE),
-      Harvest=ifelse(Year %in% privYrsSOK, "WP", Harvest), 
-      Biomass=ifelse(Year %in% privYrsSOK, "WP", Biomass) )
   # Remove Group info
   spatialGroup <- spatialGroup %>%
     select( -Group )
@@ -2000,38 +2022,6 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
 WriteInputFile( pADMB=parsADMB, cADMB=catchADMB, sADMB=spawnADMB,
   nADMB=numAgedADMB, wADMB=weightAgeADMB )
 
-##### Privacy #####
-
-# Load catch and harvest (i.e., SOK) privacy info
-LoadPrivacy <- function( where, spat ) {
-  # Load the privacy data: region
-  privRegion <- read_csv( file=file.path(where$loc, where$fn$Region),
-    col_types=cols() ) %>%
-    filter( Region %in% areas$Region ) %>%
-    mutate( Private=TRUE )
-  # Null if there are no rows for region
-  if( nrow(privRegion) == 0 )  privRegion <- NULL
-  # Load the privacy data: stat area
-  privStatArea <- read_csv( file=file.path(where$loc, where$fn$StatArea),
-    col_types=cols() ) %>%
-    filter( StatArea %in% areas$StatArea ) %>%
-    mutate( Private=TRUE )
-  # Null if there are no rows for stat area
-  if( nrow(privStatArea) == 0 )  privStatArea <- NULL
-  # Return the data
-  return( privDat=list(region=privRegion, statArea=privStatArea) )
-}  # End LoadPrivacy function
-
-# Load catch privacy data (if any)
-privDat <- LoadPrivacy( where=privLoc, spat="Region" )
-
-# Apply privacy to catch data
-catchPriv <- catch %>%
-  left_join( y=privDat$region, by=c("Region", "Year", "Gear") ) %>%
-  replace_na( replace=list(Private=FALSE) ) %>%
-  mutate( Gear=factor(Gear, levels=tPeriod$Gear),
-    CatchPriv=ifelse(Private, 0, Catch) )
-
 ##### Figures #####
 
 # Progress message
@@ -2122,14 +2112,14 @@ RegionMap <- BaseMap +
 # Plot catch by year and gear type (i.e., period)
 catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) + 
   geom_bar( stat="identity", position="stack", aes(fill=Gear) ) +
-  geom_point( data=filter(catchPriv, Private), aes(x=Year, colour=Gear), y=0, 
-    shape=8 ) +
+  geom_point( data=filter(catchPriv, Private), aes(x=Year, shape=Gear), y=0 ) +
   labs( y=expression(paste("Catch (t"%*%10^3, ")", sep="")) )  +
   scale_x_continuous( breaks=yrBreaks ) +
   scale_y_continuous( labels=function(x) comma(x/1000) ) +
   scale_fill_viridis( discrete=TRUE ) +
-  scale_colour_viridis( discrete=TRUE ) +
-  # guides( colour=FALSE ) +
+  scale_shape_manual( values=c(1, 3, 4) ) +
+  guides( fill=guide_legend(order=1),
+    shape=guide_legend(order=2, title=NULL) ) +
   expand_limits( x=yrRange, y=0 ) +
   facet_zoom( xy=Year>=firstYrFig, zoom.size=1, horizontal=FALSE,
     show.area=FALSE ) +
@@ -2167,11 +2157,12 @@ if( exists("weightCatchFig") ) {
 }  # End if weight by catch type
 
 # If catch by stat area
-if( exists("catchStatAreaFig") ) {
+if( exists("catchStatArea") ) {
   # Plot catch by year and gear type (i.e., period)
-  catchStatAreaPlot <- ggplot( data=catchStatAreaFig, aes(x=Year, y=Catch,
+  catchStatAreaPlot <- ggplot( data=catchStatAreaPriv, aes(x=Year, y=CatchPriv,
     fill=Year==max(yrRange) ) ) + 
     geom_bar( stat="identity", position="stack" ) +
+    geom_point( data=filter(catchStatAreaPriv, Private), y=0, size=0.5 ) +
     labs( y=expression(paste("Catch (t"%*%10^3, ")", sep="")) )  +
     scale_x_continuous( breaks=yrBreaks ) +
     scale_y_continuous( labels=function(x) comma(x/1000) ) +
@@ -2179,7 +2170,7 @@ if( exists("catchStatAreaFig") ) {
     expand_limits( x=c(firstYrFig, max(yrRange)), y=0 ) +
     facet_wrap( ~ SA, labeller=label_both ) +
     myTheme +
-    theme( legend.position="none" ) +
+    theme( legend.position="none", axis.text.x=element_text(angle=45, hjust=1) ) +
     ggsave( filename=file.path(regName, "CatchStatArea.pdf"), width=figWidth, 
       height=figWidth/2 )
 }  # End if catch by stat area
@@ -3048,7 +3039,7 @@ if( exists("weightAgeGroup") ) {
 if( exists("weightCatchFig") )  tfWeightCatch <- "\\toggletrue{weightCatch}"
 
 # If catch by stat area: set toggle to true
-if( exists("catchStatAreaFig") )  
+if( exists("catchStatArea") )  
   tfCatchStatArea <- "\\toggletrue{catchStatArea}"
 
 # If the region is Strait of Georgia
