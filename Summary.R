@@ -62,13 +62,14 @@
 #     the mean of the surrounding values, not just the preceding values. Maybe
 #     go with six (three on either side).
 # 19. Add option to analyses more than one SAR at a time (in addition to 'All').
+# 20. Go through and fix all the warnings (i.e., so it runs without warnings)
 
 ##### Housekeeping #####
 
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm( list=ls( ) )      # Clear the workspace
+# rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -927,7 +928,7 @@ catchCommUseYr <- catch %>%
   filter( Year == max(yrRange) ) %>%
   group_by( Gear ) %>%
   summarise( Catch=SumNA(Catch) ) %>%
-  ungroup( )    
+  ungroup( )
 
 # Calculate commercial SoK harvest and biomass
 harvestSOK <- catchRaw %>%
@@ -1162,7 +1163,7 @@ muWeightAge <- weightAge %>%
   mutate( muWeight=rollmean(x=Weight, k=nRoll, align="right", 
     na.pad=TRUE) ) %>%
   ungroup( ) %>%
-  mutate( Age=factor(Age) )
+  mutate( Age=factor(Age), PctChange=DeltaPercent(muWeight, type="PctChange") )
 
 # Calculate mean length-at-age by year
 CalcLengthAtAge <- function( dat ) {
@@ -1206,7 +1207,7 @@ muLengthAge <- lengthAge %>%
   mutate( muLength=rollmean(x=Length, k=nRoll, align="right", 
     na.pad=TRUE) ) %>%
   ungroup( ) %>%
-  mutate( Age=factor(Age) )
+  mutate( Age=factor(Age), PctChange=DeltaPercent(muLength, type="PctChange") )
 
 # Get biosample locations in the current year
 GetBioLocations <- function( dat, spObj ) {
@@ -1493,26 +1494,32 @@ LoadPrivacy <- function( where, spat ) {
 privDat <- LoadPrivacy( where=privLoc )
 
 # Apply privacy to catch data
-catchPriv <- catch %>%
-  left_join( y=filter(privDat$region, Gear!="SOK"),
-    by=c("Region", "Year", "Gear") ) %>%
+catchPriv <- privDat$region %>%
+  filter( Gear!= "SOK" ) %>%
+  right_join( y=catch, by=c("Region", "Year", "Gear") ) %>%
   replace_na( replace=list(Private=FALSE) ) %>%
   mutate( Gear=factor(Gear, levels=tPeriod$Gear),
     CatchPriv=ifelse(Private, 0, Catch) )
 
-# Years with SOK data that are not releasable
-privYrsSOK <- privDat$region %>%
-  filter( Gear=="SOK" ) %>%
-  select( Year ) %>%
-  pull( )
-
 # Remove SOK data for certain years due to privacy concerns
-harvestSOK <- harvestSOK %>%
-  mutate( 
-    Harvest=format(Harvest, big.mark=",", digits=0, scientific=FALSE),
+harvestSOK <- privDat$region %>%
+  filter( Gear == "SOK" ) %>%
+  select( Year, Private ) %>%
+  right_join( y=harvestSOK, by="Year" ) %>%
+  replace_na( replace=list(Private=FALSE) ) %>%
+  mutate( Harvest=format(Harvest, big.mark=",", digits=0, scientific=FALSE),
     Biomass=format(Biomass, big.mark=",", digits=0, scientific=FALSE),
-    Harvest=ifelse(Year %in% privYrsSOK, "WP", Harvest), 
-    Biomass=ifelse(Year %in% privYrsSOK, "WP", Biomass) )
+    Harvest=ifelse(Private, "WP", Harvest), 
+    Biomass=ifelse(Private, "WP", Biomass) ) %>%
+  select( -Private )
+
+# Remove catch due to privacy concerns
+catchCommUseYr <- catchPriv %>%
+  complete( Year=yrRange, Gear, fill=list(Catch=0) ) %>%
+  filter( Year == max(yrRange) ) %>%
+  mutate( Catch=ifelse(Private, "WP", 
+    format(Catch, big.mark=",", digits=0, scientific=FALSE)) ) %>%
+  select( Gear, Catch )
 
 ##### Region #####
 
@@ -1542,12 +1549,6 @@ if( region == "PRD" ) {
     left_join( y=privDat$statArea, by=c("StatArea", "Year") ) %>%
     replace_na( replace=list(Private=FALSE) ) %>%
     mutate( CatchPriv=ifelse(Private, 0, Catch) )
-  # Use with catch data that are not releasable ("None" if all OK)
-  privGearCatch <- "None"
-  # Remove catch data for certain uses due to privacy concerns
-  catchCommUseYr <- catchCommUseYr %>%
-    mutate( Catch=format(Catch, big.mark=",", digits=0, scientific=FALSE),
-      Catch=ifelse(Gear == privGearCatch, "WP", Catch) )
   # Remove Group info
   spatialGroup <- spatialGroup %>%
     select( -Group )
@@ -2265,6 +2266,37 @@ lwPlots <- plot_grid( weightAgePlot, lengthAgePlot, align="v", ncol=1,
   ggsave( filename=file.path(regName, "WtLenAge.pdf"), width=figWidth, 
     height=figWidth )
 
+# Plot percent change in weight-at-age by year
+weightAgeChangePlot <- ggplot( data=filter(muWeightAge, Age==ageShow),
+  mapping=aes(x=Year, y=PctChange) ) + 
+  geom_bar( aes(fill=PctChange>=0), stat="identity" ) +
+  labs( x=NULL, y="Percent change in weight-at-age (%)" ) +
+  scale_x_continuous( breaks=yrBreaks ) +
+  scale_fill_viridis( discrete=TRUE ) +
+  expand_limits( x=yrRange ) +
+  guides( fill=FALSE ) +
+  annotate( geom="text", x=-Inf, y=Inf, label="(a)", vjust=1.3, hjust=-0.1 ) +
+  myTheme +
+  theme( axis.text.x=element_blank(), legend.position="top" )
+
+# Plot percent change in length-at-age by year
+lengthAgeChangePlot <- ggplot( data=filter(muLengthAge, Age==ageShow),
+  mapping=aes(x=Year, y=PctChange) ) + 
+  geom_bar( aes(fill=PctChange>=0), stat="identity" ) +
+  labs( x=NULL, y="Percent change in length-at-age (%)" ) +
+  scale_x_continuous( breaks=yrBreaks ) +
+  scale_fill_viridis( discrete=TRUE ) +
+  expand_limits( x=yrRange ) +
+  guides( fill=FALSE ) +
+  annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, hjust=-0.1 ) +
+  myTheme
+
+# Arrange and save the weight- and length-at-age plots
+lwChangePlots <- plot_grid( weightAgeChangePlot, lengthAgeChangePlot, align="v",
+  ncol=1, rel_heights=c(1, 1.1) ) +
+  ggsave( filename=file.path(regName, "WtLenAgeChange.pdf"), width=figWidth, 
+    height=figWidth )
+
 # If weight by age and group
 if( exists("weightAgeGroup") ) {
   # Plot weight by age and group 
@@ -2323,6 +2355,7 @@ spawnTimingPlot <- ggplot( data=spawnRaw, aes(x=StartDOY) ) +
   scale_x_continuous( breaks=c(1, 32, 60, 91, 121, 152, 182), 
     labels=c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul") ) +
   labs( x="Start of spawn", y="Number of spawns" ) +
+  coord_cartesian( xlim=c(1, 182) ) +
   { if( spawnTimingGroup ) facet_grid( Decade ~ Group, labeller=label_both )
     else facet_grid( Decade ~ StatArea, labeller=label_both ) }  +
   myTheme +
@@ -2483,8 +2516,20 @@ PlotPCSecSA <- function( dat ) {
   dat <- rename( .data=dat, SA=StatArea )
   # Start a list to hold plots
   pList <- list( )
-  # Set group name
-  gName <- ifelse( exists("spawnYrGrp"), "Group", "SA" )
+  # If aggregating by group
+  if( exists("spawnYrGrp") ) {
+    # Group name
+    gName <- "Group"
+    # Remove NAs
+    dat <- dat %>%
+      filter( !is.na(Group) )
+  } else {  # End if aggregating by group, otherwise
+    # Group name
+    gName <- "SA"
+    # Remove NAs
+    dat <- dat %>%
+      filter( !is.na(SA) )
+  }  # End if aggregating by StatArea
   # Get unique group names
   uGroups <- unique( dat[[gName]] )[order(unique(dat[[gName]]))]
   # Get the number of plots
@@ -2781,7 +2826,6 @@ print( x=xRegions, file=file.path(regName, "Regions.tex"),
 
 # Format commercial catch
 xCatchCommUseYr <- catchCommUseYr %>%
-  mutate( Catch=format(Catch, big.mark=",", digits=0, scientific=FALSE) ) %>%
   rename( 'Catch (t)'=Catch ) %>%
   xtable( )
 
