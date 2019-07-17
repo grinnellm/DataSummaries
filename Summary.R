@@ -168,6 +168,9 @@ ageRange <- 2:10
 # Age to highlight in figure
 ageShow <- 3
 
+# Second age to hightlight in figure
+ageShow2 <- 6
+
 # Number of years to calculate running mean
 nRoll <- 5
 
@@ -1159,11 +1162,14 @@ weightAge <- CalcWeightAtAge( dat=bio )
 
 # Calculate running mean weight-at-age by year
 muWeightAge <- weightAge %>%
+  mutate( Measure="Weight" ) %>%
+  rename( Value=Weight ) %>%
+  arrange( Age, Year ) %>%
   group_by( Age ) %>%
-  mutate( muWeight=rollmean(x=Weight, k=nRoll, align="right", 
-    na.pad=TRUE) ) %>%
+  mutate( RollMean=rollmean(x=Value, k=nRoll, align="right", na.pad=TRUE),
+    PctChange=DeltaPercent(x=Value, type="PctChange") ) %>%
   ungroup( ) %>%
-  mutate( Age=factor(Age), PctChange=DeltaPercent(muWeight, type="PctChange") )
+  mutate( Age=factor(Age) )
 
 # Calculate mean length-at-age by year
 CalcLengthAtAge <- function( dat ) {
@@ -1203,11 +1209,18 @@ lengthAge <- CalcLengthAtAge( dat=bio )
 
 # Calculate running mean length-at-age by year
 muLengthAge <- lengthAge %>%
+  mutate( Measure="Length" ) %>%
+  rename( Value=Length ) %>%
+  arrange( Age, Year ) %>%
   group_by( Age ) %>%
-  mutate( muLength=rollmean(x=Length, k=nRoll, align="right", 
-    na.pad=TRUE) ) %>%
+  mutate( RollMean=rollmean(x=Value, k=nRoll, align="right", na.pad=TRUE),
+    PctChange=DeltaPercent(x=Value, type="PctChange") ) %>%
   ungroup( ) %>%
-  mutate( Age=factor(Age), PctChange=DeltaPercent(muLength, type="PctChange") )
+  mutate( Age=factor(Age) )
+
+# Combine length- and weight-at-age by year
+muWtLenAge <- bind_rows( muWeightAge, muLengthAge ) %>%
+  mutate( Measure=factor(Measure, levels=unique(Measure)) )
 
 # Get biosample locations in the current year
 GetBioLocations <- function( dat, spObj ) {
@@ -2227,74 +2240,52 @@ pnPlots <- plot_grid( propAgedPlot, numAgedPlot, align="v",
   ggsave( filename=file.path(regName, "ProportionAged.pdf"), width=figWidth, 
     height=figWidth )
 
-# Plot weight-at-age by year
-weightAgePlot <- ggplot( data=muWeightAge ) + 
-  geom_point( data=filter(.data=muWeightAge, Age == ageShow), 
-    aes(x=Year, y=Weight), shape=1, size=1 ) +
-  geom_line( aes(x=Year, y=muWeight, group=Age, colour=Age), size=1 ) +
-  #    geom_line( data=filter(.data=muWeightAge, Age == ageShow), 
-  #        aes(x=Year, y=muWeight), size=1 ) +
+# Plot weight- and length-at-age by year
+wtLenAgePlot <- ggplot( data=muWtLenAge, mapping=aes(x=Year, y=RollMean) ) + 
+  geom_point( data=filter(.data=muWtLenAge, Age == ageShow), aes(y=Value),
+    shape=1, size=1 ) +
+  geom_line( aes(group=Age, colour=Age), size=1 ) +
   scale_colour_viridis( guide=guide_legend(nrow=1), discrete=TRUE ) +
-  labs( x=NULL, y="Weight-at-age (g)" ) +
   scale_x_continuous( breaks=yrBreaks ) +
-  #    coord_cartesian( ylim=wtRange ) +
   expand_limits( x=yrRange ) +
-  annotate( geom="text", x=-Inf, y=Inf, label="(a)", vjust=1.3, hjust=-0.1 ) +
+  labs( y=NULL ) +
+  facet_wrap( Measure ~ ., scales="free_y", strip.position="left",
+    labeller=as_labeller(c(Weight="Weight-at-age (g)",
+      Length="Length-at-age (mm)")), nrow=2 ) +
   myTheme +
-  theme( axis.text.x=element_blank(), legend.position="top" )
-
-# Plot length-at-age by year
-lengthAgePlot <- ggplot( data=muLengthAge ) + 
-  geom_point( data=filter(.data=muLengthAge, Age == ageShow), 
-    aes(x=Year, y=Length), shape=1, size=1 ) +
-  geom_line( aes(x=Year, y=muLength, group=Age, colour=Age), size=1 ) +
-  #    geom_line( data=filter(.data=muLengthAge, Age == ageShow), 
-  #        aes(x=Year, y=muLength), size=1 ) +
-  scale_colour_viridis( guide=guide_legend(nrow=1), discrete=TRUE ) +
-  labs( y="Length-at-age (mm)" ) +
-  guides( colour=FALSE ) +
-  scale_x_continuous( breaks=yrBreaks ) +
-  #    coord_cartesian( ylim=lenRange ) +
-  expand_limits( x=yrRange ) +
-  annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, hjust=-0.1 ) +
-  myTheme
-#    facet_zoom( y=Age==ageShow, zoom.size=1 )
-
-# Arrange and save the weight- and length-at-age plots
-lwPlots <- plot_grid( weightAgePlot, lengthAgePlot, align="v", ncol=1, 
-  rel_heights=c(1.2, 1.1) ) +
+  theme( legend.position="top", strip.background=element_blank(),
+    strip.placement="outside" ) +
   ggsave( filename=file.path(regName, "WtLenAge.pdf"), width=figWidth, 
     height=figWidth )
 
-# Plot percent change in weight-at-age by year
-weightAgeChangePlot <- ggplot( data=filter(muWeightAge, Age==ageShow),
+# Plot percent change in weight- and length-at-age by year
+wtLenAgeChangePlot <- ggplot( data=filter(muWtLenAge, Age==ageShow),
   mapping=aes(x=Year, y=PctChange) ) + 
   geom_bar( aes(fill=PctChange>=0), stat="identity" ) +
-  labs( x=NULL, y="Percent change in weight-at-age (%)" ) +
+  labs( y=paste("Percent change for age-", ageShow, " fish (%)", sep="") ) +
   scale_x_continuous( breaks=yrBreaks ) +
   scale_fill_viridis( discrete=TRUE ) +
   expand_limits( x=yrRange ) +
   guides( fill=FALSE ) +
-  annotate( geom="text", x=-Inf, y=Inf, label="(a)", vjust=1.3, hjust=-0.1 ) +
+  facet_grid( Measure ~ ., scales="free_y" ) +
   myTheme +
-  theme( axis.text.x=element_blank(), legend.position="top" )
+  theme( legend.position="top" ) +
+  ggsave( filename=file.path(regName, "WtLenAgeChange.pdf"), width=figWidth, 
+    height=figWidth )
 
-# Plot percent change in length-at-age by year
-lengthAgeChangePlot <- ggplot( data=filter(muLengthAge, Age==ageShow),
+# Plot percent change in weight- and length-at-age by year
+wtLenAgeChangePlot2 <- ggplot( data=filter(muWtLenAge, Age==ageShow2),
   mapping=aes(x=Year, y=PctChange) ) + 
   geom_bar( aes(fill=PctChange>=0), stat="identity" ) +
-  labs( x=NULL, y="Percent change in length-at-age (%)" ) +
+  labs( y=paste("Percent change for age-", ageShow2, " fish (%)", sep="") ) +
   scale_x_continuous( breaks=yrBreaks ) +
   scale_fill_viridis( discrete=TRUE ) +
   expand_limits( x=yrRange ) +
   guides( fill=FALSE ) +
-  annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, hjust=-0.1 ) +
-  myTheme
-
-# Arrange and save the weight- and length-at-age plots
-lwChangePlots <- plot_grid( weightAgeChangePlot, lengthAgeChangePlot, align="v",
-  ncol=1, rel_heights=c(1, 1.1) ) +
-  ggsave( filename=file.path(regName, "WtLenAgeChange.pdf"), width=figWidth, 
+  facet_grid( Measure ~ ., scales="free_y" ) +
+  myTheme +
+  theme( legend.position="top" ) +
+  ggsave( filename=file.path(regName, "WtLenAgeChange2.pdf"), width=figWidth, 
     height=figWidth )
 
 # If weight by age and group
