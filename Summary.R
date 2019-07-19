@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-# rm( list=ls( ) )      # Clear the workspace
+rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
