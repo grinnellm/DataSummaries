@@ -1530,7 +1530,10 @@ harvestSOK <- privDat$region %>%
 catchCommUseYr <- catchPriv %>%
   complete( Year=yrRange, Gear, fill=list(Catch=0) ) %>%
   filter( Year == max(yrRange) ) %>%
-  mutate( Catch=ifelse(Private, "WP", 
+  group_by( Gear ) %>%
+  summarise( Catch=SumNA(Catch), Private=all(isTRUE(Private)) ) %>%
+  ungroup( ) %>%
+  mutate( Catch=ifelse(Private, "WP",
     format(Catch, big.mark=",", digits=0, scientific=FALSE)) ) %>%
   select( Gear, Catch )
 
