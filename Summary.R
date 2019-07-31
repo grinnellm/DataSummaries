@@ -139,7 +139,7 @@ dirShape <- file.path( dirDBs, "Polygons" )
 dirPriv <- file.path( dirDBs, "Privacy" )
 
 # Databases: remote (i.e., H:\ for hdata$) or local (e.g., C:\)
-dbLoc <- "Local"
+dbLoc <- "Remote"
 
 # Database name
 dbName <- "HSA_Program_v6.2.mdb"
