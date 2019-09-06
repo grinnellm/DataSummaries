@@ -98,7 +98,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "PRD"
+if( !exists('region') )  region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1372,8 +1372,7 @@ CalcPropSpawn <- function( dat, g, yrs1=max(yrRange):(max(yrRange)-4),
   tSpawn <- pSpawn %>%
     group_by( Year ) %>%
     summarise( TotalSI=SumNA(TotalSI) ) %>%
-    ungroup( ) %>%
-    filter( Year%in%yrs )
+    ungroup( )
   # Loop over years (1)
   for( i in 1:length(yrs1) ) {
     # Get the ith year
@@ -1395,15 +1394,22 @@ CalcPropSpawn <- function( dat, g, yrs1=max(yrRange):(max(yrRange)-4),
   for( j in 1:length(yrs2) ) {
     # Get the jth year
     jYr <- yrs2[j]
-    # Calculate means of last n years
+    # Calculate means of last n years: proportion spawn
     temp2 <- pSpawn %>%
       filter( Year>=jYr ) %>%
       group_by_( .dots=g ) %>%
       summarise( Mean=MeanNA(Proportion) ) %>%
       ungroup( ) %>%
       mutate( Year=jYr, Name="SI_bar" )
-    # Compile results
+    # Calculate means of last n years: total spawn
+    temp3 <- tSpawn %>%
+      filter( Year>=jYr ) %>%
+      summarise( TotalSI=MeanNA(TotalSI) ) %>%
+      mutate( Year=jYr )
+    # Compile results: proportions
     ifelse( j==1, out2 <- temp2, out2 <- bind_rows(temp2, out2) )
+    # Compile results: totals
+    ifelse( j==1, out3 <- temp3, out3 <- bind_rows(temp3, out3) )
   }  # End j loop over years 2
   # If stat areas
   if( g=="StatArea" ) {
@@ -1414,6 +1420,10 @@ CalcPropSpawn <- function( dat, g, yrs1=max(yrRange):(max(yrRange)-4),
     out2 <- out2 %>%
       mutate( StatArea=formatC(StatArea, width=2, format="d", flag="0") )
   }  # End if stat areas
+  # Combine tSpawn with out3 (mean spawn)
+  tSpawn <- tSpawn %>%
+    filter( Year%in%yrs1 ) %>%
+    bind_rows( out3 )
   # Full join and wrangle
   res <- bind_rows( out1, out2 ) %>%
     mutate( Mean=formatC(Mean, digits=3, format="f") ) %>%
@@ -2126,8 +2136,8 @@ RegionMap <- BaseMap +
   ggsave( filename=file.path(regName, "Region.pdf"), width=figWidth, 
     height=min(7.5, 6.5/shapes$xyRatio) )
 
-# Plot catch by year and gear type (i.e., period)
-catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) + 
+Plot catch by year and gear type (i.e., period)
+catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) +
   geom_bar( stat="identity", position="stack", aes(fill=Gear) ) +
   geom_point( data=filter(catchPriv, Private), aes(x=Year, shape=Gear), y=0 ) +
   labs( y=expression(paste("Catch (t"%*%10^3, ")", sep="")) )  +
@@ -2138,11 +2148,11 @@ catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) +
   guides( fill=guide_legend(order=1),
     shape=guide_legend(order=2, title=NULL) ) +
   expand_limits( x=yrRange, y=0 ) +
-  facet_zoom( xy=Year>=firstYrFig, zoom.size=1, horizontal=FALSE,
+  facet_zoom( xy = Year >= firstYrFig, zoom.size=1, horizontal=FALSE,
     show.area=FALSE ) +
   myTheme +
   theme( legend.position="top" ) +
-  ggsave( filename=file.path(regName, "CatchGear.pdf"), width=figWidth, 
+  ggsave( filename=file.path(regName, "CatchGear.pdf"), width=figWidth,
     height=figWidth )
 
 # Plot it again, in French
