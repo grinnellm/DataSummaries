@@ -1344,10 +1344,7 @@ spawnYrSA <- CalcSpawnSummary( dat=spawnRaw, g=c("Year", "StatArea") ) %>%
   mutate( StatArea=formatC(StatArea, width=2, flag="0") )
 
 # Calculate the proportion of spawn by group or statistical area
-CalcPropSpawn <- function( dat, g, yrs1=max(yrRange):(max(yrRange)-4),
-  yrs2=(max(yrRange)-5):(max(yrRange)-9) ) {
-  # Total years
-  yrs <- c( yrs1, yrs2 )
+CalcPropSpawn <- function( dat, g, yrs=max(yrRange):(max(yrRange)-9) ) {
   # Error if grouping variable not specified
   if( !g %in%c("StatArea", "Group") )  stop( "Grouping variable not specified" )
   # Get the full year range and stat areas
@@ -1359,6 +1356,7 @@ CalcPropSpawn <- function( dat, g, yrs1=max(yrRange):(max(yrRange)-4),
       mutate( Group=as.character(Group) )
   # Determin spawn proportions
   pSpawn <- dat %>%
+    filter( Year %in% yrs ) %>%
     replace_na( replace=list( SurfSI=0, MacroSI=0, UnderSI=0) ) %>%
     mutate( TotalSI=SurfSI + MacroSI + UnderSI ) %>%
     group_by_( .dots=c("Year", g) ) %>%
@@ -1367,77 +1365,28 @@ CalcPropSpawn <- function( dat, g, yrs1=max(yrRange):(max(yrRange)-4),
     mutate( Proportion=TotalSI/SumNA(TotalSI) ) %>%
     ungroup( ) %>%
     full_join( y=yrsFull, by=c("Year", g) ) %>%
-    replace_na( replace=list(Proportion=0) )
-  # Extract total spawn by year
+    replace_na( replace=list(Proportion=0) ) %>%
+    mutate( Proportion=formatC(Proportion, digits=3, format="f", big.mark=",") )
+  # Calculate total spawn
   tSpawn <- pSpawn %>%
     group_by( Year ) %>%
     summarise( TotalSI=SumNA(TotalSI) ) %>%
     ungroup( )
-  # Loop over years (1)
-  for( i in 1:length(yrs1) ) {
-    # Get the ith year
-    iYr <- yrs1[i]
-    # Calculate the proportion by year
-    temp1 <- pSpawn %>%
-      filter( Year == iYr) %>%
-      group_by_( .dots=g ) %>%
-      summarise( Mean=MeanNA(Proportion) ) %>%
-      ungroup( ) %>%
-      mutate( Year=iYr, Name="SI" )
-    # Compile results (1)
-    ifelse( i==1, out1 <- temp1, out1 <- bind_rows(temp1, out1) )
-  }  # End i loop over years 1
-  # Fill missing data
-  out1 <- out1 %>%
-    complete( Year=yrs1, fill=list(Mean=0, Name="SI") )
-  # Loop over years (2)
-  for( j in 1:length(yrs2) ) {
-    # Get the jth year
-    jYr <- yrs2[j]
-    # Calculate means of last n years: proportion spawn
-    temp2 <- pSpawn %>%
-      filter( Year>=jYr ) %>%
-      group_by_( .dots=g ) %>%
-      summarise( Mean=MeanNA(Proportion) ) %>%
-      ungroup( ) %>%
-      mutate( Year=jYr, Name="SI_bar" )
-    # Calculate means of last n years: total spawn
-    temp3 <- tSpawn %>%
-      filter( Year>=jYr ) %>%
-      summarise( TotalSI=MeanNA(TotalSI) ) %>%
-      mutate( Year=jYr )
-    # Compile results: proportions
-    ifelse( j==1, out2 <- temp2, out2 <- bind_rows(temp2, out2) )
-    # Compile results: totals
-    ifelse( j==1, out3 <- temp3, out3 <- bind_rows(temp3, out3) )
-  }  # End j loop over years 2
   # If stat areas
   if( g=="StatArea" ) {
     # Update stat area names (1)
-    out1 <- out1 %>%
-      mutate( StatArea=formatC(StatArea, width=2, format="d", flag="0") )
-    # Update stat area names (2)
-    out2 <- out2 %>%
+    pSpawn <- pSpawn %>%
       mutate( StatArea=formatC(StatArea, width=2, format="d", flag="0") )
   }  # End if stat areas
-  # Combine tSpawn with out3 (mean spawn)
-  tSpawn <- tSpawn %>%
-    filter( Year%in%yrs1 ) %>%
-    bind_rows( out3 )
   # Full join and wrangle
-  res <- bind_rows( out1, out2 ) %>%
-    mutate( Mean=formatC(Mean, digits=3, format="f") ) %>%
-    select( -Name ) %>%
-    spread_( key=g, value="Mean" ) %>%
+  res <- pSpawn %>%
+    select( -TotalSI ) %>%
+    spread_( key=g, value="Proportion" ) %>%
     full_join( y=tSpawn, by="Year" ) %>%
-    arrange( desc(Year) ) %>%
-    mutate( Year=ifelse(Year%in%out2$Year, 
-      paste(Year, max(yrs), sep=" to "), Year) ) %>%
+    arrange( Year ) %>%
     mutate( TotalSI=formatC(TotalSI, digits=0, format="f", big.mark=",") ) %>%
     select( Year, TotalSI, everything() ) %>%
-    rename( `Year(s)`=Year, `Spawn index (t)`=TotalSI )
-  # Replace NAs
-  res[is.na(res)] <- "0.000"
+    rename( `Spawn index`=TotalSI )
   # Return the results
   return( res )
 }  # End CalcPropSpawn function
@@ -2136,7 +2085,7 @@ RegionMap <- BaseMap +
   ggsave( filename=file.path(regName, "Region.pdf"), width=figWidth, 
     height=min(7.5, 6.5/shapes$xyRatio) )
 
-Plot catch by year and gear type (i.e., period)
+# Plot catch by year and gear type (i.e., period)
 catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) +
   geom_bar( stat="identity", position="stack", aes(fill=Gear) ) +
   geom_point( data=filter(catchPriv, Private), aes(x=Year, shape=Gear), y=0 ) +
@@ -3238,12 +3187,14 @@ write_csv( x=numBiosamples,
   path=file.path(regName, paste("NumBiosamples", regName, ".csv", sep="")) )
 
 # Write the spawn distribution to a csv
-write_csv( x=propSpawn, 
-  path=file.path(regName, paste("PropSpawn", regName, ".csv", sep="")) )
+write_csv( x=propSpawn,
+  path=file.path(regName, paste("prop-spawn-", tolower(regName), ".csv",
+    sep="")) )
 
 # Write the SOK harvest to a csv
 write_csv( x=allHarvSOK, 
-  path=file.path(regName, paste("HarvSOK", regName, ".csv", sep="")) )
+  path=file.path(regName, paste("harvest-sok-", tolower(regName), ".csv",
+    sep="")) )
 
 ## Format the spawn summary
 #spawnYrF <- spawnYr %>%
