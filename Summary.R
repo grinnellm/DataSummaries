@@ -1344,7 +1344,7 @@ spawnYrSA <- CalcSpawnSummary( dat=spawnRaw, g=c("Year", "StatArea") ) %>%
   mutate( StatArea=formatC(StatArea, width=2, flag="0") )
 
 # Calculate the proportion of spawn by group or statistical area
-CalcPropSpawn <- function( dat, g, yrs=max(yrRange):(max(yrRange)-9) ) {
+CalcPropSpawn <- function( dat, g, yrs=yrRange ) {
   # Error if grouping variable not specified
   if( !g %in%c("StatArea", "Group") )  stop( "Grouping variable not specified" )
   # Get the full year range and stat areas
