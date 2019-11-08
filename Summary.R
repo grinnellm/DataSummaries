@@ -98,7 +98,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "SoG"
+if( !exists('region') )  region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -2096,12 +2096,12 @@ catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) +
   scale_shape_manual( values=c(1, 3, 4) ) +
   guides( fill=guide_legend(order=1),
     shape=guide_legend(order=2, title=NULL) ) +
-  expand_limits( x=yrRange, y=0 ) +
-  facet_zoom( xy = Year >= firstYrFig, zoom.size=1, horizontal=FALSE,
+  # expand_limits( x=yrRange, y=0 ) +
+  facet_zoom( xy=Year >= firstYrFig, zoom.size=1, horizontal=FALSE,
     show.area=FALSE ) +
   myTheme +
   theme( legend.position="top" ) +
-  ggsave( filename=file.path(regName, "CatchGear.pdf"), width=figWidth,
+  ggsave( filename=file.path(regName, "CatchGear.png"), width=figWidth,
     height=figWidth )
 
 # Plot it again, in French
