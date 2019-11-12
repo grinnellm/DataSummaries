@@ -85,15 +85,15 @@ UsePackages <- function( pkgs, locn="https://cran.rstudio.com/" ) {
   for( i in 1:length(rPkgs) ) {
     # Load required packages using 'library'
     eval( parse(text=paste("suppressPackageStartupMessages(library(", rPkgs[i], 
-      "))", sep="")) )
+                           "))", sep="")) )
   }  # End i loop over package names
 }  # End UsePackages function
 
 # Make packages available
 UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp", 
-  "maptools", "rgdal", "rgeos", "raster", "xtable", "cowplot", "grid", 
-  "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "plyr", 
-  "lettercase", "ggforce", "viridis", "ggthemes") ) 
+                    "maptools", "rgdal", "rgeos", "raster", "xtable", "cowplot", "grid", 
+                    "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "plyr", 
+                    "lettercase", "ggforce", "viridis", "ggthemes") ) 
 
 ##### Controls #####
 
@@ -255,7 +255,7 @@ validCatch <- list( RoeGN=1998, RoeSN=1999 )
 
 # Correction factors for understory spawn width (by year and region)
 adjWidthFacs <- read_csv(file=
-    "Year, HG, PRD, CC, SoG, WCVI, A27, A2W
+                           "Year, HG, PRD, CC, SoG, WCVI, A27, A2W
   2003, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
   2004, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
   2005, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
@@ -268,7 +268,7 @@ adjWidthFacs <- read_csv(file=
   2012, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
   2013, 1.15, 1.15, 1.075, 1.075, 1.075, 1, 1.15
   2014, 1.15, 1.15, 1, 1, 1, 1, 1.15",
-  col_types=cols() )
+                         col_types=cols() )
 
 #### Sources #####
 
@@ -281,14 +281,14 @@ diveLoc <- list(
 codesLoc <- list(
   loc=dirDBs,
   fns=list(tDisposal="tDisposal.csv", tGear="tGear.csv", 
-    tSource="tSource.csv", tPeriod="tPeriod.csv") )
+           tSource="tSource.csv", tPeriod="tPeriod.csv") )
 
 # Location and name of the location database and tables
 areaLoc <- list(
   loc=file.path(dirDBs, dbLoc),
   db=dbName,
   fns=list(sections="Sections", locationsFirst="Location_Bmccarter", 
-    locationsSecond="Location") )
+           locationsSecond="Location") )
 
 # Location(s) and names of the Sections and land shapefiles
 shapesLoc <- list(
@@ -313,22 +313,22 @@ surfLoc <- list(
   loc=file.path(dirDBs, dbLoc),
   db=dbName, 
   fns=list(regionStd="RegionStd", sectionStd="SectionStd", poolStd="PoolStd", 
-    surface="tSSSurface", intensity="Intensity", allSpawn="tSSAllspawn") )
+           surface="tSSSurface", intensity="Intensity", allSpawn="tSSAllspawn") )
 
 # Location and name of the macrocystis database and tables
 macroLoc <- list(
   loc=file.path(dirDBs, dbLoc),
   db=dbName,
   fns=list(allSpawn="tSSAllspawn", plants="tSSMacPlant", 
-    transects="tSSMacTrans") )
+           transects="tSSMacTrans") )
 
 # Location and name of the macrocystis database and tables
 underLoc <- list(
   loc=file.path(dirDBs, dbLoc),
   db=dbName,
   fns=list(allSpawn="tSSAllspawn", algTrans="tSSVegTrans", 
-    stations="tSSStations", algae="tSSVegetation", 
-    typeAlg="tSSTypeVegetation") )
+           stations="tSSStations", algae="tSSVegetation", 
+           typeAlg="tSSTypeVegetation") )
 
 # Location and name of catch and harvest privacy data
 privLoc <- list( 
@@ -348,7 +348,7 @@ source( file=file.path("..", "HerringSpawnIndex", "SpawnIndex.R") )
 
 # Breaks for years
 yrBreaks <- seq( from=round_any(x=min(yrRange), accuracy=10, f=floor), 
-  to=round_any(x=max(yrRange), accuracy=10, f=ceiling), by=10 )
+                 to=round_any(x=max(yrRange), accuracy=10, f=ceiling), by=10 )
 
 # Function to load transect spatial info
 LoadTransectXY <- function( loc ) {
@@ -367,7 +367,7 @@ LoadTransectXY <- function( loc ) {
     transmute( X=Longitude, Y=Latitude )
   # Put X and Y into a spatial points object
   locPts <- SpatialPointsDataFrame( coords=locSP, 
-    data=data.frame(LocationCode=dat$LocationCode), proj4string=CRS(inCRS) )
+                                    data=data.frame(LocationCode=dat$LocationCode), proj4string=CRS(inCRS) )
   # Convert X and Y from WGS to Albers
   locPtsAlb <- spTransform( x=locPts, CRSobj=CRS(outCRS) )
   # Extract spatial info
@@ -398,19 +398,19 @@ if( regName %in% list.files() ) {
 
 # Load disposal codes
 tDisposal <- read_csv( file=file.path(codesLoc$loc, codesLoc$fns$tDisposal),
-  col_types=cols("i", "c", "c", "i", "i", "c") )
+                       col_types=cols("i", "c", "c", "i", "i", "c") )
 
 # Load gear codes
 tGear <- read_csv( file=file.path(codesLoc$loc, codesLoc$fns$tGear), 
-  col_types=cols("i", "c", "i", "i", "i") )
+                   col_types=cols("i", "c", "i", "i", "i") )
 
 # Load source codes
 tSource <- read_csv( file=file.path(codesLoc$loc, codesLoc$fns$tSource), 
-  col_types=cols("i", "c", "c") )
+                     col_types=cols("i", "c", "c") )
 
 # Load period codes
 tPeriod <- read_csv( file=file.path(codesLoc$loc, codesLoc$fns$tPeriod),
-  col_types=cols("c", "c") )
+                     col_types=cols("c", "c") )
 
 # Load herring areas
 areas <- LoadAreaData( where=areaLoc )
@@ -449,7 +449,7 @@ LoadCatchData <- function( where ) {
   hCatch <- hCatch %>%
     filter( Active == 1, Section %in% areas$Section ) %>%
     mutate( Year=Season2Year(Season), Catch=CatchTons*convFac$st2t,
-      Source=rep("Hail", times=n()) ) %>%
+            Source=rep("Hail", times=n()) ) %>%
     group_by( Year, Source, Section, GearCode, DisposalCode ) %>%
     summarise( Catch=SumNA(Catch) ) %>%
     ungroup( )
@@ -476,13 +476,13 @@ LoadCatchData <- function( where ) {
   res <- allCatch %>%
     left_join( y=areasSm, by="Section" ) %>%
     select( Year, Source, Region, StatArea, Section, GearCode, DisposalCode,
-      Catch ) %>%
+            Catch ) %>%
     arrange( Year, Source, Region, StatArea, Section, GearCode, DisposalCode )
   # Warning if more recent data is available
   if( max(res$Year, na.rm=TRUE) > max(yrRange) )
     warning( "Recent catch data exists; update 'yrRange' to include ",
-      paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse=", "),
-      call.=FALSE )
+             paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse=", "),
+             call.=FALSE )
   # Trim years outside the desired year range
   res <- res %>%
     filter( Year %in% yrRange )
@@ -515,7 +515,7 @@ LoadBioData <- function( where, XY ) {
   # Grab the spatial info and process
   sampleSP <- sampleDat %>%
     transmute( X=ifelse(is.na(Set_Longitude), 0, Set_Longitude),
-      Y=ifelse(is.na(Set_Latitude), 0, Set_Latitude) )
+               Y=ifelse(is.na(Set_Latitude), 0, Set_Latitude) )
   # Put X and Y into a spatial points object
   sPts <- SpatialPoints( coords=sampleSP, proj4string=CRS(inCRS) )
   # Save the original points
@@ -530,13 +530,13 @@ LoadBioData <- function( where, XY ) {
     cbind( dfAlb ) %>%
     cbind( sPtsOrig ) %>%
     rename( LocationCode=loc_code, Sample=isamp, Month=month,
-      Representative=Representative_Set, SourceCode=source_code, 
-      GearCode=gear_code ) %>%
+            Representative=Representative_Set, SourceCode=source_code, 
+            GearCode=gear_code ) %>%
     mutate( Year=Season2Year(season),
-      Eastings=ifelse(is.na(Set_Longitude), Set_Longitude, X),
-      Northings=ifelse(is.na(Set_Latitude), Set_Latitude, Y) ) %>%
+            Eastings=ifelse(is.na(Set_Longitude), Set_Longitude, X),
+            Northings=ifelse(is.na(Set_Latitude), Set_Latitude, Y) ) %>%
     select( Year, Month, Sample, Representative, LocationCode, Eastings, 
-      Northings, Longitude, Latitude, SourceCode, GearCode ) %>%
+            Northings, Longitude, Latitude, SourceCode, GearCode ) %>%
     as_tibble( )
   # Access the fish worksheet
   fish <- sqlFetch( channel=accessDB, sqtable=where$fns$fish ) 
@@ -546,13 +546,13 @@ LoadBioData <- function( where, XY ) {
   # Wrangle biosamples
   fish <- fish %>%
     rename( Sample=isamp, Fish=fish, Length=len, Weight=wgt, Sex=sex_alpha, 
-      MaturityCode=mat_code, DualAge=dual_age, 
-      GonadLength=gonad_len, GonadWeight=gonad_wgt ) %>%
+            MaturityCode=mat_code, DualAge=dual_age, 
+            GonadLength=gonad_len, GonadWeight=gonad_wgt ) %>%
     mutate( Year=Season2Year(season), 
-      Age=ifelse(age<=max(ageRange), age, max(ageRange)) ) %>%
+            Age=ifelse(age<=max(ageRange), age, max(ageRange)) ) %>%
     filter( Age >= min(ageRange) ) %>%
     select( Year, Sample, Fish, Length, Weight, Sex, MaturityCode, Age, 
-      DualAge, GonadLength, GonadWeight ) %>%
+            DualAge, GonadLength, GonadWeight ) %>%
     as_tibble( )
   # Combine the two tables (note that Sample re-starts at 1 each Year)
   fishSamples <- full_join( x=samples, y=fish, by=c("Year", "Sample") )
@@ -566,14 +566,14 @@ LoadBioData <- function( where, XY ) {
       Longitude=ifelse(Longitude.x==0, Longitude.y, Longitude.x),
       Latitude=ifelse(Latitude.x==0, Latitude.y, Latitude.x) ) %>%
     select( Year, Month, Region, StatArea, Group, Section, LocationCode, 
-      LocationName, Eastings, Northings, Longitude, Latitude, Sample,
-      Representative, SourceCode, GearCode, Fish, Length, Weight, Sex,
-      MaturityCode, Age, DualAge, GonadLength, GonadWeight ) %>%
+            LocationName, Eastings, Northings, Longitude, Latitude, Sample,
+            Representative, SourceCode, GearCode, Fish, Length, Weight, Sex,
+            MaturityCode, Age, DualAge, GonadLength, GonadWeight ) %>%
     arrange( Year, Month, Region, StatArea, Group, Section, LocationCode, 
-      Sample, Fish )
+             Sample, Fish )
   # Clip the extent
   df <- ClipExtent( dat=raw, spObj=shapes$regSPDF, bufDist=maxBuff, 
-    silent=TRUE )
+                    silent=TRUE )
   # Subset data with 'good' X and Y
   dfNotNA <- df %>%
     filter( !is.na(Eastings) & !is.na(Northings) )
@@ -586,7 +586,7 @@ LoadBioData <- function( where, XY ) {
   df2 <- bind_rows( dfNotNA, dfNA )
   # Clip the extent (again)
   res <- ClipExtent( dat=df2, spObj=shapes$regSPDF, bufDist=maxBuff,
-    silent=TRUE )
+                     silent=TRUE )
   # Get locations with missing X or Y
   noXY <- res %>%
     filter( is.na(Eastings) | is.na(Northings) ) %>%
@@ -594,15 +594,15 @@ LoadBioData <- function( where, XY ) {
     distinct( )
   # Message re missing X and Y, if any
   if( nrow(noXY) >=1 )  warning( "There are ", nrow(noXY), 
-    " biological sample location(s) with missing or incorrect spatial info",
-    call.=FALSE )
+                                 " biological sample location(s) with missing or incorrect spatial info",
+                                 call.=FALSE )
   # Stop if we're missing rows
   if( nrow(raw) != nrow(res) )  stop( "Missing rows!", call.=FALSE )
   # Warning if more recent data is available
   if( max(res$Year, na.rm=TRUE) > max(yrRange) )
     warning( "Recent biological data exists; update 'yrRange' to include ",
-      paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse=", "),
-      call.=FALSE )
+             paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse=", "),
+             call.=FALSE )
   # Trim years outside the desired year range
   res <- res %>%
     filter( Year %in% yrRange )
@@ -625,7 +625,7 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
   cat( "Calculating spawn index:\n" )
   # Fecundity conversion factor
   ECF <<- CalcEggConversion( fecundity=parsProd$fecundity, 
-    pFemale=parsProd$pFemale )
+                             pFemale=parsProd$pFemale )
   # Progress message
   cat( "\tsurface...\n" )
   # Access and calculate surface spawn
@@ -645,24 +645,24 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
   # Combine the spawn types (by spawn number)
   raw <- surface$biomassSpawn %>%
     full_join( y=macrocystis$biomassSpawn, by=c("Year", "Region", "StatArea", 
-      "Section", "LocationCode", "SpawnNumber") ) %>%
+                                                "Section", "LocationCode", "SpawnNumber") ) %>%
     # TODO: Look into why this Width is different from the allSpawn$Width
     select( -Width ) %>%
     full_join( y=understory$biomassSpawn, by=c("Year", "Region", "StatArea", 
-      "Section", "LocationCode", "SpawnNumber") ) %>%
+                                               "Section", "LocationCode", "SpawnNumber") ) %>%
     full_join( y=allSpawn, by=c("Year", "Region", "StatArea", "Section", 
-      "LocationCode", "SpawnNumber") ) %>%
+                                "LocationCode", "SpawnNumber") ) %>%
     select( Year, Region, StatArea, Group, Section, LocationCode, 
-      LocationName, SpawnNumber, Eastings, Northings, Longitude, Latitude, 
-      Start, End, Length, Width, Depth, Method, SurfLyrs, SurfSI, MacroLyrs, 
-      MacroSI, UnderLyrs, UnderSI ) %>%
+            LocationName, SpawnNumber, Eastings, Northings, Longitude, Latitude, 
+            Start, End, Length, Width, Depth, Method, SurfLyrs, SurfSI, MacroLyrs, 
+            MacroSI, UnderLyrs, UnderSI ) %>%
     mutate( Year=as.integer(Year), StartDOY=yday(Start), 
-      EndDOY=yday(End), Decade=paste(Year%/%10*10, "s", sep="") ) %>%
+            EndDOY=yday(End), Decade=paste(Year%/%10*10, "s", sep="") ) %>%
     arrange( Year, Region, StatArea, Section, LocationCode, SpawnNumber, 
-      Start, End )
+             Start, End )
   # Clip the extent
   df <- ClipExtent( dat=raw, spObj=shapes$regSPDF, bufDist=maxBuff, 
-    silent=TRUE )
+                    silent=TRUE )
   # Subset data with 'good' X and Y
   dfNotNA <- df %>%
     filter( !is.na(Eastings) & !is.na(Northings) )
@@ -675,7 +675,7 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
   df2 <- bind_rows( dfNotNA, dfNA )
   # Clip the extent (again)
   res <- ClipExtent( dat=df2, spObj=shapes$regSPDF, bufDist=maxBuff,
-    silent=TRUE )
+                     silent=TRUE )
   # Get locations with missing X or Y
   noXY <- res %>%
     filter( is.na(Eastings) | is.na(Northings) ) %>%
@@ -683,19 +683,19 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
     distinct( )
   # Message re missing X and Y, if any
   if( nrow(noXY) >=1 )  warning( "There are ", nrow(noXY), 
-    " spawn location(s) with missing or incorrect spatial info", 
-    call.=FALSE )
+                                 " spawn location(s) with missing or incorrect spatial info", 
+                                 call.=FALSE )
   # Stop if we're missing rows
   if( nrow(raw) != nrow(res) )  stop( "Missing rows!", call.=FALSE )
   # Warning if more recent data is available
   if( max(res$Year, na.rm=TRUE) > max(yrRange) )
     warning( "Recent spawn data exists; update 'yrRange' to include ",
-      paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse=", "),
-      call.=FALSE )
+             paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse=", "),
+             call.=FALSE )
   # Add a column to indicate the survey period
   res <- res %>%
     mutate( Survey=ifelse(Year < newSurvYr, "Surface", "Dive"),
-      Survey=factor(Survey, levels=c("Surface", "Dive")) ) %>%
+            Survey=factor(Survey, levels=c("Surface", "Dive")) ) %>%
     filter( Year %in% yrRange )
   # Return spawn intensity table
   intensity <<- intensity
@@ -709,7 +709,7 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
 
 # Load spawn data
 spawnRaw <- LoadSpawnData( whereSurf=surfLoc, whereMacro=macroLoc, 
-  whereUnder=underLoc, XY=transectXY )
+                           whereUnder=underLoc, XY=transectXY )
 
 # # For Kristen, CC spawn
 # spawnRaw %>% 
@@ -724,12 +724,12 @@ spawnRaw <- LoadSpawnData( whereSurf=surfLoc, whereMacro=macroLoc,
 spawnSummary <- spawnRaw %>%
   group_by( Year ) %>%
   summarise( Surf=SumNA(SurfSI), Macro=SumNA(MacroSI), Under=SumNA(UnderSI),
-    Total=SumNA(c(Surf, Macro, Under)) ) %>%
+             Total=SumNA(c(Surf, Macro, Under)) ) %>%
   ungroup( ) %>%
   mutate( Surf=formatC(as.numeric(Surf), digits=3, format="f"), 
-    Macro=formatC(as.numeric(Macro), digits=3, format="f"),
-    Under=formatC(as.numeric(Under), digits=3, format="f"), 
-    Total=formatC(as.numeric(Total), digits=3, format="f") )
+          Macro=formatC(as.numeric(Macro), digits=3, format="f"),
+          Under=formatC(as.numeric(Under), digits=3, format="f"), 
+          Total=formatC(as.numeric(Total), digits=3, format="f") )
 
 # Write to disc
 write_csv( x=spawnSummary, path=paste("Spawn", region, ".csv", sep="") )
@@ -894,8 +894,8 @@ UpdateBioData <- function( dat, rYr ) {
   p123 <- bind_rows( pd1, pd2, pd3 )
   # Warning re representative samples
   warning( "Biosamples: keep all samples from ", min(yrRange), " to ", rYr-1, 
-    ", and 'representative' samples from ", rYr, " to ", max(yrRange), sep="", 
-    call.=FALSE )
+           ", and 'representative' samples from ", rYr, " to ", max(yrRange), sep="", 
+           call.=FALSE )
   # Include only representative samples (ish)
   res <- p123 %>%
     filter( Year < rYr | Representative == 1 ) %>%
@@ -913,15 +913,15 @@ bio <- UpdateBioData( dat=bioRaw, rYr=2014 )
 
 # Check area data for inconsistent spatial overlays
 overAreas <- CheckSpatialOverlay( pts=areas, shape=shapes$secAllSPDF,
-  type="Location" )
+                                  type="Location" )
 
 # Check spawn data for inconsistent spatial overlays
 overSpawn <- CheckSpatialOverlay( pts=spawnRaw, shape=shapes$secAllSPDF,
-  type="Spawn")
+                                  type="Spawn")
 
 # Check biosample data for inconsistent spatial overlays
 overBio <- CheckSpatialOverlay( pts=bioRaw, shape=shapes$secAllSPDF,
-  type="Biosample")
+                                type="Biosample")
 
 ##### Main ##### 
 
@@ -941,8 +941,8 @@ harvestSOK <- catchRaw %>%
   ungroup( ) %>%
   # Covert harvest (lb) to spawning biomass (t)
   mutate( Biomass=CalcBiomassSOK(SOK=Harvest*convFac$lb2kg, 
-    eggKelpProp=parsProd$eggKelpProp, eggBrineProp=parsProd$eggBrineProp, 
-    eggWt=parsProd$eggWt, ECF=ECF) ) %>%
+                                 eggKelpProp=parsProd$eggKelpProp, eggBrineProp=parsProd$eggBrineProp, 
+                                 eggWt=parsProd$eggWt, ECF=ECF) ) %>%
   complete( Year=yrRange, fill=list(Harvest=0, Biomass=0) ) %>%
   arrange( Year )
 
@@ -973,7 +973,7 @@ CountBiosamplesYear <- function( dat ) {
   # Merge the two tables and wrangle
   res <- full_join( x=numComm, y=numTest, by="Year" ) %>%
     complete( Year=firstYrTab:max(yrRange), 
-      fill=list(Commercial=0, Test=0) ) %>%
+              fill=list(Commercial=0, Test=0) ) %>%
     mutate( Total=as.integer(Commercial+Test) ) %>%
     arrange( Year )
   # If there are no rows
@@ -1011,7 +1011,7 @@ GetSampleNumType <- function( dat ) {
     mutate( Type=ifelse(SourceCode %in% c(2, 3, 5), "Test", "Commercial") )
   # Combine with gear names
   sampGear <- left_join( x=samp, y=select(.data=tGear, Gear, GearCode), 
-    by="GearCode" )
+                         by="GearCode" )
   # Combine with disposal names
   sampGearSource <- left_join( x=sampGear, y=tSource, by="SourceCode" )
   # A bit more wrangling
@@ -1167,7 +1167,7 @@ muWeightAge <- weightAge %>%
   arrange( Age, Year ) %>%
   group_by( Age ) %>%
   mutate( RollMean=rollmean(x=Value, k=nRoll, align="right", na.pad=TRUE),
-    PctChange=DeltaPercent(x=Value, type="PctChange") ) %>%
+          PctChange=DeltaPercent(x=Value, type="PctChange") ) %>%
   ungroup( ) %>%
   mutate( Age=factor(Age) )
 
@@ -1214,7 +1214,7 @@ muLengthAge <- lengthAge %>%
   arrange( Age, Year ) %>%
   group_by( Age ) %>%
   mutate( RollMean=rollmean(x=Value, k=nRoll, align="right", na.pad=TRUE),
-    PctChange=DeltaPercent(x=Value, type="PctChange") ) %>%
+          PctChange=DeltaPercent(x=Value, type="PctChange") ) %>%
   ungroup( ) %>%
   mutate( Age=factor(Age) )
 
@@ -1228,7 +1228,7 @@ GetBioLocations <- function( dat, spObj ) {
   samp <- dat %>%
     filter( Year == max(yrRange), !is.na(Eastings), !is.na(Northings) ) %>%   
     mutate( Type=ifelse(SourceCode==2, "Nearshore", 
-      ifelse(SourceCode %in% c(3, 5), "Seine test", "Commercial")) ) %>%
+                        ifelse(SourceCode %in% c(3, 5), "Seine test", "Commercial")) ) %>%
     group_by( Type, Eastings, Northings ) %>%
     summarise( Number=n_distinct(Sample) ) %>%
     ungroup( )
@@ -1260,7 +1260,7 @@ CalcSpawnSummary <- function( dat, g ) {
   # Some wrangling
   spawnByYear <- dat %>%
     select( Year, StatArea, Section, Group, Length, Width, SurfLyrs, 
-      MacroLyrs, UnderLyrs, MacroSI, SurfSI, UnderSI ) %>%
+            MacroLyrs, UnderLyrs, MacroSI, SurfSI, UnderSI ) %>%
     mutate( Group=as.character(Group) ) %>%
     group_by_( .dots=g ) %>%
     summarise( 
@@ -1290,7 +1290,7 @@ CalcSpawnSummary <- function( dat, g ) {
     filter( Year %in% yrRange ) %>%
     arrange_( g ) %>%
     mutate( Survey=ifelse(Year < newSurvYr, "Surface", "Dive"),
-      Survey=factor(Survey, levels=c("Surface", "Dive")) )
+            Survey=factor(Survey, levels=c("Surface", "Dive")) )
   # Return the data
   return( res )
 }  # End CalcSpawnSummary function
@@ -1298,9 +1298,9 @@ CalcSpawnSummary <- function( dat, g ) {
 # Calculate spawn summary by year
 spawnYr <- CalcSpawnSummary( dat=spawnRaw, g=c("Year") ) %>%
   mutate( PctChange=DeltaPercent(TotalSI, type="PctChange"),
-    PctDiff=DeltaPercent(TotalSI, type="PctDiff"),
-    PctChange=ifelse(Year==newSurvYr, NA, PctChange),
-    PctDiff=ifelse(Year==newSurvYr, NA, PctDiff) )
+          PctDiff=DeltaPercent(TotalSI, type="PctDiff"),
+          PctChange=ifelse(Year==newSurvYr, NA, PctChange),
+          PctDiff=ifelse(Year==newSurvYr, NA, PctDiff) )
 
 # sYr <- spawnYr %>%
 #   filter( !is.na(TotalSI) ) %>%
@@ -1317,8 +1317,8 @@ spawnYrType <- spawnYr %>%
   rename( Macrocystis=MacroSI, Surface=SurfSI, Understory=UnderSI ) %>%
   gather( "Macrocystis", "Surface", "Understory", key="Type", value="SI" ) %>%
   mutate( Type=factor(Type, 
-    levels=c("Surface", "Macrocystis", "Understory")), 
-    Survey=factor(Survey, levels=c("Surface", "Dive"))) %>%
+                      levels=c("Surface", "Macrocystis", "Understory")), 
+          Survey=factor(Survey, levels=c("Surface", "Dive"))) %>%
   arrange( Year, Survey, Type )
 
 # Smaller subset for table: spawn by year
@@ -1332,9 +1332,9 @@ spawnYrSec <- CalcSpawnSummary( dat=spawnRaw, g=c("Year", "Section") ) %>%
   mutate( PercSI=100*TotalSI/SumNA(TotalSI) ) %>%
   ungroup( ) %>%
   full_join( y=areas %>% select(StatArea, Section, Group) %>% distinct( ),
-    by="Section" ) %>%
+             by="Section" ) %>%
   mutate( Section=formatC(Section, width=3, flag="0"),
-    StatArea=formatC(StatArea, width=2, flag="0") )
+          StatArea=formatC(StatArea, width=2, flag="0") )
 
 # Calculate spawn summary by year and statistical area
 spawnYrSA <- CalcSpawnSummary( dat=spawnRaw, g=c("Year", "StatArea") ) %>%
@@ -1396,7 +1396,7 @@ spawnByLocXY <- spawnRaw %>%
   filter( Year == max(yrRange) ) %>%
   group_by( StatArea, Section, LocationCode, LocationName ) %>%
   summarise( Start=min(Start), TotalSI=SumNA(c(MacroSI, SurfSI, UnderSI)),
-    Eastings=unique(Eastings), Northings=unique(Northings) ) %>%
+             Eastings=unique(Eastings), Northings=unique(Northings) ) %>%
   ungroup( ) %>%
   arrange( TotalSI )
 
@@ -1413,12 +1413,12 @@ spawnDecade <- spawnRaw %>%
   filter( Year %in% (max(yrRange)-1):(max(yrRange)-10) ) %>%
   group_by( Year, LocationCode ) %>%
   summarise( Eastings=unique(Eastings), Northings=unique(Northings),
-    TotalSI=SumNA(c(SurfSI, MacroSI, UnderSI)) ) %>%
+             TotalSI=SumNA(c(SurfSI, MacroSI, UnderSI)) ) %>%
   ungroup( ) %>%
   mutate( Decade=paste(min(Year), max(Year), sep=" to ") ) %>%
   group_by( Decade, LocationCode ) %>%
   summarise( Eastings=unique(Eastings), Northings=unique(Northings),
-    MeanSI=MeanNA(TotalSI), Frequency=n() ) %>%
+             MeanSI=MeanNA(TotalSI), Frequency=n() ) %>%
   ungroup( ) %>%
   #    filter( Frequency >= 2, MeanSI >=quantile(MeanSI, probs=0.1, 
   #            na.rm=TRUE) ) %>%
@@ -1429,14 +1429,14 @@ spatialGroup <- areas %>%
   select( RegionName, StatArea, Section, Group ) %>% 
   distinct( ) %>%
   mutate( StatArea=formatC(StatArea, width=2, format="d", flag="0"),
-    Section=formatC(Section, width=3, format="d", flag="0") ) %>%
+          Section=formatC(Section, width=3, format="d", flag="0") ) %>%
   arrange( RegionName, StatArea, Section, Group )
 
 # Calculate spawn index by location and year
 siYearLoc <- spawnRaw %>%
   group_by( Year, LocationCode ) %>%
   summarise( Eastings=unique(Eastings), Northings=unique(Northings),
-    SITotal=SumNA(c(SurfSI, MacroSI, UnderSI)) ) %>%
+             SITotal=SumNA(c(SurfSI, MacroSI, UnderSI)) ) %>%
   ungroup( ) %>%
   complete( Year=yrRange )
 
@@ -1446,14 +1446,14 @@ siYearLoc <- spawnRaw %>%
 LoadPrivacy <- function( where, spat ) {
   # Load the privacy data: region
   privRegion <- read_csv( file=file.path(where$loc, where$fn$Region),
-    col_types=cols() ) %>%
+                          col_types=cols() ) %>%
     filter( Region %in% areas$Region ) %>%
     mutate( Private=TRUE )
   # Null if there are no rows for region
   if( nrow(privRegion) == 0 )  privRegion <- NULL
   # Load the privacy data: stat area
   privStatArea <- read_csv( file=file.path(where$loc, where$fn$StatArea),
-    col_types=cols() ) %>%
+                            col_types=cols() ) %>%
     filter( StatArea %in% areas$StatArea ) %>%
     mutate( Private=TRUE )
   # Null if there are no rows for stat area
@@ -1471,7 +1471,7 @@ catchPriv <- privDat$region %>%
   right_join( y=catch, by=c("Region", "Year", "Gear") ) %>%
   replace_na( replace=list(Private=FALSE) ) %>%
   mutate( Gear=factor(Gear, levels=tPeriod$Gear),
-    CatchPriv=ifelse(Private, 0, Catch) )
+          CatchPriv=ifelse(Private, 0, Catch) )
 
 # Remove SOK data for certain years due to privacy concerns
 harvestSOK <- privDat$region %>%
@@ -1480,9 +1480,9 @@ harvestSOK <- privDat$region %>%
   right_join( y=harvestSOK, by="Year" ) %>%
   replace_na( replace=list(Private=FALSE) ) %>%
   mutate( Harvest=format(Harvest, big.mark=",", digits=0, scientific=FALSE),
-    Biomass=format(Biomass, big.mark=",", digits=0, scientific=FALSE),
-    Harvest=ifelse(Private, "WP", Harvest), 
-    Biomass=ifelse(Private, "WP", Biomass) ) %>%
+          Biomass=format(Biomass, big.mark=",", digits=0, scientific=FALSE),
+          Harvest=ifelse(Private, "WP", Harvest), 
+          Biomass=ifelse(Private, "WP", Biomass) ) %>%
   select( -Private )
 
 # Remove catch due to privacy concerns
@@ -1493,7 +1493,7 @@ catchCommUseYr <- catchPriv %>%
   summarise( Catch=SumNA(Catch), Private=all(isTRUE(Private)) ) %>%
   ungroup( ) %>%
   mutate( Catch=ifelse(Private, "WP",
-    format(Catch, big.mark=",", digits=0, scientific=FALSE)) ) %>%
+                       format(Catch, big.mark=",", digits=0, scientific=FALSE)) ) %>%
   select( Gear, Catch )
 
 ##### Region #####
@@ -1560,7 +1560,7 @@ if( region == "CC" ) {
   weightAgeGroup <- bio %>%
     filter( GearCode == 29, Year >= max(yrRange)-19 ) %>%
     left_join( y=areas, 
-      by=c("Region", "StatArea", "Section", "LocationCode", "Group") ) %>%
+               by=c("Region", "StatArea", "Section", "LocationCode", "Group") ) %>%
     mutate( Decade=ifelse( Year>=max(yrRange)-9, "Recent", "Previous") ) %>%
     select( Year, Age, Weight, Group, Decade ) %>%
     na.omit( )
@@ -1621,7 +1621,7 @@ if( region == "WCVI" ) {
   # Compare differences by group: number, proportion, weight, and length-at-age
   npwAgeGrp <- bioRaw %>%
     filter( Year == max(yrRange), SourceCode %in% c(2, 5), 
-      Representative == 1 ) %>%
+            Representative == 1 ) %>%
     left_join( y=tSource, by="SourceCode" ) %>%
     group_by( Age, SampleSource2 ) %>%
     summarise( Number=n(), Weight=MeanNA(Weight), Length=MeanNA(Length) ) %>%
@@ -1631,7 +1631,7 @@ if( region == "WCVI" ) {
   # Calculate total: number, proportion, and weight-at-age
   npwAgeTot <- bioRaw %>%
     filter( Year == max(yrRange), SourceCode %in% c(2, 5), 
-      Representative == 1 ) %>%
+            Representative == 1 ) %>%
     mutate( SampleSource2="Total" ) %>%
     group_by( Age, SampleSource2 ) %>%
     summarise( Number=n(), Weight=MeanNA(Weight), Length=MeanNA(Length) ) %>%
@@ -1641,7 +1641,7 @@ if( region == "WCVI" ) {
   # Combine the grouped statistics with the total statistics
   npwAge <- bind_rows( npwAgeGrp, npwAgeTot ) %>%       
     complete( SampleSource2=unique(SampleSource2), Age=ageRange, 
-      fill=list(Number=0, Proportion=0) ) %>%
+              fill=list(Number=0, Proportion=0) ) %>%
     arrange( SampleSource2, Age )
   # Get differences in number-at-age
   deltaNumAgeYr <- npwAge %>%
@@ -1720,10 +1720,21 @@ if( region == "WCVI" ) {
   # Get length at age for the two sampling protocols
   lenAgeSample <- bioRaw %>%
     filter( Year %in% yrsNearshore, SourceCode %in% c(2, 5), 
-      Representative == 1 ) %>%
+            Representative == 1 ) %>%
     left_join( y=tSource, by="SourceCode" ) %>%
     select( Year, SampleSource2, StatArea, Age, Length ) %>%
     rename( SA=StatArea )
+  # Combine nearshore and seine test samples: part A
+  compNearA <- nearYearAge %>%
+    select( Year, Age, Proportion ) %>%
+    mutate( Sample="Nearshore", Year=as.integer(Year) )
+  # Combine nearshore and seine test samples: part B
+  compNearB <- numAgedYear %>% 
+    select(Year, Age, Proportion) %>% 
+    filter( Year%in%yrsNearshore) %>%
+    mutate( Sample="Seine test")
+  # Combine nearshore and seine test samples: parts A and B
+  compNear <- bind_rows( compNearA, compNearB )
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
 }  # End if region is West Coast of Vancouver Island
@@ -1771,9 +1782,9 @@ catchADMB <- catch %>%
   ungroup( ) %>%
   rename( Gear=Period ) %>%
   mutate( Gear=as.integer(parse_number(Gear)),
-    Value=round(Catch/1000, digits=3),
-    Area=as.integer(1), Group=as.integer(1), Sex=as.integer(0), 
-    Type=as.integer(1) ) %>%
+          Value=round(Catch/1000, digits=3),
+          Area=as.integer(1), Group=as.integer(1), Sex=as.integer(0), 
+          Type=as.integer(1) ) %>%
   select( Year, Gear, Area, Group, Sex, Type, Value ) %>%
   arrange( Gear, Year )
 
@@ -1782,17 +1793,17 @@ spawnADMB <- spawnYr %>%
   select( Year, TotalSI ) %>%
   rename( Spawn=TotalSI ) %>%
   mutate( Spawn=round(Spawn/1000, digits=3), 
-    Gear=ifelse(Year<newSurvYr, as.integer(4), as.integer(5)), 
-    Area=as.integer(1), Group=as.integer(1), Sex=as.integer(0),
-    Weight=ifelse(Year<newSurvYr, 1, 1.1666),
-    Timing=as.integer(1) ) %>%
+          Gear=ifelse(Year<newSurvYr, as.integer(4), as.integer(5)), 
+          Area=as.integer(1), Group=as.integer(1), Sex=as.integer(0),
+          Weight=ifelse(Year<newSurvYr, 1, 1.1666),
+          Timing=as.integer(1) ) %>%
   arrange( Gear, Year )
 
 # Make ADMB input data: number aged
 numAgedADMB <- numAgedYearGear %>%
   select( Year, Period, Age, Number ) %>%
   mutate( Period=as.integer(Period), Area=as.integer(1), Group=as.integer(1), 
-    Sex=as.integer(0), Number=round(Number) ) %>%
+          Sex=as.integer(0), Number=round(Number) ) %>%
   spread( key=Age, value=Number, fill=0 ) %>%
   rename( Gear=Period ) %>%
   mutate_all( as.integer ) %>%
@@ -1801,8 +1812,8 @@ numAgedADMB <- numAgedYearGear %>%
 # Make ADMB input data: weight-at-age (kg)
 weightAgeADMB <- weightAge %>%
   mutate( Weight=round(Weight/1000, digits=4),
-    Gear=as.integer(1), Area=as.integer(1), Group=as.integer(1), 
-    Sex=as.integer(0) ) %>%
+          Gear=as.integer(1), Area=as.integer(1), Group=as.integer(1), 
+          Sex=as.integer(0) ) %>%
   spread( key=Age, value=Weight ) %>%
   arrange( Gear, Year )
 
@@ -1813,7 +1824,7 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
   # numbers, but the values are read back correctly in R (see emails)
   # Create the file name
   fName <- file.path( regName, 
-    paste("Herring", regName, max(yrRange), ".dat", sep="") )
+                      paste("Herring", regName, max(yrRange), ".dat", sep="") )
   # Start a connection (binary)
   out <- file( description=fName, open="wb" )
   
@@ -1821,14 +1832,14 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
   write( x=paste(rep("#", times=80), collapse=""), file=out, append=FALSE )
   # Write the main title
   write( x="# Data file for Pacific Herring stock assessment using iSCAM", 
-    file=out, append=TRUE )
+         file=out, append=TRUE )
   # Write the region(s)
   write( x=paste("# Region(s):\t", PasteNicely(unique(areas$RegionName)), 
-    sep=""), file=out, append=TRUE )
+                 sep=""), file=out, append=TRUE )
   # Write the subset of sections, if it applies
   if( !all(is.na(sectionSub)) )
     write( x=paste("# Section(s):\t", PasteNicely(sectionSub), sep=""), 
-      file=out, append=TRUE )
+           file=out, append=TRUE )
   # Write the date
   write( x=paste("# Created:\t", Sys.Date( ), sep=""), file=out, append=TRUE )
   # Write space for editing
@@ -1848,21 +1859,21 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
   nsex <- n_distinct( c(cADMB$Sex, sADMB$Sex, nADMB$Sex, wADMB$Sex) )
   # Write model dimensions
   write( x=paste(narea, "\t# Number of areas (narea)", sep=""), file=out, 
-    append=TRUE )
+         append=TRUE )
   write( x=paste(ngroup, "\t# Number of groups (ngroup)", sep=""), file=out, 
-    append=TRUE )
+         append=TRUE )
   write( x=paste(nsex, "\t# Number of sexes (nsex)", sep=""), file=out, 
-    append=TRUE )
+         append=TRUE )
   write( x=paste(min(yrRange), "\t# First year (syr)", sep=""), file=out, 
-    append=TRUE )
+         append=TRUE )
   write( x=paste(max(yrRange), "\t# Last year (nyr)", sep=""), file=out, 
-    append=TRUE )
+         append=TRUE )
   write( x=paste(min(ageRange), "\t# Youngest age (sage)", sep=""), file=out, 
-    append=TRUE )
+         append=TRUE )
   write( x=paste(max(ageRange), "\t# Plus group (nage)", sep=""), file=out, 
-    append=TRUE )
+         append=TRUE )
   write( x=paste(ngear, "\t# Number of gears (ngear)", sep=""), file=out, 
-    append=TRUE)
+         append=TRUE)
   
   # Write header for fishery flags
   write( x="#\n##### Fishery flags #####", file=out, append=TRUE )
@@ -1877,38 +1888,38 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
     arrange( Gear )
   # Write fishery flags
   write( x=paste(paste(cHist$Proportion, collapse="\t"),
-    "\t# TAC allocations (mean of last ", pADMB$General$HistoricCatch,
-    " years)", sep=""), file=out, append=TRUE )
+                 "\t# TAC allocations (mean of last ", pADMB$General$HistoricCatch,
+                 " years)", sep=""), file=out, append=TRUE )
   # These are for testing only:
   # write( x=paste(paste(c(0.5, 0.3, 0.2, 0, 0), collapse="\t"), 
   #         "\t# TAC allocations", sep=""), file=out, append=TRUE )
   
   # Write header for age and population parameters
   write( x="#\n##### Age and population parameters #####", file=out, 
-    append=TRUE )
+         append=TRUE )
   # Loop over age and population parameters
   for( p in 1:length(pADMB$AgePopulation) ) 
     # Write age and population parameters, and names
     write( x=paste(paste(pADMB$AgePopulation[[p]], collapse=", "), "\t# ",  
-      names(pADMB$AgePopulation)[p], sep=""), file=out, append=TRUE )
+                   names(pADMB$AgePopulation)[p], sep=""), file=out, append=TRUE )
   
   # Write header for delay-difference data
   write( x="#\n##### Delay-difference parameters (not used) #####", file=out, 
-    append=TRUE )
+         append=TRUE )
   # Loop over delay-difference parameters
   for( d in 1:length(pADMB$DelayDifference) ) 
     # Write delay-difference parameters, and names
     write( x=paste(paste(pADMB$DelayDifference[[d]], collapse=", "), "\t# ",  
-      names(pADMB$DelayDifference)[d], sep=""), file=out, append=TRUE )
+                   names(pADMB$DelayDifference)[d], sep=""), file=out, append=TRUE )
   
   # Write header for catch data
   write( x="#\n##### Catch (t*10^3) #####", file=out, append=TRUE )
   # Write catch information
   write( x=paste(nrow(cADMB), "\t# Number of observations", sep=""), file=out,
-    append=TRUE )
+         append=TRUE )
   # Write catch column names and data
   write( x=paste("#", paste(colnames(cADMB), collapse="\t")), file=out, 
-    append=TRUE )
+         append=TRUE )
   write_delim( x=cADMB, path=out, delim="\t", append=TRUE )
   
   # Write header for spawn data
@@ -1920,16 +1931,16 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
     ungroup( )
   # Write spawn information
   write( x=paste(nrow(dimSpawn), "\t\t# Number of survey types", sep=""), 
-    file=out, append=TRUE )
+         file=out, append=TRUE )
   write( x=paste(paste(dimSpawn$Number, collapse="\t"), 
-    "\t# Number of years per survey", sep=""), file=out, append=TRUE )
+                 "\t# Number of years per survey", sep=""), file=out, append=TRUE )
   write( x=paste(paste(rep(pADMB$General$SurveyType, times=nrow(dimSpawn)), 
-    collapse="\t"), "\t# Survey type (1=vuln. number, ", 
-    "2=vuln. biomass, 3=spawn biomass)", sep=""), file=out, 
-    append=TRUE )
+                       collapse="\t"), "\t# Survey type (1=vuln. number, ", 
+                 "2=vuln. biomass, 3=spawn biomass)", sep=""), file=out, 
+         append=TRUE )
   # Write spawn column names and data
   write( x=paste("#", paste(colnames(sADMB), collapse="\t")), file=out, 
-    append=TRUE )
+         append=TRUE )
   write_delim( x=sADMB, path=out, delim="\t", append=TRUE )
   
   # Write header for number-at-age data
@@ -1941,24 +1952,24 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
     ungroup( )
   # Write number aged dimensions
   write( x=paste(nrow(dimNumAged), "\t\t\t# Number of gears", sep=""), 
-    file=out, append=TRUE )
+         file=out, append=TRUE )
   write( x=paste(paste(dimNumAged$Number, collapse="\t"), 
-    "\t# Number of years per gear", sep=""), file=out, append=TRUE )
+                 "\t# Number of years per gear", sep=""), file=out, append=TRUE )
   write( x=paste(paste(rep(min(ageRange), times=nrow(dimNumAged)), 
-    collapse="\t"), "\t# Youngest age", sep=""), file=out, 
-    append=TRUE )
+                       collapse="\t"), "\t# Youngest age", sep=""), file=out, 
+         append=TRUE )
   write( x=paste(paste(rep(max(ageRange), times=nrow(dimNumAged)), 
-    collapse="\t"), "\t# Plus group", sep=""), file=out, 
-    append=TRUE )
+                       collapse="\t"), "\t# Plus group", sep=""), file=out, 
+         append=TRUE )
   write( x=paste(paste(rep(pADMB$General$SampleSize, times=nrow(dimNumAged)), 
-    collapse="\t"), "\t# Effective sample size", sep=""), file=out, 
-    append=TRUE )
+                       collapse="\t"), "\t# Effective sample size", sep=""), file=out, 
+         append=TRUE )
   write( x=paste(paste(rep(pADMB$General$Composition, times=nrow(dimNumAged)), 
-    collapse="\t"), "\t# Composition (1=age, 2=length)", sep=""), 
-    file=out, append=TRUE )
+                       collapse="\t"), "\t# Composition (1=age, 2=length)", sep=""), 
+         file=out, append=TRUE )
   # Write number aged column names and data
   write( x=paste("#", paste(colnames(nADMB), collapse="\t")), file=out, 
-    append=TRUE )
+         append=TRUE )
   write_delim( x=nADMB, path=out, delim="\t", append=TRUE )
   
   # Write header for weight-at-age data
@@ -1966,28 +1977,28 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
   # Write weight-at-age dimensions
   # TODO: This should come from the data, or an input parameter 
   write( x=paste(1, "\t# Number of weight-at-age tables", sep=""), file=out, 
-    append=TRUE)
+         append=TRUE)
   write( x=paste(nrow(wADMB), "\t# Number of years", sep=""), file=out, 
-    append=TRUE )
+         append=TRUE )
   # Write weight-at-age column names and data
   write( x=paste("#", paste(colnames(wADMB), collapse="\t")), file=out, 
-    append=TRUE )
+         append=TRUE )
   write_delim( x=wADMB, path=out, delim="\t", append=TRUE )
   
   # Write header for annual mean weight data
   write( x="#\n##### Annual mean weight (not used) #####", file=out, 
-    append=TRUE )
+         append=TRUE )
   # Write annual mean weight dimensions
   # TODO: This should come from the data, or an input parameter  
   write( x=paste(1, "\t# Number of annual mean weight tables"), file=out, 
-    append=TRUE )
+         append=TRUE )
   # TODO: This should come from the data, or an input parameter
   write( x=paste(0, "\t# Number of observations per table"), file=out, 
-    append=TRUE )
+         append=TRUE )
   
   # Write header for end of data file
   write( x="#\n##### Marker for end of data file #####", file=out, 
-    append=TRUE )
+         append=TRUE )
   # End of file message
   write( x=paste(999, "\t# End of file"), file=out, append=TRUE )
   # Close the connection
@@ -1996,7 +2007,7 @@ WriteInputFile <- function( pADMB, cADMB, sADMB, nADMB, wADMB ) {
 
 # Write ADMB input file
 WriteInputFile( pADMB=parsADMB, cADMB=catchADMB, sADMB=spawnADMB,
-  nADMB=numAgedADMB, wADMB=weightAgeADMB )
+                nADMB=numAgedADMB, wADMB=weightAgeADMB )
 
 ##### Figures #####
 
@@ -2006,28 +2017,28 @@ cat( "Printing figures... " )
 # Plot the BC coast and regions
 BCMap <- ggplot( data=shapes$landAllCropDF, aes(x=Eastings, y=Northings) ) +
   geom_polygon( data=shapes$landAllCropDF, aes(group=group), 
-    fill="lightgrey" ) +
+                fill="lightgrey" ) +
   geom_point( data=shapes$extAllDF, colour="transparent" ) +
   geom_path( data=shapes$regAllDF, aes(group=Region), size=0.75, 
-    colour="black" ) + 
+             colour="black" ) + 
   geom_label( data=shapes$regCentDF, alpha=0.5, aes(label=Region) ) +
   annotate( geom="text", x=1100000, y=800000, label="British\nColumbia",
-    size=5 ) +
+            size=5 ) +
   annotate( geom="text", x=650000, y=550000, label="Pacific\nOcean", 
-    size=5 ) +
+            size=5 ) +
   coord_equal( ) +
   labs( x="Eastings (km)", y="Northings (km)", caption=geoProj ) +
   scale_x_continuous( labels=function(x) comma(x/1000), expand=c(0, 0) ) + 
   scale_y_continuous( labels=function(x) comma(x/1000), expand=c(0, 0) ) +
   myTheme +
   ggsave( filename=file.path(regName, "BC.pdf"), width=figWidth, 
-    height=min(6.9, 5.75/shapes$xyAllRatio) ) 
+          height=min(6.9, 5.75/shapes$xyAllRatio) ) 
 
 # Make a french version if requested
 if( makeFrench ) {
   # Make a png map in the main folder (english)
   BCMap +  ggsave( filename=file.path("BC.png"), width=figWidth, 
-    height=min(7, 5.75/shapes$xyAllRatio) )
+                   height=min(7, 5.75/shapes$xyAllRatio) )
   # French SAR names (short)
   frenchSARs <- data.frame( 
     Region=c("HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W"),
@@ -2038,22 +2049,22 @@ if( makeFrench ) {
   # Plot the BC coast and regions (french)
   BCMapFR <- ggplot( data=shapes$landAllCropDF, aes(x=Eastings, y=Northings) ) +
     geom_polygon( data=shapes$landAllCropDF, aes(group=group), 
-      fill="lightgrey" ) +
+                  fill="lightgrey" ) +
     geom_point( data=shapes$extAllDF, colour="transparent" ) +
     geom_path( data=shapes$regAllDF, aes(group=Region), size=0.75, 
-      colour="black" ) + 
+               colour="black" ) + 
     geom_label( data=shapes$regCentDF, alpha=0.5, aes(label=RegionFR) ) +
     annotate( geom="text", x=1100000, y=800000, label="Colombie-\nBritannique",
-      size=5 ) +
+              size=5 ) +
     annotate( geom="text", x=650000, y=550000, label="Océan\nPacifique", 
-      size=5 ) +
+              size=5 ) +
     coord_equal( ) +
     labs( x="Abcsisses (km)", y="Ordonnées (km)", caption=geoProj ) +
     scale_x_continuous( labels=function(x) comma(x/1000), expand=c(0, 0) ) + 
     scale_y_continuous( labels=function(x) comma(x/1000), expand=c(0, 0) ) +
     myTheme +
     ggsave( filename=file.path("BC-FR.png"), width=figWidth, 
-      height=min(7, 5.75/shapes$xyAllRatio) )
+            height=min(7, 5.75/shapes$xyAllRatio) )
 }  # End if making french
 
 # Create a base map for the region
@@ -2061,7 +2072,7 @@ BaseMap <- ggplot( data=shapes$landCropDF, aes(x=Eastings, y=Northings) ) +
   geom_polygon( data=shapes$landCropDF, aes(group=group), fill="lightgrey" ) +
   geom_point( data=shapes$extDF, colour="transparent" ) +
   geom_path( data=shapes$regDF, aes(group=Region), size=0.75, 
-    colour="black", linetype="dashed" ) +
+             colour="black", linetype="dashed" ) +
   coord_equal( ) +
   labs( x="Eastings (km)", y="Northings (km)", caption=geoProj ) +
   scale_x_continuous( labels=function(x) comma(x/1000), expand=c(0, 0) ) + 
@@ -2071,19 +2082,19 @@ BaseMap <- ggplot( data=shapes$landCropDF, aes(x=Eastings, y=Northings) ) +
 # Plot the region, and statistical areas
 RegionMap <- BaseMap +
   geom_path( data=shapes$saDF, aes(group=StatArea), size=0.25, 
-    colour="black" ) + 
+             colour="black" ) + 
   geom_path( data=shapes$secDF, aes(group=Section), size=0.25, 
-    colour="black", linetype="dotted" ) +
-    {if( !is.null(shapes$grpDF) & region %in% c("CC", "SoG") )
-      geom_polygon( data=shapes$grpDF, aes(group=id, fill=id), alpha=0.25 )} +
-      {if( nrow(shapes$saCentDF) >= 1 )  
-        geom_label( data=shapes$saCentDF, alpha=0.25,
-          aes(label=paste("SA", StatArea, sep=" ")) )} +
+             colour="black", linetype="dotted" ) +
+  {if( !is.null(shapes$grpDF) & region %in% c("CC", "SoG") )
+    geom_polygon( data=shapes$grpDF, aes(group=id, fill=id), alpha=0.25 )} +
+  {if( nrow(shapes$saCentDF) >= 1 )  
+    geom_label( data=shapes$saCentDF, alpha=0.25,
+                aes(label=paste("SA", StatArea, sep=" ")) )} +
   scale_fill_viridis( discrete=TRUE ) +
   labs( fill="Group" ) +
   theme( legend.position=c(0.01, 0.01), legend.justification=c(0, 0) ) +
   ggsave( filename=file.path(regName, "Region.pdf"), width=figWidth, 
-    height=min(7.5, 6.5/shapes$xyRatio) )
+          height=min(7.5, 6.5/shapes$xyRatio) )
 
 # Plot catch by year and gear type (i.e., period)
 catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) +
@@ -2095,14 +2106,14 @@ catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) +
   scale_fill_viridis( discrete=TRUE ) +
   scale_shape_manual( values=c(1, 3, 4) ) +
   guides( fill=guide_legend(order=1),
-    shape=guide_legend(order=2, title=NULL) ) +
+          shape=guide_legend(order=2, title=NULL) ) +
   # expand_limits( x=yrRange, y=0 ) +
   facet_zoom( xy=Year >= firstYrFig, zoom.size=1, horizontal=FALSE,
-    show.area=FALSE ) +
+              show.area=FALSE ) +
   myTheme +
   theme( legend.position="top" ) +
   ggsave( filename=file.path(regName, "CatchGear.png"), width=figWidth,
-    height=figWidth )
+          height=figWidth )
 
 # Plot it again, in French
 # Instead of a different name, maybe put the plot in a /French subfolder; this
@@ -2117,26 +2128,26 @@ catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) +
 if( exists("weightCatchFig") ) {
   # Plot weight by year and catch type
   weightCatchPlot <- ggplot( data=weightCatchFig, 
-    aes(x=Year, y=Weight, fill=SampleSource2, 
-      group=interaction(Year, SampleSource2)) ) + 
+                             aes(x=Year, y=Weight, fill=SampleSource2, 
+                                 group=interaction(Year, SampleSource2)) ) + 
     geom_boxplot( outlier.colour="black", size=0.25 ) + 
     labs( y="Weight (g)", fill="Sample type" )  +
     scale_x_continuous( breaks=pretty_breaks() ) +
     scale_fill_viridis( discrete=TRUE ) + 
     geom_hline( data=weightCatchFigMu, aes(yintercept=MuWeight), size=0.25,
-      linetype="dashed" ) + 
+                linetype="dashed" ) + 
     expand_limits( x=c(firstYrTab, max(yrRange)), y=0 ) +
     myTheme +
     theme( legend.position="top" ) +
     ggsave( filename=file.path(regName, "WeightCatch.pdf"), width=figWidth, 
-      height=3.5 )
+            height=3.5 )
 }  # End if weight by catch type
 
 # If catch by stat area
 if( exists("catchStatArea") ) {
   # Plot catch by year and gear type (i.e., period)
   catchStatAreaPlot <- ggplot( data=catchStatAreaPriv, aes(x=Year, y=CatchPriv,
-    fill=Year==max(yrRange) ) ) + 
+                                                           fill=Year==max(yrRange) ) ) + 
     geom_bar( stat="identity", position="stack" ) +
     geom_point( data=filter(catchStatAreaPriv, Private), y=0, size=0.5 ) +
     labs( y=expression(paste("Catch (t"%*%10^3, ")", sep="")) )  +
@@ -2148,35 +2159,35 @@ if( exists("catchStatArea") ) {
     myTheme +
     theme( legend.position="none", axis.text.x=element_text(angle=45, hjust=1) ) +
     ggsave( filename=file.path(regName, "CatchStatArea.pdf"), width=figWidth, 
-      height=figWidth/2 )
+            height=figWidth/2 )
 }  # End if catch by stat area
 
 # Plot biosample locations
 if( nrow(bioLocations) > 0 ) 
   bioLocPlot <- BaseMap +
   geom_path( data=shapes$secDF, aes(group=Section), size=0.25, 
-    colour="black" ) +
+             colour="black" ) +
   geom_text( data=shapes$secCentDF, alpha=0.6, size=2,
-    aes(label=paste("Sec", Section, sep=" ")) ) +
+             aes(label=paste("Sec", Section, sep=" ")) ) +
   geom_point( data=bioLocations, aes(shape=Type, size=Number), alpha=0.6 ) +
   scale_size( guide=guide_legend(order=2), range=c(3, 6) ) +
   labs( shape="Sample type" ) +
   guides( size=guide_legend(order=1),
-    shape=guide_legend(override.aes=list(size=3)) ) +
+          shape=guide_legend(override.aes=list(size=3)) ) +
   theme( legend.justification=c(0, 0), 
-    legend.box.just=if(region %in% c("WCVI", "JS")) "top" else "left", 
-    legend.position=if(region == "PRD") "right" else c(0.01, 0.01),
-    legend.box=if(region %in% c("WCVI", "JS")) "horizontal" else 
-      "vertical" ) +
+         legend.box.just=if(region %in% c("WCVI", "JS")) "top" else "left", 
+         legend.position=if(region == "PRD") "right" else c(0.01, 0.01),
+         legend.box=if(region %in% c("WCVI", "JS")) "horizontal" else 
+           "vertical" ) +
   ggsave( filename=file.path(regName, "BioLocations.pdf"), width=figWidth, 
-    height=min(7.5, 6.5/shapes$xyRatio) )
+          height=min(7.5, 6.5/shapes$xyRatio) )
 
 # Plot proportion-at-age by year
 propAgedPlot <- ggplot( data=numAgedYear, aes(x=Year)  ) +
   geom_point( aes(y=Age, size=Proportion) ) +
   geom_path( data=qAgedYear, aes(y=MeanAge, group=GroupID) ) +
   geom_ribbon( data=qAgedYear, aes(ymin=Lower, ymax=Upper, group=GroupID), 
-    alpha=0.25 ) +
+               alpha=0.25 ) +
   scale_size( range=c(0, 3) ) +
   labs( x=NULL, y="Age" ) +
   scale_x_continuous( breaks=yrBreaks ) +
@@ -2198,31 +2209,44 @@ numAgedPlot <- ggplot( data=numAgedYear, aes(x=Year, y=Number) ) +
 
 # Arrange and save the proportion-at-age and number aged plots
 pnPlots <- plot_grid( propAgedPlot, numAgedPlot, align="v", 
-  ncol=1, rel_heights=c(1, 0.7) ) +
+                      ncol=1, rel_heights=c(1, 0.7) ) +
   ggsave( filename=file.path(regName, "ProportionAged.pdf"), width=figWidth, 
-    height=figWidth )
+          height=figWidth )
+
+# If nearshore comparison
+if( exists("compNear") ) {
+  # Plot proportion-at-age
+  compNearPlot <- ggplot( data=compNear, mapping=aes(x=Age, y=Proportion) ) +
+    geom_bar( stat="identity" ) +
+    facet_grid( Year ~ Sample ) +
+    scale_x_continuous( breaks=seq(from=min(ageRange), to=max(ageRange),
+                                   by=2) ) +
+    myTheme +
+    ggsave( filename=file.path(regName, "CompNear.pdf"), width=figWidth,
+            height=figWidth )
+}  # End if nearshore comparison
 
 # Plot weight- and length-at-age by year
 wtLenAgePlot <- ggplot( data=muWtLenAge, mapping=aes(x=Year, y=RollMean) ) + 
   geom_point( data=filter(.data=muWtLenAge, Age == ageShow), aes(y=Value),
-    shape=1, size=1 ) +
+              shape=1, size=1 ) +
   geom_line( aes(group=Age, colour=Age), size=1 ) +
   scale_colour_viridis( guide=guide_legend(nrow=1), discrete=TRUE ) +
   scale_x_continuous( breaks=yrBreaks ) +
   expand_limits( x=yrRange ) +
   labs( y=NULL ) +
   facet_wrap( Measure ~ ., scales="free_y", strip.position="left",
-    labeller=as_labeller(c(Weight="Weight-at-age (g)",
-      Length="Length-at-age (mm)")), nrow=2 ) +
+              labeller=as_labeller(c(Weight="Weight-at-age (g)",
+                                     Length="Length-at-age (mm)")), nrow=2 ) +
   myTheme +
   theme( legend.position="top", strip.background=element_blank(),
-    strip.placement="outside" ) +
+         strip.placement="outside" ) +
   ggsave( filename=file.path(regName, "WtLenAge.pdf"), width=figWidth, 
-    height=figWidth )
+          height=figWidth )
 
 # Plot percent change in weight- and length-at-age by year
 wtLenAgeChangePlot <- ggplot( data=filter(muWtLenAge, Age==ageShow),
-  mapping=aes(x=Year, y=PctChange) ) + 
+                              mapping=aes(x=Year, y=PctChange) ) + 
   geom_bar( aes(fill=PctChange>=0), stat="identity" ) +
   labs( y=paste("Percent change for age-", ageShow, " fish (%)", sep="") ) +
   scale_x_continuous( breaks=yrBreaks ) +
@@ -2233,11 +2257,11 @@ wtLenAgeChangePlot <- ggplot( data=filter(muWtLenAge, Age==ageShow),
   myTheme +
   theme( legend.position="top" ) +
   ggsave( filename=file.path(regName, "WtLenAgeChange.pdf"), width=figWidth, 
-    height=figWidth )
+          height=figWidth )
 
 # Plot percent change in weight- and length-at-age by year
 wtLenAgeChangePlot2 <- ggplot( data=filter(muWtLenAge, Age==ageShow2),
-  mapping=aes(x=Year, y=PctChange) ) + 
+                               mapping=aes(x=Year, y=PctChange) ) + 
   geom_bar( aes(fill=PctChange>=0), stat="identity" ) +
   labs( y=paste("Percent change for age-", ageShow2, " fish (%)", sep="") ) +
   scale_x_continuous( breaks=yrBreaks ) +
@@ -2248,13 +2272,13 @@ wtLenAgeChangePlot2 <- ggplot( data=filter(muWtLenAge, Age==ageShow2),
   myTheme +
   theme( legend.position="top" ) +
   ggsave( filename=file.path(regName, "WtLenAgeChange2.pdf"), width=figWidth, 
-    height=figWidth )
+          height=figWidth )
 
 # If weight by age and group
 if( exists("weightAgeGroup") ) {
   # Plot weight by age and group 
   weightAgeGroupPlot <- ggplot( data=weightAgeGroup, 
-    aes(x=Age, y=Weight, fill=Group, group=interaction(Age, Group)) ) + 
+                                aes(x=Age, y=Weight, fill=Group, group=interaction(Age, Group)) ) + 
     geom_boxplot( outlier.colour="black", size=0.25 ) + 
     labs( y="Weight (g)" )  +
     scale_x_continuous( breaks=pretty_breaks() ) +
@@ -2264,49 +2288,49 @@ if( exists("weightAgeGroup") ) {
     myTheme +
     theme( legend.position="top" ) +
     ggsave( filename=file.path(regName, "WeightAgeGroup.pdf"), width=figWidth, 
-      height=figWidth*0.67 )
+            height=figWidth*0.67 )
 }  # End if weight by age and group
 
 # Plot the spawn index locations
 spawnByLocPlot <- BaseMap + 
   geom_path( data=shapes$secDF, aes(group=Section), size=0.25, 
-    colour="black" ) +
+             colour="black" ) +
   geom_text( data=shapes$secCentDF, alpha=0.6, size=2,
-    aes(label=paste("Sec", Section, sep=" ")) ) +
+             aes(label=paste("Sec", Section, sep=" ")) ) +
   geom_point( data=spawnByLocXY, aes(colour=TotalSI), alpha=0.75, size=4 ) +
   scale_colour_viridis( labels=comma ) +
   labs( colour="Spawn\nindex (t)" ) +
   theme( legend.justification=c(0, 0), 
-    legend.position=if(region == "PRD") "right" else c(0.01, 0.01) ) +
+         legend.position=if(region == "PRD") "right" else c(0.01, 0.01) ) +
   ggsave( filename=file.path(regName, "SpawnByLoc.pdf"), width=figWidth, 
-    height=min(7.5, 6.5/shapes$xyRatio) )
+          height=min(7.5, 6.5/shapes$xyRatio) )
 
 # Plot the spawn index locations
 spawnDecadePlot <- BaseMap + 
   geom_path( data=shapes$secDF, aes(group=Section), size=0.25, 
-    colour="black" ) +
+             colour="black" ) +
   geom_text( data=shapes$secCentDF, alpha=0.6, size=2,
-    aes(label=paste("Sec", Section, sep=" ")) ) +
+             aes(label=paste("Sec", Section, sep=" ")) ) +
   geom_point( data=spawnDecade, aes(colour=MeanSI, size=Frequency), 
-    alpha=0.75 ) +
+              alpha=0.75 ) +
   scale_colour_viridis( labels=comma ) +
   scale_size( breaks=pretty_breaks(), guide=guide_legend(order=2) ) +
   labs( colour="Mean spawn\nindex (t)" ) +
   theme( legend.justification=c(0, 0), 
-    legend.box.just=if(region %in% c("WCVI", "JS")) "top" else "left", 
-    legend.position=if(region == "PRD") "right" else c(0.01, 0.01),
-    legend.box=if(region %in% c("WCVI", "JS")) "horizontal" else 
-      "vertical" ) +
+         legend.box.just=if(region %in% c("WCVI", "JS")) "top" else "left", 
+         legend.position=if(region == "PRD") "right" else c(0.01, 0.01),
+         legend.box=if(region %in% c("WCVI", "JS")) "horizontal" else 
+           "vertical" ) +
   ggsave( filename=file.path(regName, "SpawnDecade.pdf"), width=figWidth, 
-    height=min(7.5, 6.5/shapes$xyRatio) )
+          height=min(7.5, 6.5/shapes$xyRatio) )
 
 # Basic spawn timing plot
 spawnTimingPlot <- ggplot( data=spawnRaw, aes(x=StartDOY) ) +
   annotate( geom="rect", xmin=60, xmax=90, ymin=0, ymax=Inf, fill="grey", 
-    alpha=0.5 ) +
+            alpha=0.5 ) +
   geom_freqpoly( bins=30, size=0.5 ) +
   scale_x_continuous( breaks=c(1, 32, 60, 91, 121, 152, 182), 
-    labels=c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul") ) +
+                      labels=c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul") ) +
   labs( x="Start of spawn", y="Number of spawns" ) +
   coord_cartesian( xlim=c(1, 182) ) +
   { if( spawnTimingGroup ) facet_grid( Decade ~ Group, labeller=label_both )
@@ -2314,7 +2338,7 @@ spawnTimingPlot <- ggplot( data=spawnRaw, aes(x=StartDOY) ) +
   myTheme +
   theme( legend.position="top", axis.text.x=element_text(angle=45, hjust=1) ) +
   ggsave( filename=file.path(regName, "SpawnTiming.pdf"), width=figWidth,
-    height=figWidth*1.25 )
+          height=figWidth*1.25 )
 
 # Plot total spawn length by year
 spawnLengthPlot <- ggplot( data=spawnYr, aes(x=Year, y=TotalLength) ) +
@@ -2322,7 +2346,7 @@ spawnLengthPlot <- ggplot( data=spawnYr, aes(x=Year, y=TotalLength) ) +
   geom_line( aes(group=Survey) ) +
   #    geom_smooth( method=smLine, colour="black", level=ciLevel ) +
   labs( x=NULL, 
-    y=expression(paste("Total spawn length (m"%*%10^3, ")", sep="")) )  +
+        y=expression(paste("Total spawn length (m"%*%10^3, ")", sep="")) )  +
   scale_x_continuous( breaks=yrBreaks ) +
   scale_y_continuous( labels=function(x) comma(x/1000) ) +
   annotate( geom="text", x=-Inf, y=Inf, label="(a)", vjust=1.3, hjust=-0.1 ) +
@@ -2360,9 +2384,9 @@ spawnLayersPlot <- ggplot( data=spawnYr, aes(x=Year, y=MeanLayers) ) +
 
 # Arrange and save length, width, and layer plots
 plot_grid( spawnLengthPlot, spawnWidthPlot, spawnLayersPlot, align="v", ncol=1, 
-  rel_heights=c(1.2, 1, 1.1) ) +
+           rel_heights=c(1.2, 1, 1.1) ) +
   ggsave( filename=file.path(regName, "SpawnDimensions.pdf"), width=figWidth, 
-    height=figWidth*1.25 )
+          height=figWidth*1.25 )
 
 # Plot spawn index by survey type: surface, macro, under
 spawnIndexTypePlot <- ggplot( data=spawnYrType, aes(x=Year, y=SI) ) +
@@ -2376,7 +2400,7 @@ spawnIndexTypePlot <- ggplot( data=spawnYrType, aes(x=Year, y=SI) ) +
   myTheme +
   theme( legend.position="top" ) +
   ggsave( filename=file.path(regName, "SpawnIndexType.pdf"), width=figWidth, 
-    height=figWidth*1.15 )
+          height=figWidth*1.15 )
 
 # Plot total spawn index by year
 spawnIndexPlot <- ggplot( data=spawnYr, aes(x=Year, y=TotalSI) ) +
@@ -2396,7 +2420,7 @@ spawnIndexPlot <- ggplot( data=spawnYr, aes(x=Year, y=TotalSI) ) +
 if( exists("spawnYrGrp") ) { 
   # Plot percent spawn index by group
   spawnPercentSAStackPlot <- ggplot( data=spawnYrGrp, 
-    aes(x=Year, y=PercSI, fill=Group) ) +
+                                     aes(x=Year, y=PercSI, fill=Group) ) +
     geom_bar( stat="identity", width=1, colour="black", size=0.1 ) +
     labs( x=NULL, y="Spawn index (%)", fill="Group" ) + 
     scale_x_continuous( breaks=yrBreaks ) +
@@ -2404,13 +2428,13 @@ if( exists("spawnYrGrp") ) {
     expand_limits( x=c(firstYrFig, max(yrRange)) ) +
     scale_fill_viridis( discrete=TRUE ) +
     annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, 
-      hjust=-0.1 ) +
+              hjust=-0.1 ) +
     myTheme +
     theme( legend.position="top", axis.text.x=element_blank() )
 } else {  # End if using groups, otherwise stat areas
   # Plot percent spawn index by group (stat areas)
   spawnPercentSAStackPlot <- ggplot( data=spawnYrSA, 
-    aes(x=Year, y=PercSI, fill=StatArea) ) +
+                                     aes(x=Year, y=PercSI, fill=StatArea) ) +
     geom_bar( stat="identity", width=1, colour="black", size=0.1 ) +
     labs( x=NULL, y="Spawn index (%)", fill="SA" ) + 
     scale_x_continuous( breaks=yrBreaks ) +
@@ -2418,7 +2442,7 @@ if( exists("spawnYrGrp") ) {
     expand_limits( x=c(firstYrFig, max(yrRange)) ) +
     scale_fill_viridis( discrete=TRUE ) +
     annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, 
-      hjust=-0.1 ) +
+              hjust=-0.1 ) +
     myTheme +
     theme( legend.position="top", axis.text.x=element_blank() )
 }  # End if using stat areas
@@ -2428,14 +2452,14 @@ nSecCol <- n_distinct( spawnYrSec$Section )
 
 # Plot proportion of spawn in each section and year
 spawnPercentSecStackPlot <- ggplot( data=spawnYrSec, 
-  aes(x=Year, y=PercSI, fill=Section) ) +
+                                    aes(x=Year, y=PercSI, fill=Section) ) +
   geom_bar( stat="identity", width=1, colour="black", size=0.1 ) +
   labs( y="Spawn index (%)" ) + 
   scale_x_continuous( breaks=yrBreaks ) +
   scale_y_continuous( labels=comma ) +
   expand_limits( x=c(firstYrFig, max(yrRange)) ) +
   scale_fill_viridis( guide=guide_legend(nrow=ceiling(nSecCol/8)), 
-    discrete=TRUE ) +
+                      discrete=TRUE ) +
   annotate( geom="text", x=-Inf, y=Inf, label="(c)", vjust=1.3, hjust=-0.1 ) +
   myTheme +
   theme( legend.position="top" )
@@ -2452,16 +2476,16 @@ spawnChangePlot <- ggplot( data=spawnYr, mapping=aes(x=Year, y=PctChange) ) +
 
 # Arrange and save the index and proportion plots
 ipPlots <- plot_grid( spawnIndexPlot, spawnPercentSAStackPlot, 
-  spawnPercentSecStackPlot, align="v", ncol=1, 
-  rel_heights=c(2.1, 2.5, 2.5) ) +
+                      spawnPercentSecStackPlot, align="v", ncol=1, 
+                      rel_heights=c(2.1, 2.5, 2.5) ) +
   ggsave( filename=file.path(regName, "SpawnIndexPercent.pdf"), 
-    width=figWidth, height=6.9 ) 
+          width=figWidth, height=6.9 ) 
 
 # Arrange and save the spawn index and percent change plots
 pctPlots <- plot_grid( spawnIndexPlot, spawnChangePlot, align="v", ncol=1, 
-  rel_heights=c(2.1, 2.1) ) +
+                       rel_heights=c(2.1, 2.1) ) +
   ggsave( filename=file.path(regName, "SpawnIndexChange.pdf"), width=figWidth,
-    height=figWidth )
+          height=figWidth )
 
 # Plot percent contribution by Section faceted by Stat Area or Group
 PlotPCSecSA <- function( dat ) {
@@ -2500,15 +2524,15 @@ PlotPCSecSA <- function( dat ) {
     datSub <- dat[dat[[gName]] == uGroups[i], ]
     # Make the plot
     pList[[i]] <- ggplot( data=datSub, 
-      aes_string(x="Year", y="PercSI", fill="Section") ) + 
+                          aes_string(x="Year", y="PercSI", fill="Section") ) + 
       geom_bar( stat="identity", width=1, colour="black", size=0.1 ) +
       labs( x=NULL, y=NULL ) +
       scale_x_continuous( breaks=yrBreaks ) +
       scale_y_continuous( labels=comma ) +
       expand_limits( x=c(firstYrFig, max(yrRange)), y=yLims ) +
       scale_fill_viridis( guide=
-          guide_legend(ncol=ceiling(length(unique(datSub$Section))/6)),
-        discrete=TRUE ) +
+                            guide_legend(ncol=ceiling(length(unique(datSub$Section))/6)),
+                          discrete=TRUE ) +
       facet_grid( paste(gName, "~ ."), labeller=label_both ) + 
       myTheme 
     # Update the plot if it's not the bottom plot
@@ -2528,7 +2552,7 @@ PlotPCSecSA <- function( dat ) {
   # Combine the y-axis title, and save the plots
   pGridXY <- plot_grid( titleY, pGridX, ncol=2, rel_widths=c(0.04, 1) ) +
     ggsave( filename=file.path(regName, "SpawnPercentGrid.pdf"), 
-      width=figWidth, height=min(7.1, length(pList)*3) )
+            width=figWidth, height=min(7.1, length(pList)*3) )
   # Return the plot list
   return( pGridXY )
 }  # End PlotPCSecSA function
@@ -2538,7 +2562,7 @@ plotGridPCs <- PlotPCSecSA( dat=spawnYrSec )
 
 # Plot proportion of spawn in each section and year
 spawnPercentPanelPlot <- ggplot( data=spawnYrSec, 
-  aes(x=Year, y=PercSI, fill=Year==max(yrRange)) ) +
+                                 aes(x=Year, y=PercSI, fill=Year==max(yrRange)) ) +
   geom_bar( stat="identity" ) +
   labs( y="Spawn index (%)" ) + 
   scale_x_continuous( breaks=yrBreaks ) +
@@ -2549,12 +2573,12 @@ spawnPercentPanelPlot <- ggplot( data=spawnYrSec,
   myTheme +
   theme( legend.position="none", axis.text.x=element_text(angle=45, hjust=1) ) +
   ggsave( filename=file.path(regName, "SpawnPercentPanel.pdf"), 
-    width=figWidth, 
-    height=min(7.5, 1.5*(ceiling(n_distinct(spawnYrSec$Section)/3))) )
+          width=figWidth, 
+          height=min(7.5, 1.5*(ceiling(n_distinct(spawnYrSec$Section)/3))) )
 
 # Plot index of spawn in each section and year
 spawnIndexPanelPlot <- ggplot( data=spawnYrSec, 
-  aes(x=Year, y=TotalSI, fill=Year==max(yrRange)) ) +
+                               aes(x=Year, y=TotalSI, fill=Year==max(yrRange)) ) +
   geom_bar( stat="identity" ) +
   labs( y=expression(paste("Spawn index (t"%*%10^3, ")", sep="")) ) + 
   scale_x_continuous( breaks=yrBreaks ) +
@@ -2565,15 +2589,15 @@ spawnIndexPanelPlot <- ggplot( data=spawnYrSec,
   myTheme +
   theme( legend.position="none" ) +
   ggsave( filename=file.path(regName, "SpawnIndexPanel.pdf"), 
-    width=figWidth, 
-    height=min(7.9, 1.5*(ceiling(n_distinct(spawnYrSec$Section)/3))) )
+          width=figWidth, 
+          height=min(7.9, 1.5*(ceiling(n_distinct(spawnYrSec$Section)/3))) )
 
 # If length by sampling protocol
 if( exists("lenAgeSample") ) {
   # Compare the two sampling protocols (length)
   lenAgeSamplePlot <- ggplot( data=lenAgeSample, 
-    aes(x=Age, y=Length, fill=SampleSource2, 
-      group=interaction(Age, SampleSource2)) ) + 
+                              aes(x=Age, y=Length, fill=SampleSource2, 
+                                  group=interaction(Age, SampleSource2)) ) + 
     geom_boxplot( outlier.colour="black", size=0.25 ) + 
     labs( y="Length (mm)", fill="Sample" )  +
     scale_x_continuous( breaks=pretty_breaks() ) +
@@ -2581,11 +2605,11 @@ if( exists("lenAgeSample") ) {
     myTheme +
     theme( legend.position="top" ) +
     ggsave( filename=file.path(regName, "LengthAgeSample.pdf"), 
-      width=figWidth, height=figWidth*0.67 )
+            width=figWidth, height=figWidth*0.67 )
   # Compare the two sampling protocols by StatArea (length)
   lenAgeSamplePlotSA <- ggplot( data=lenAgeSample, 
-    aes(x=Age, y=Length, fill=SampleSource2, 
-      group=interaction(Age, SampleSource2)) ) + 
+                                aes(x=Age, y=Length, fill=SampleSource2, 
+                                    group=interaction(Age, SampleSource2)) ) + 
     geom_boxplot( outlier.colour="black", size=0.25 ) + 
     labs( y="Length (mm)", fill="Sample" )  +
     scale_x_continuous( breaks=pretty_breaks() ) +
@@ -2594,11 +2618,11 @@ if( exists("lenAgeSample") ) {
     theme( legend.position="top" ) +
     facet_grid( SA ~ ., labeller=label_both ) +
     ggsave( filename=file.path(regName, "LengthAgeSampleSA.pdf"), 
-      width=figWidth, height=figWidth )
+            width=figWidth, height=figWidth )
   # Compare age distributions by year and stat area
   ageDistSamplePlotSA <- ggplot( data=lenAgeSample,
-    mapping=aes(x=Year, y=Age, fill=SampleSource2,
-      group=interaction(Year, SampleSource2)) ) +
+                                 mapping=aes(x=Year, y=Age, fill=SampleSource2,
+                                             group=interaction(Year, SampleSource2)) ) +
     geom_boxplot( outlier.colour="black", size=0.25 ) + 
     labs( fill="Sample" )  +
     scale_x_continuous( breaks=pretty_breaks() ) +
@@ -2607,7 +2631,7 @@ if( exists("lenAgeSample") ) {
     theme( legend.position="top" ) +
     facet_grid( SA ~ ., labeller=label_both ) +
     ggsave( filename=file.path(regName, "AgeDistSampleSA.pdf"), 
-      width=figWidth, height=figWidth )
+            width=figWidth, height=figWidth )
 }  # End if length by sampling protocol
 
 # If spawn depth by year and statistical area
@@ -2616,8 +2640,8 @@ if( exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07") ) {
   nSecCol <- n_distinct( spawnStatsYrSecSA07$Section )
   # Plot spawn depth (maximum by spawn number) in each statistical area and year
   spawnDepthSAPlot <- ggplot( data=spawnStatsYrSA, 
-    aes(x=Year, y=Depth, fill=StatArea, 
-      group=interaction(Year, StatArea)) ) +
+                              aes(x=Year, y=Depth, fill=StatArea, 
+                                  group=interaction(Year, StatArea)) ) +
     geom_boxplot( outlier.colour="black", outlier.size = 0.5, size=0.25 ) +
     expand_limits( x=c(firstYrFig, max(yrRange)), y=0 ) +
     scale_fill_viridis( discrete=TRUE ) +
@@ -2625,13 +2649,13 @@ if( exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07") ) {
     scale_x_continuous( breaks=yrBreaks ) +
     scale_y_reverse( ) +
     annotate( geom="text", x=-Inf, y=-Inf, label="(a)", vjust=1.3, 
-      hjust=-0.1 ) +
+              hjust=-0.1 ) +
     myTheme +
     theme( legend.position="top", axis.text.x=element_blank() )
   # Plot spawn depth (maximum by spawn number) in each section and year  
   spawnDepthSecPlot <- ggplot( data=spawnStatsYrSecSA07, 
-    aes(x=Year, y=Depth, fill=Section, 
-      group=interaction(Year, Section)) ) +
+                               aes(x=Year, y=Depth, fill=Section, 
+                                   group=interaction(Year, Section)) ) +
     geom_boxplot( outlier.colour="black", outlier.size = 0.5, size=0.25 ) +
     expand_limits( x=c(firstYrFig, max(yrRange)), y=0 ) +
     scale_fill_viridis( discrete=TRUE ) +
@@ -2639,46 +2663,46 @@ if( exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07") ) {
     scale_x_continuous( breaks=yrBreaks ) +
     scale_y_reverse( ) +
     annotate( geom="text", x=-Inf, y=-Inf, label="(b)", vjust=1.3, 
-      hjust=-0.1 ) +
+              hjust=-0.1 ) +
     guides( fill=guide_legend(nrow=ceiling(nSecCol/8)) ) +
     myTheme +
     theme( legend.position="bottom" )
   # Arrange and save the depth plots
   depthPlots <- plot_grid( spawnDepthSAPlot, spawnDepthSecPlot, align="v", 
-    ncol=1, rel_heights=c(2, 2) ) +
+                           ncol=1, rel_heights=c(2, 2) ) +
     ggsave( filename=file.path(regName, "SpawnDepthSASec.pdf"), 
-      width=figWidth, height=figWidth )
+            width=figWidth, height=figWidth )
   # Plot spawn layers in each statistical area and year
   spawnLayersSAPlot <- ggplot( data=spawnStatsYrSA, 
-    aes(x=Year, y=Layers, fill=StatArea, 
-      group=interaction(Year, StatArea)) ) +
+                               aes(x=Year, y=Layers, fill=StatArea, 
+                                   group=interaction(Year, StatArea)) ) +
     geom_boxplot( outlier.colour="black", outlier.size = 0.5, size=0.25 ) +
     scale_fill_viridis( discrete=TRUE ) +
     expand_limits( x=c(firstYrFig, max(yrRange)), y=0 ) +
     labs( x=NULL, y="Number of egg layers", fill="SA" ) + 
     scale_x_continuous( breaks=yrBreaks ) +
     annotate( geom="text", x=-Inf, y=Inf, label="(a)", vjust=1.3, 
-      hjust=-0.1 ) +
+              hjust=-0.1 ) +
     myTheme +
     theme( legend.position="top", axis.text.x=element_blank() )
   # Plot spawn layers in each section and year  
   spawnLayersSecPlot <- ggplot( data=spawnStatsYrSecSA07, 
-    aes(x=Year, y=Layers, fill=Section, 
-      group=interaction(Year, Section)) ) +
+                                aes(x=Year, y=Layers, fill=Section, 
+                                    group=interaction(Year, Section)) ) +
     geom_boxplot( outlier.colour="black", outlier.size = 0.5, size=0.25 ) +
     expand_limits( x=c(firstYrFig, max(yrRange)), y=0 ) +
     labs( y="Number of egg layers" ) + 
     scale_x_continuous( breaks=yrBreaks ) +
     annotate( geom="text", x=-Inf, y=Inf, label="(b)", vjust=1.3, 
-      hjust=-0.1 ) +
+              hjust=-0.1 ) +
     guides( fill=guide_legend(nrow=ceiling(nSecCol/8)) ) +
     myTheme +
     theme( legend.position="bottom" )
   # Arrange and save the depth plots
   layerPlots <- plot_grid( spawnLayersSAPlot, spawnLayersSecPlot, align="v", 
-    ncol=1, rel_heights=c(2, 2) ) +
+                           ncol=1, rel_heights=c(2, 2) ) +
     ggsave( filename=file.path(regName, "SpawnLayersSASec.pdf"), 
-      width=figWidth, height=figWidth )
+            width=figWidth, height=figWidth )
 }  # End if spawn depth by year and statistical area
 
 # Show spawn index by locations by year
@@ -2689,18 +2713,18 @@ PlotLocationsYear <- function( dat ) {
     summarise( SITotal=SumNA(SITotal) ) %>%
     ungroup( ) %>%
     mutate( Survey=ifelse(Year < newSurvYr, "Surface", "Dive"),
-      Survey=factor(Survey, levels=c("Surface", "Dive")) )
+            Survey=factor(Survey, levels=c("Surface", "Dive")) )
   # Get the number of plots
   uPages <- unique( dat$Year )
   # Set up the map
   MapGIF <- BaseMap + 
     geom_path( data=shapes$secDF, aes(group=Section), size=0.25, 
-      colour="black" ) +
+               colour="black" ) +
     geom_text( data=shapes$secCentDF, alpha=0.6, size=2,
-      aes(label=paste("Sec", Section, sep=" ")) )
+               aes(label=paste("Sec", Section, sep=" ")) )
   # Start the PDF
   pdf( file=file.path(regName, "SpawnIndexAnimation.pdf"), width=figWidth, 
-    height=min(6.75, 6.5/shapes$xyRatio) )
+       height=min(6.75, 6.5/shapes$xyRatio) )
   # Loop over pages/years
   for( i in 1:length(uPages) ) { 
     # Get the index (up to 9999)
@@ -2708,12 +2732,12 @@ PlotLocationsYear <- function( dat ) {
     # The plot
     layersPlot <- MapGIF +
       facet_wrap_paginate( ~ Year, ncol=1, nrow=1, page=i, 
-        labeller=label_both ) +
+                           labeller=label_both ) +
       geom_point( data=dat, aes(colour=SITotal), size=4, alpha=0.75 ) +
       scale_colour_viridis( labels=comma ) +
       labs( colour="Spawn\nindex (t)" ) +
       theme( legend.justification=c(0, 0), 
-        legend.position=if(region == "PRD") "right" else c(0.01, 0.01) )
+             legend.position=if(region == "PRD") "right" else c(0.01, 0.01) )
     # Inset: spawn index vs year
     subPlot <- ggplot( data=datYr, aes(x=Year, y=SITotal) ) +
       geom_point( size=0.25, aes(shape=Survey) ) +
@@ -2724,8 +2748,8 @@ PlotLocationsYear <- function( dat ) {
       guides( shape=FALSE ) +
       theme_tufte( ) +
       theme( plot.background=element_rect(fill=alpha("white", 0.5), 
-        size=0.1),
-        plot.margin=unit(c(0.3, 0.6, 0.1, 0.1), "lines") )
+                                          size=0.1),
+             plot.margin=unit(c(0.3, 0.6, 0.1, 0.1), "lines") )
     # Convert to a grob
     subGrob <- ggplotGrob( x=subPlot )
     # Determine the x location for the grob
@@ -2737,7 +2761,7 @@ PlotLocationsYear <- function( dat ) {
     # Add the inset to the map
     finalPlot <- layersPlot + 
       annotation_custom( grob=subGrob, xmin=grobLeft, xmax=Inf, 
-        ymin=grobBottom, ymax=Inf )
+                         ymin=grobBottom, ymax=Inf )
     # Print the main plot
     print( finalPlot )
   }  # End i loop over years
@@ -2745,9 +2769,9 @@ PlotLocationsYear <- function( dat ) {
   dev.off( )
   # Save a copy (for later, if desired)
   file.copy( from=file.path(regName, "SpawnIndexAnimation.pdf"),
-    to=file.path("Animations", 
-      paste("SpawnIndexAnimation", regName, "pdf", sep=".")),
-    overwrite=TRUE )
+             to=file.path("Animations", 
+                          paste("SpawnIndexAnimation", regName, "pdf", sep=".")),
+             overwrite=TRUE )
 }  # End PlotLocationsYear
 
 # Make the animation
@@ -2757,8 +2781,8 @@ if( makeAnimation ) {
 } else {  # End if making the animation, otherwise  
   # Copy the saved version
   file.copy( from=file.path("Animations", 
-    paste("SpawnIndexAnimation", regName, "pdf", sep=".")),  
-    to=file.path(regName, "SpawnIndexAnimation.pdf") )
+                            paste("SpawnIndexAnimation", regName, "pdf", sep=".")),  
+             to=file.path(regName, "SpawnIndexAnimation.pdf") )
 }  # End if not making the animation
 
 # Update progress
@@ -2775,7 +2799,7 @@ xRegions <- regions %>%
 
 # Write regions to disc
 print( x=xRegions, file=file.path(regName, "Regions.tex"),
-  include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+       include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 
 # Format commercial catch
 xCatchCommUseYr <- catchCommUseYr %>%
@@ -2784,20 +2808,20 @@ xCatchCommUseYr <- catchCommUseYr %>%
 
 # Write commercial catch to disc
 print( x=xCatchCommUseYr, file=file.path(regName, "CatchCommUseYr.tex"),
-  include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+       include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 
 # Format commercial harvest (recent years)
 xHarvestSOK <- harvestSOK %>%
   filter( Year >= firstYrTab ) %>%
   mutate( Year=as.integer(Year), 
-    Harvest=format(Harvest, big.mark=",", digits=0, scientific=FALSE),
-    Biomass=format(Biomass, big.mark=",", digits=0, scientific=FALSE) ) %>%
+          Harvest=format(Harvest, big.mark=",", digits=0, scientific=FALSE),
+          Biomass=format(Biomass, big.mark=",", digits=0, scientific=FALSE) ) %>%
   rename( 'Harvest (lb)'=Harvest, 'Spawning biomass (t)'=Biomass ) %>%
   xtable( )
 
 # Write commercial harvest to disc
 print( x=xHarvestSOK, file=file.path(regName, "HarvestSOK.tex"),
-  include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+       include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 
 ###### This stuff is for the stock assessment research document #####
 # write_csv( x=allHarvSOK, path=paste("allHarvSOK", regName, ".csv", sep="") )
@@ -2823,12 +2847,12 @@ print( x=xHarvestSOK, file=file.path(regName, "HarvestSOK.tex"),
 # Format number of biosamples
 xBioNum <- bioNum %>%
   mutate( Year=as.integer(Year), Commercial=as.integer(Commercial),
-    Test=as.integer(Test) ) %>%
+          Test=as.integer(Test) ) %>%
   xtable()
 
 # Write number of biosamples to disc
 print( x=xBioNum, file=file.path(regName, "BioNum.tex"),
-  include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+       include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 
 # Format number of biosamples by type
 xBioTypeNum <- bioTypeNum %>%
@@ -2838,7 +2862,7 @@ xBioTypeNum <- bioTypeNum %>%
 
 # Write number of biosamples by type to disc
 print( x=xBioTypeNum, file=file.path(regName, "BioTypeNum.tex"),
-  include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+       include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 
 # Number-, proportion-, weight- and length-at-age
 if( exists("deltaNumAgeYr") & exists("deltaPropAgeYr") & 
@@ -2849,49 +2873,49 @@ if( exists("deltaNumAgeYr") & exists("deltaPropAgeYr") &
     xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
   # Write number-at-age to disc
   print( x=xDeltaNumAgeYr, file=file.path(regName, "DeltaNumAgeYr.tex"),
-    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+         include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
   # Format proportion-at-age
   xDeltaPropAgeYr <- deltaPropAgeYr %>%
     xtable( digits=c(0, 0, rep(3, times=length(ageRange))) )
   # Write proportion-at-age to disc
   print( x=xDeltaPropAgeYr, file=file.path(regName, "DeltaPropAgeYr.tex"),
-    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+         include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
   # Format weight-at-age
   xDeltaWtAgeYr <- deltaWtAgeYr %>%
     xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
   # Write weight-at-age to disc
   print( x=xDeltaWtAgeYr, file=file.path(regName, "DeltaWtAgeYr.tex"),
-    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+         include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
   # Format length-at-age
   xDeltaLenAgeYr <- deltaLenAgeYr %>%
     xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
   # Write length-at-age to disc
   print( x=xDeltaLenAgeYr, file=file.path(regName, "DeltaLenAgeYr.tex"),
-    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+         include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
   # Format number-at-age: annuals and total
   xNearNum <- nearNum %>%
     xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
   # Write number-at-age to disc
   print( x=xNearNum, file=file.path(regName, "NearNum.tex"),
-    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+         include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
   # Format proportion-at-age: annuals and total
   xNearProp <- nearProp %>%
     xtable( digits=c(0, 0, rep(3, times=length(ageRange))) )
   # Write proportion-at-age to disc
   print( x=xNearProp, file=file.path(regName, "NearProp.tex"),
-    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+         include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
   # Format weight-at-age: annuals and total
   xNearWt <- nearWt %>%
     xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
   # Write weight-at-age to disc
   print( x=xNearWt, file=file.path(regName, "NearWt.tex"),
-    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+         include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
   # Format length-at-age: annuals and total
   xNearLen <- nearLen %>%
     xtable( digits=c(0, 0, rep(0, times=length(ageRange))) )
   # Write length-at-age to disc
   print( x=xNearLen, file=file.path(regName, "NearLen.tex"),
-    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+         include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 }  # End if number-, proportion-, weight-, and length-at-age
 
 # Format proportion-at-age
@@ -2900,7 +2924,7 @@ xPropAgedYearTab <- propAgedYearTab %>%
 
 # Write proportion-at-age to disc
 print( x=xPropAgedYearTab, file=file.path(regName, "PropAgedYearTab.tex"),
-  include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+       include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 
 # If weight-at-age by group exists
 if( exists("weightAgeGroupN") ) {
@@ -2913,24 +2937,24 @@ if( exists("weightAgeGroupN") ) {
     xtable( digits=c(0, 0, 0, 0, 0) )
   # Write weight-at-age to disc
   print( x=xWeightAgeGroupN, file=file.path(regName, "WeightAgeGroupN.tex"),
-    include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+         include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 }  # End if weight-at-age exists
 
 # Format spawn summary
 xSpawnYrTab <- spawnYrTab %>%
   mutate( TotalLength=format(TotalLength, big.mark=",", digits=0, 
-    scientific=FALSE),
-    MeanWidth=format(MeanWidth, big.mark=",", digits=0),
-    MeanLayers=format(MeanLayers, big.mark=",", digits=1),
-    TotalSI=format(TotalSI, big.mark=",", digits=0, 
-      scientific=FALSE) ) %>%
+                             scientific=FALSE),
+          MeanWidth=format(MeanWidth, big.mark=",", digits=0),
+          MeanLayers=format(MeanLayers, big.mark=",", digits=1),
+          TotalSI=format(TotalSI, big.mark=",", digits=0, 
+                         scientific=FALSE) ) %>%
   rename( 'Total length (m)'=TotalLength, 'Mean width (m)'=MeanWidth,
-    'Mean number of egg layers'=MeanLayers, 'Spawn index (t)'=TotalSI ) %>%
+          'Mean number of egg layers'=MeanLayers, 'Spawn index (t)'=TotalSI ) %>%
   xtable( )
 
 # Write spawn summary to disc
 print( x=xSpawnYrTab, file=file.path(regName, "SpawnYrTab.tex"),
-  include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
+       include.rownames=FALSE, booktabs=TRUE, only.contents=TRUE, NA.string=NA )
 
 # If there is spawn reported
 if( nrow(spawnByLoc) >= 1 ) {
@@ -2938,12 +2962,12 @@ if( nrow(spawnByLoc) >= 1 ) {
   xSpawnByLoc <- spawnByLoc %>%
     arrange( StatArea, Section, LocationName, Start ) %>%
     mutate( StatArea=formatC(StatArea, width=2, format="d", flag="0"),
-      Section=formatC(Section, width=3, format="d", flag="0"),
-      Start=format(Start, format="%B %d"),
-      TotalSI=format(TotalSI, big.mark=",", digits=0, 
-        scientific=FALSE) ) %>%
+            Section=formatC(Section, width=3, format="d", flag="0"),
+            Start=format(Start, format="%B %d"),
+            TotalSI=format(TotalSI, big.mark=",", digits=0, 
+                           scientific=FALSE) ) %>%
     rename( 'Statistical Area'=StatArea, 'Location name'=LocationName,
-      'Start date'=Start, 'Spawn index (t)'=TotalSI ) %>%
+            'Start date'=Start, 'Spawn index (t)'=TotalSI ) %>%
     xtable( )
   # Write spawn summary (longtable) to disc
   WriteLongTable( dat=xSpawnByLoc, fn=file.path(regName, "SpawnByLoc.tex") )
@@ -3075,7 +3099,7 @@ if( region == "CC" ) {
 
 # If number-, proportion-, weight-, and length-at-age: set the toggle to true
 if( exists("deltaNumAgeYr") & exists("deltaPropAgeYr") & exists("deltaWtAgeYr") 
-  & exists("deltaLenAgeYr") & exists("nearNum") & exists("nearProp") & 
+    & exists("deltaLenAgeYr") & exists("nearNum") & exists("nearProp") & 
     exists("nearWt") & exists("nearLen") )  
   tfNumPropWtAge <- "\\toggletrue{numPropWtAge}"
 
@@ -3127,7 +3151,7 @@ qYrs <- list(
 
 # Justification for age tables
 ageTableAlign <- paste( c("{l", rep("r", times=length(ageRange)), "}"), 
-  collapse="" )
+                        collapse="" )
 
 ##### Tables #####
 
@@ -3148,8 +3172,8 @@ if( region == "All" ) {
   # Write raw spawn data to a csv for the FIND app
   spawnRaw %>%
     select( Year, Region, StatArea, Section, LocationCode, LocationName,
-      SpawnNumber, Eastings, Northings, Longitude, Latitude, Method, SurfSI,
-      MacroSI, UnderSI, Survey ) %>%
+            SpawnNumber, Eastings, Northings, Longitude, Latitude, Method, SurfSI,
+            MacroSI, UnderSI, Survey ) %>%
     arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
     write_csv( path=file.path(regName, "SpawnRaw.csv") )
   # Write the locations with spatial inconsistencies
@@ -3184,17 +3208,17 @@ if( region == "All" ) {
 
 # Write the number of biosamples to a csv
 write_csv( x=numBiosamples, 
-  path=file.path(regName, paste("NumBiosamples", regName, ".csv", sep="")) )
+           path=file.path(regName, paste("NumBiosamples", regName, ".csv", sep="")) )
 
 # Write the spawn distribution to a csv
 write_csv( x=propSpawn,
-  path=file.path(regName, paste("prop-spawn-", tolower(regName), ".csv",
-    sep="")) )
+           path=file.path(regName, paste("prop-spawn-", tolower(regName), ".csv",
+                                         sep="")) )
 
 # Write the SOK harvest to a csv
 write_csv( x=allHarvSOK, 
-  path=file.path(regName, paste("harvest-sok-", tolower(regName), ".csv",
-    sep="")) )
+           path=file.path(regName, paste("harvest-sok-", tolower(regName), ".csv",
+                                         sep="")) )
 
 ## Format the spawn summary
 #spawnYrF <- spawnYr %>%
@@ -3223,7 +3247,7 @@ cat( "done\n" )
 
 # Save the workspace image 
 save.image( file=file.path(regName, 
-  paste("Image.", regName, ".RData", sep="")) ) 
+                           paste("Image.", regName, ".RData", sep="")) ) 
 
 ##### QAQC #####
 
