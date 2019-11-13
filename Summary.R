@@ -2248,7 +2248,7 @@ pnPlots <- plot_grid( propAgedPlot, numAgedPlot, align="v",
           height=figWidth )
 
 # If nearshore comparison
-if( exists("compNear") ) {
+if( exists("compNear") & exists("compNearSA") & exists("nSampleSA") ) {
   # Plot proportion-at-age
   compNearPlot <- ggplot( data=compNear,
                           mapping=aes(x=Age, y=Proportion, fill=Sample) ) +
@@ -2280,7 +2280,7 @@ if( exists("compNear") ) {
     guides( fill=FALSE ) +
     facet_grid( Year ~ StatArea ) +
     myTheme + 
-    ggsave( filename=file.path(regName, "NumNearSA.png"), width=figWidth,
+    ggsave( filename=file.path(regName, "NumNearSA.pdf"), width=figWidth,
             height=figWidth )
 }  # End if nearshore comparison
 
