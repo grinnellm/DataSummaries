@@ -1724,17 +1724,51 @@ if( region == "WCVI" ) {
     left_join( y=tSource, by="SourceCode" ) %>%
     select( Year, SampleSource2, StatArea, Age, Length ) %>%
     rename( SA=StatArea )
-  # Combine nearshore and seine test samples: part A
-  compNearA <- nearYearAge %>%
-    select( Year, Age, Proportion ) %>%
-    mutate( Sample="Nearshore", Year=as.integer(Year) )
-  # Combine nearshore and seine test samples: part B
-  compNearB <- numAgedYear %>% 
-    select(Year, Age, Proportion) %>% 
-    filter( Year%in%yrsNearshore) %>%
+  # Get nearshore samples
+  nearYearAge2 <- bioRaw %>%
+    filter( SourceCode==2, GearCode==1, Representative==1 ) %>%
+    group_by( Year, Age ) %>%
+    summarise( Number=n(), Weight=MeanNA(Weight), Length=MeanNA(Length) ) %>%
+    mutate( Proportion=Number/SumNA(Number) ) %>%
+    ungroup( ) %>%
+    select( Year, Age, Number, Proportion ) %>%
+    mutate( Sample="Nearshore" )
+  # Get seine test samples
+  seineYearAge2 <- bio %>%
+    filter( GearCode == 29, Year %in% yrsNearshore ) %>%
+    group_by( Year, Age ) %>%
+    summarise( Number=SumNA(SampWt) ) %>%
+    mutate( Proportion=Number/SumNA(Number) ) %>%
+    ungroup( ) %>%
+    select(Year, Age, Number, Proportion) %>% 
     mutate( Sample="Seine test")
   # Combine nearshore and seine test samples: parts A and B
-  compNear <- bind_rows( compNearA, compNearB )
+  compNear <- bind_rows( nearYearAge2, seineYearAge2 )
+  # Get nearshore samples by stat area
+  nearYearAgeSA <- bioRaw %>%
+    filter( SourceCode==2, GearCode==1, Representative==1 ) %>%
+    group_by( Year, StatArea, Age ) %>%
+    summarise( Number=n(), Weight=MeanNA(Weight), Length=MeanNA(Length) ) %>%
+    mutate( Proportion=Number/SumNA(Number) ) %>%
+    ungroup( ) %>%
+    select( Year, Age, StatArea, Number, Proportion ) %>%
+    mutate( Sample="Nearshore" )
+  # Get seine test samples by stat area
+  seineYearAgeSA <- bio %>%
+    filter( GearCode == 29, Year %in% yrsNearshore ) %>%
+    group_by( Year, StatArea, Age ) %>%
+    summarise( Number=SumNA(SampWt) ) %>%
+    mutate( Proportion=Number/SumNA(Number) ) %>%
+    ungroup( ) %>%
+    select(Year, Age, StatArea, Number, Proportion) %>% 
+    mutate( Sample="Seine test")
+  # Combine nearshore and seine test samples by stat area
+  compNearSA <- bind_rows( nearYearAgeSA, seineYearAgeSA )
+  # Determine number by year and sample type
+  nSampleSA <- compNearSA %>%
+    group_by( Year, StatArea, Sample ) %>%
+    summarise( Number=SumNA(Number) ) %>%
+    ungroup( )
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn( dat=spawnRaw, g="StatArea" )
 }  # End if region is West Coast of Vancouver Island
@@ -2216,13 +2250,37 @@ pnPlots <- plot_grid( propAgedPlot, numAgedPlot, align="v",
 # If nearshore comparison
 if( exists("compNear") ) {
   # Plot proportion-at-age
-  compNearPlot <- ggplot( data=compNear, mapping=aes(x=Age, y=Proportion) ) +
-    geom_bar( stat="identity" ) +
-    facet_grid( Year ~ Sample ) +
+  compNearPlot <- ggplot( data=compNear,
+                          mapping=aes(x=Age, y=Proportion, fill=Sample) ) +
+    geom_bar( stat="identity", position="dodge" ) +
+    facet_grid( Year ~ . ) +
     scale_x_continuous( breaks=seq(from=min(ageRange), to=max(ageRange),
                                    by=2) ) +
+    # scale_fill_viridis_d( ) +
     myTheme +
+    theme( legend.position="top" ) +
     ggsave( filename=file.path(regName, "CompNear.pdf"), width=figWidth,
+            height=figWidth )
+  # Plot proportion-at-age by stat area
+  compNearPlotSA <- ggplot( data=compNearSA,
+                          mapping=aes(x=Age, y=Proportion, fill=Sample) ) +
+    geom_bar( stat="identity", position="dodge" ) +
+    facet_grid( Year ~ StatArea ) +
+    scale_x_continuous( breaks=seq(from=min(ageRange), to=max(ageRange),
+                                   by=2) ) +
+    # scale_fill_viridis_d( ) +
+    myTheme +
+    theme( legend.position="top" ) +
+    ggsave( filename=file.path(regName, "CompNearSA.pdf"), width=figWidth,
+            height=figWidth )
+  # Plot number aged by stat area
+  numNearPlotSA <- ggplot( data=nSampleSA, 
+                           mapping=aes(x=Sample, y=Number, fill=Sample) ) +
+    geom_bar( stat="identity", position="dodge" ) +
+    guides( fill=FALSE ) +
+    facet_grid( Year ~ StatArea ) +
+    myTheme + 
+    ggsave( filename=file.path(regName, "NumNearSA.png"), width=figWidth,
             height=figWidth )
 }  # End if nearshore comparison
 
