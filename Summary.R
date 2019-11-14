@@ -2677,6 +2677,19 @@ if( exists("lenAgeSample") ) {
     facet_grid( SA ~ ., labeller=label_both ) +
     ggsave( filename=file.path(regName, "LengthAgeSampleSA.pdf"), 
             width=figWidth, height=figWidth )
+  # Compare the two sampling protocols by StatArea and year (length)
+  lenAgeSamplePlotSAYr <- ggplot( data=lenAgeSample, 
+                                aes(x=Age, y=Length, fill=SampleSource2, 
+                                    group=interaction(Age, SampleSource2)) ) + 
+    geom_boxplot( outlier.colour="black", size=0.25 ) + 
+    labs( y="Length (mm)", fill="Sample" )  +
+    scale_x_continuous( breaks=pretty_breaks() ) +
+    # scale_fill_viridis_d( alpha=0.5 ) +
+    myTheme +
+    theme( legend.position="top" ) +
+    facet_grid( Year ~ SA, labeller=label_both ) +
+    ggsave( filename=file.path(regName, "LengthAgeSampleSAYr.pdf"), 
+            width=figWidth, height=figWidth )
   # Compare age distributions by year and stat area
   ageDistSamplePlotSA <- ggplot( data=lenAgeSample,
                                  mapping=aes(x=Year, y=Age, fill=SampleSource2,
