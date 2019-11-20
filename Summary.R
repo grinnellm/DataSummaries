@@ -98,7 +98,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "All"
+if( !exists('region') )  region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -108,6 +108,9 @@ Area25 <- c( 250:253, 259 )
 Tlaamin <- c( 135, 141, 151, 152, 161:163 )
 Area15 <- c( 150:159 )
 AllHG <- c( 0:6, 11, 12, 21:25 )
+HG6 <- c( 6 )
+HG2125 <- c( 21, 25 )
+HG2324 <- c( 23, 24 ) 
 
 # Select a subset of sections (or NA for all)
 sectionSub <- NA
