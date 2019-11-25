@@ -113,7 +113,7 @@ Sec021025 <- c( 21, 25 )
 Sec023024 <- c( 23, 24 ) 
 
 # Select a subset of sections (or NA for all)
-sectionSub <- Sec006
+sectionSub <- NA
 
 # Generate the annual spawn survey animation (this takes a few mins!)
 makeAnimation <- FALSE
