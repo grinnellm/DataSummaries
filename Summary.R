@@ -108,12 +108,12 @@ Area25 <- c( 250:253, 259 )
 Tlaamin <- c( 135, 141, 151, 152, 161:163 )
 Area15 <- c( 150:159 )
 AllHG <- c( 0:6, 11, 12, 21:25 )
-HG6 <- c( 6 )
-HG2125 <- c( 21, 25 )
-HG2324 <- c( 23, 24 ) 
+Sec006 <- c( 6 )
+Sec021025 <- c( 21, 25 )
+Sec023024 <- c( 23, 24 ) 
 
 # Select a subset of sections (or NA for all)
-sectionSub <- NA
+sectionSub <- Sec006
 
 # Generate the annual spawn survey animation (this takes a few mins!)
 makeAnimation <- FALSE
