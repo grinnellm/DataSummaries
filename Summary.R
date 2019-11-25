@@ -1857,6 +1857,7 @@ catchADMB <- catch %>%
 spawnADMB <- spawnYr %>%
   select( Year, TotalSI ) %>%
   rename( Spawn=TotalSI ) %>%
+  na.omit( ) %>%
   mutate( Spawn=round(Spawn/1000, digits=3), 
           Gear=ifelse(Year<newSurvYr, as.integer(4), as.integer(5)), 
           Area=as.integer(1), Group=as.integer(1), Sex=as.integer(0),
