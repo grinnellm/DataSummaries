@@ -1503,6 +1503,34 @@ catchCommUseYr <- catchPriv %>%
 
 # If region is Haida Gwaii
 if( region == "HG" ) {
+  # Count the number of fish aged by year (and as a proportion) by seine gear:
+  # use the 'SampWt' column to fix unrepresentative sampling if identified
+  numAgedYearGrp <- bio %>%
+    filter( GearCode == 29 ) %>%  # %in% c(19, 29) (originally == 29)
+    select( Year, Age, Group, SampWt ) %>%
+    na.omit( ) %>%
+    group_by( Year, Group, Age ) %>%
+    summarise( Number=SumNA(SampWt) ) %>%
+    mutate( Proportion=Number/SumNA(Number) ) %>%
+    ungroup( ) %>%
+    arrange( Year, Group, Age )
+  # Determine weighted mean and approximate CI age by year
+  qAgedYearGrp <- numAgedYearGrp %>%
+    select( Year, Age, Group, Proportion ) %>%
+    group_by( Year, Group ) %>%
+    summarise(
+      MeanAge=weighted.mean(x=Age, w=Proportion),
+      # CI is based on R code by Steve Martel
+      sBar=qnorm(1 - (1 - ciLevel) / 2) *
+        sum(sqrt(Proportion * (1 - Proportion)) / sqrt(Age)),
+      Lower=exp(log(MeanAge) - log(sBar)),
+      Upper=exp(log(MeanAge) + log(sBar)) ) %>%
+    ungroup( ) %>%
+    arrange( Year, Group ) %>%
+    group_by( Group ) %>%
+    mutate( GroupID=ConsecutiveGroup(Year) ) %>%
+    ungroup( ) %>%
+    arrange( Year, Group )
   # Remove Group info
   spatialGroup <- spatialGroup %>%
     select( -Group )
@@ -2249,6 +2277,37 @@ pnPlots <- plot_grid( propAgedPlot, numAgedPlot, align="v",
                       ncol=1, rel_heights=c(1, 0.7) ) +
   ggsave( filename=file.path(regName, "ProportionAged.pdf"), width=figWidth, 
           height=figWidth )
+
+# If proportion-at-age by group
+if( exists("numAgedYearGrp") ) {
+  # Plot proportion-at-age by year and group
+  propAgedGrpPlot <- ggplot( data=numAgedYearGrp, aes(x=Year)  ) +
+    geom_point( aes(y=Age, size=Proportion) ) +
+    geom_path( data=qAgedYearGrp, aes(y=MeanAge, group=GroupID) ) +
+    geom_ribbon( data=qAgedYearGrp, aes(ymin=Lower, ymax=Upper, group=GroupID),
+                 alpha=0.25 ) +
+    scale_size( range=c(0, 3) ) +
+    labs( y="Age" ) +
+    scale_x_continuous( breaks=yrBreaks ) +
+    scale_y_continuous( breaks=pretty_breaks() ) +
+    expand_limits( x=c(min(yrRange)-0.5, max(yrRange)+0.5) ) +
+    myTheme +
+    facet_grid( Group ~ . ) +
+    theme( legend.position="top" ) +
+    ggsave( filename=file.path(regName, "PropAgedGroup.pdf"), width=figWidth, 
+            height=figWidth )
+  # Plot number aged by year and group
+  numAgedGrpPlot <- ggplot( data=numAgedYearGrp, aes(x=Year, y=Number) ) +
+    geom_bar( stat="identity", width=0.9 ) +
+    labs( y="Number aged (thousands)" )  +
+    scale_x_continuous( breaks=yrBreaks ) +
+    scale_y_continuous( labels=function(x) comma(x/1000) ) +
+    expand_limits( x=yrRange, y=0 ) +
+    facet_grid( Group ~ . ) +
+    myTheme +
+    ggsave( filename=file.path(regName, "NumAgedGroup.pdf"), width=figWidth, 
+            height=figWidth )
+} # End if proportion-at-age by group
 
 # If nearshore comparison
 if( exists("compNear") & exists("compNearSA") & exists("nSampleSA") ) {
