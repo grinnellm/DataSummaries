@@ -2149,7 +2149,7 @@ catchGearPlot <- ggplot( data=catchPriv, aes(x=Year, y=CatchPriv) ) +
               show.area=FALSE ) +
   myTheme +
   theme( legend.position="top" ) +
-  ggsave( filename=file.path(regName, "CatchGear.png"), width=figWidth,
+  ggsave( filename=file.path(regName, "CatchGear.pdf"), width=figWidth,
           height=figWidth )
 
 # Plot it again, in French
