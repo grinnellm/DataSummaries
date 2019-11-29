@@ -91,9 +91,10 @@ UsePackages <- function( pkgs, locn="https://cran.rstudio.com/" ) {
 
 # Make packages available
 UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp", 
-                    "maptools", "rgdal", "rgeos", "raster", "xtable", "cowplot", "grid", 
-                    "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "plyr", 
-                    "lettercase", "ggforce", "viridis", "ggthemes") ) 
+                    "maptools", "rgdal", "rgeos", "raster", "xtable", "cowplot",
+                    "grid", "colorRamps", "RColorBrewer", "stringr",
+                    "lubridate", "readxl", "plyr", "lettercase", "ggforce",
+                    "viridis", "ggthemes") )
 
 ##### Controls #####
 
