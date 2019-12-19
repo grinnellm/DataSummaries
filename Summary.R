@@ -92,9 +92,9 @@ UsePackages <- function( pkgs, locn="https://cran.rstudio.com/" ) {
 # Make packages available
 UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp", 
                     "maptools", "rgdal", "rgeos", "raster", "xtable", "cowplot",
-                    "grid", "colorRamps", "RColorBrewer", "stringr",
-                    "lubridate", "readxl", "plyr", "lettercase", "ggforce",
-                    "viridis", "ggthemes") )
+                    "grid", "colorRamps", "RColorBrewer", "stringr", 
+                    "lubridate", "readxl", "plyr", "ggforce",  "viridis",
+                    "ggthemes") )
 
 ##### Controls #####
 
@@ -291,8 +291,7 @@ codesLoc <- list(
 areaLoc <- list(
   loc=file.path(dirDBs, dbLoc),
   db=dbName,
-  fns=list(sections="Sections", locationsFirst="Location_Bmccarter", 
-           locationsSecond="Location") )
+  fns=list(sections="Sections", locations="Location") )
 
 # Location(s) and names of the Sections and land shapefiles
 shapesLoc <- list(
