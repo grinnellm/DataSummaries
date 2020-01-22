@@ -99,7 +99,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "WCVI"
+if( !exists('region') )  region <- "A2W"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -113,6 +113,8 @@ AllHG <- c( 0:6, 11, 12, 21:25 )
 Sec006 <- c( 6 )
 Sec021025 <- c( 21, 25 )
 Sec023024 <- c( 23, 24 )
+Sec002 <- c( 2 )
+Sec003 <- c( 3 )
 
 # Select a subset of sections (or NA for all)
 sectionSub <- NA
@@ -3317,6 +3319,43 @@ if( region == "All" ) {
     arrange( StatAreaLoc, SectionLoc, LocationCode ) %>%
     write_csv( path=file.path(regName, "SpatialInconsistent.csv") )
 }  # End if all regions
+
+# # Write catch data to a csv (same as ADMB input data file)
+# catch %>%
+#   group_by( Year ) %>%
+#   summarise( Catch=sum(Catch)/1000 ) %>%
+#   ungroup( ) %>%
+#   complete( Year=yrRange, fill=list(Catch=0) ) %>%
+#   write_csv( path=file.path(regName, "Catch.csv") )
+
+# # Write spawn index data to a csv (same as ADMB input data file)
+# spawnYr %>%
+#   select( Year, TotalSI ) %>%
+#   rename( Spawn=TotalSI ) %>%
+#   mutate( Spawn=Spawn/1000, Gear=ifelse(Year<newSurvYr, 4, 5),
+#           Weight=ifelse(Year<newSurvYr, 1, 1.1666)) %>%
+#   write_csv( path=file.path(regName, "Spawn.csv") )
+
+# # Write number-at-age data to a csv (same as ADMB input data file)
+# numAgedADMB %>%
+#   select( -Area, -Group, -Sex ) %>%
+#   complete( Year=yrRange, Gear=1:3 ) %>%
+#   arrange( Gear, Year ) %>%
+#   write_csv( path=file.path(regName, "NumAge.csv") )
+
+# # Write weight-at-age data to a csv (same as ADMB input data file)
+# bio %>% 
+#   filter( GearCode == 29 ) %>%
+#   select( Year, Age, Weight, SampWt ) %>%
+#   na.omit( ) %>%
+#   group_by( Year, Age ) %>%
+#   summarise( MeanWeight=WtMeanNA(x=Weight, w=SampWt)/1000 ) %>%
+#   ungroup( ) %>%
+#   arrange( Year, Age ) %>%
+#   spread( key=Age, value=MeanWeight ) %>%
+#   complete( Year=yrRange ) %>%
+#   arrange( Year ) %>%
+#   write_csv( path=file.path(regName, "WeightAge.csv") )
 
 ## Write catch data to a csv
 #write_csv( x=catch, path=file.path(regName, "Catch.csv") )
