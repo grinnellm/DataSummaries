@@ -355,6 +355,10 @@ source( file=file.path("..", "HerringSpawnIndex", "SpawnIndex.R") )
 
 ##### Data #####
 
+# Message re region
+cat( "Region(s): ", paste(reg, collapse=", "), " (",
+     paste(range(yrRange), collapse=":"), ")\n", sep="" )
+
 # Breaks for years
 yrBreaks <- seq( from=round_any(x=min(yrRange), accuracy=10, f=floor), 
                  to=round_any(x=max(yrRange), accuracy=10, f=ceiling), by=10 )
