@@ -94,12 +94,12 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
                     "maptools", "rgdal", "rgeos", "raster", "xtable", "cowplot",
                     "grid", "colorRamps", "RColorBrewer", "stringr", 
                     "lubridate", "readxl", "plyr", "ggforce",  "viridis",
-                    "ggthemes") )
+                    "ggthemes", "SpawnIndex") )
 
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "HG"
+if( !exists('region') )  region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -240,45 +240,14 @@ yrsRatioHist <- 1994:2013
 # Years to fix using historic ratio of biosample effort (Central Coast)
 yrsRatioFix <- c( 2014, 2015 )
 
-# Years where intensity is used to determine egg layers
-intenseYrs <- yrRange[yrRange < 1979]
-
-# Years where intensity needs to be re-scaled
-rescaleYrs <- intenseYrs[intenseYrs < 1951]
-
 # Transect swath (i.e., width of the transect in m; used for macrocystis spawn)
 transectSwath <- 2
 
 # Buffer distance (m; to include locations that are outside the region polygon)
 maxBuff <- 5000 
 
-# Productivity parameters
-parsProd <- list(
-  fecundity=200000,     # Number of eggs per kilogram of female spawners
-  pFemale=0.5,          # Proportion of spawners that are female
-  eggKelpProp=0.88,     # Proportion of the SOK product that is eggs, not kelp
-  eggBrineProp=1/1.13,  # Proportion of SOK product that is eggs after brining
-  eggWt=2.38*10^-6 )    # Weight in kg of a fertilized egg
-
 # Start year for catch validation program (not currently used)
 validCatch <- list( RoeGN=1998, RoeSN=1999 )
-
-# Correction factors for understory spawn width (by year and region)
-adjWidthFacs <- read_csv(file=
-                           "Year, HG, PRD, CC, SoG, WCVI, A27, A2W
-  2003, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
-  2004, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
-  2005, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
-  2006, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
-  2007, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
-  2008, 1, 1.075, 1.075, 1.075, 1.075, 1.075, 1
-  2009, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
-  2010, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
-  2011, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
-  2012, 1.15, 1.075, 1.075, 1.075, 1.075, 1.075, 1.15
-  2013, 1.15, 1.15, 1.075, 1.075, 1.075, 1, 1.15
-  2014, 1.15, 1.15, 1, 1, 1, 1, 1.15",
-                         col_types=cols() )
 
 #### Sources #####
 
@@ -322,7 +291,7 @@ surfLoc <- list(
   loc=file.path(dirDBs, dbLoc),
   db=dbName, 
   fns=list(regionStd="RegionStd", sectionStd="SectionStd", poolStd="PoolStd", 
-           surface="tSSSurface", intensity="Intensity", allSpawn="tSSAllspawn") )
+           surface="tSSSurface", allSpawn="tSSAllspawn") )
 
 # Location and name of the macrocystis database and tables
 macroLoc <- list(
@@ -336,8 +305,7 @@ underLoc <- list(
   loc=file.path(dirDBs, dbLoc),
   db=dbName,
   fns=list(allSpawn="tSSAllspawn", algTrans="tSSVegTrans", 
-           stations="tSSStations", algae="tSSVegetation", 
-           typeAlg="tSSTypeVegetation") )
+           stations="tSSStations", algae="tSSVegetation") )
 
 # Location and name of catch and harvest privacy data
 privLoc <- list( 
@@ -350,13 +318,22 @@ privLoc <- list(
 source( file=file.path( "..", "HerringFunctions", "Functions.R") )
 # source_url( url="https://github.com/grinnellm/HerringFunctions/blob/master/Functions.R" )
 
-# Load spawn index functions
-source( file=file.path("..", "HerringSpawnIndex", "SpawnIndex.R") )
-
 ##### Data #####
 
+# Load parameter values (for spawn index)
+data( pars )
+
+# Load intensity categories
+data( intensity )
+
+# Load algae coefficients
+data( algaeCoefs )
+
+# Load understory width adjustments
+data( underWidthFac )
+
 # Message re region
-cat( "Region(s): ", paste(reg, collapse=", "), " (",
+cat( "Region(s): ", paste(region, collapse=", "), " (",
      paste(range(yrRange), collapse=":"), ")\n", sep="" )
 
 # Breaks for years
@@ -426,7 +403,7 @@ tPeriod <- read_csv( file=file.path(codesLoc$loc, codesLoc$fns$tPeriod),
                      col_types=cols("c", "c") )
 
 # Load herring areas
-areas <- LoadAreaData( where=areaLoc )
+areas <- LoadAreaData( where=areaLoc, reg=region, secSub=sectionSub )
 
 # Get BC land data etc (for plots)
 shapes <- LoadShapefiles( where=shapesLoc, a=areas )
@@ -637,38 +614,40 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
   # Progress message
   cat( "Calculating spawn index:\n" )
   # Fecundity conversion factor
-  ECF <<- CalcEggConversion( fecundity=parsProd$fecundity, 
-                             pFemale=parsProd$pFemale )
+  ECF <<- CalcEggConversion(  )
   # Progress message
   cat( "\tsurface...\n" )
   # Access and calculate surface spawn
-  surface <- CalcSurfSpawn( where=whereSurf, a=areas, f=ECF )
+  surface <- CalcSurfSpawn( where=whereSurf, a=areas, yrs=yrRange )
   # Progress message
   cat( "\tmacrocystis...\n" )
   # Access and calculate macrocystis spawn
-  macrocystis <- CalcMacroSpawn( where=whereMacro, a=areas, f=ECF )
+  macrocystis <- CalcMacroSpawn( where=whereMacro, a=areas, yrs=yrRange )
   # Progress message
   cat( "\tunderstory...\n" )
   # Access and calculate understory spawn
-  understory <- CalcUnderSpawn( where=whereUnder, a=areas, f=ECF )
+  understory <- CalcUnderSpawn( where=whereUnder, a=areas, yrs=yrRange )
   # Update progress message
   cat( "\ttotal... " )
   # Load the all spawn data
-  allSpawn <- GetAllSpawn( where=underLoc, a=areas )
+  allSpawn <- GetAllSpawn( where=underLoc, a=areas, yrs=yrRange, 
+                           ft2m=convFac$ft2m )
   # Combine the spawn types (by spawn number)
   raw <- surface$biomassSpawn %>%
     full_join( y=macrocystis$biomassSpawn, by=c("Year", "Region", "StatArea", 
-                                                "Section", "LocationCode", "SpawnNumber") ) %>%
+                                                "Section", "LocationCode", 
+                                                "SpawnNumber") ) %>%
     # TODO: Look into why this Width is different from the allSpawn$Width
     select( -Width ) %>%
     full_join( y=understory$biomassSpawn, by=c("Year", "Region", "StatArea", 
-                                               "Section", "LocationCode", "SpawnNumber") ) %>%
+                                               "Section", "LocationCode", 
+                                               "SpawnNumber") ) %>%
     full_join( y=allSpawn, by=c("Year", "Region", "StatArea", "Section", 
                                 "LocationCode", "SpawnNumber") ) %>%
     select( Year, Region, StatArea, Group, Section, LocationCode, 
             LocationName, SpawnNumber, Eastings, Northings, Longitude, Latitude, 
-            Start, End, Length, Width, Depth, Method, SurfLyrs, SurfSI, MacroLyrs, 
-            MacroSI, UnderLyrs, UnderSI ) %>%
+            Start, End, Length, Width, Depth, Method, SurfLyrs, SurfSI, 
+            MacroLyrs, MacroSI, UnderLyrs, UnderSI ) %>%
     mutate( Year=as.integer(Year), StartDOY=yday(Start), 
             EndDOY=yday(End), Decade=paste(Year%/%10*10, "s", sep="") ) %>%
     arrange( Year, Region, StatArea, Section, LocationCode, SpawnNumber, 
@@ -710,10 +689,6 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
     mutate( Survey=ifelse(Year < newSurvYr, "Surface", "Dive"),
             Survey=factor(Survey, levels=c("Surface", "Dive")) ) %>%
     filter( Year %in% yrRange )
-  # Return spawn intensity table
-  intensity <<- intensity
-  # Return algae coefficients
-  algType <<- algType
   # Update the progress message
   cat( "done\n" )
   # Return the data
@@ -953,9 +928,7 @@ harvestSOK <- catchRaw %>%
   summarise( Harvest=SumNA(Catch) ) %>%
   ungroup( ) %>%
   # Covert harvest (lb) to spawning biomass (t)
-  mutate( Biomass=CalcBiomassSOK(SOK=Harvest*convFac$lb2kg, 
-                                 eggKelpProp=parsProd$eggKelpProp, eggBrineProp=parsProd$eggBrineProp, 
-                                 eggWt=parsProd$eggWt, ECF=ECF) ) %>%
+  mutate( Biomass=CalcBiomassSOK(SOK=Harvest*convFac$lb2kg) ) %>%
   complete( Year=yrRange, fill=list(Harvest=0, Biomass=0) ) %>%
   arrange( Year )
 
