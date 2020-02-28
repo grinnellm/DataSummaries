@@ -315,6 +315,7 @@ privLoc <- list(
 ##### Functions #####
 
 # Load helper functions
+# TODO: Move these to `herringutils`
 source( file=file.path( "..", "HerringFunctions", "Functions.R") )
 # source_url( url="https://github.com/grinnellm/HerringFunctions/blob/master/Functions.R" )
 
