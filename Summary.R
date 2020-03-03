@@ -3387,14 +3387,6 @@ write_csv( x=allHarvSOK,
 ## Write the spawn summary
 #write_csv( x=spawnYrF, path=paste("RawIndex", regName, ".csv", sep="") )
 
-# # Spawn for Luke
-# spawnRawOut <- spawnRaw %>%
-#   select( Year, Region, StatArea, Section, LocationCode, LocationName,
-#     SpawnNumber, Eastings, Northings, Longitude, Latitude, Start, End, Method, 
-#     SurfSI, MacroSI, UnderSI ) %>%
-#   arrange( Year, Region, StatArea, Section, LocationCode, SpawnNumber ) %>%
-#   write_csv( path=paste("SpawnIndex", regName, ".csv", sep="") )
-
 # Update progress
 cat( "done\n" )
 
