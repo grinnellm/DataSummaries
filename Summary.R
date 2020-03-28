@@ -99,7 +99,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "SoG"
+if( !exists('region') )  region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -146,7 +146,7 @@ dirShape <- file.path( dirDBs, "Polygons" )
 dirPriv <- file.path( dirDBs, "Privacy" )
 
 # Databases: remote (i.e., H:\ for hdata$) or local (e.g., C:\)
-dbLoc <- "Remote"
+dbLoc <- "Local"
 
 # Database name
 dbName <- "HSA_Program_v6.2.mdb"
@@ -268,6 +268,12 @@ areaLoc <- list(
   db=dbName,
   fns=list(sections="Sections", locations="Location") )
 
+# Location and name of tables for widths.
+widthLoc <- list(
+  loc=file.path(dirDBs, dbLoc),
+  db=dbName,
+  fns=list(regionStd="RegionStd", sectionStd="SectionStd", poolStd="PoolStd") )
+
 # Location(s) and names of the Sections and land shapefiles
 shapesLoc <- list(
   locSec=file.path( dirShape ),
@@ -320,6 +326,26 @@ source( file=file.path( "..", "HerringFunctions", "Functions.R") )
 # source_url( url="https://github.com/grinnellm/HerringFunctions/blob/master/Functions.R" )
 
 ##### Data #####
+
+# Cross-walk table for SAR to region and region name
+regions <- readr::read_csv(
+  file =
+    "SAR, Region, RegionName, Major
+          1, HG, Haida Gwaii, TRUE
+          2, PRD, Prince Rupert District, TRUE
+          3, CC, Central Coast, TRUE
+          4, SoG, Strait of Georgia, TRUE
+          5, WCVI, West Coast of Vancouver Island, TRUE
+          6, A27, Area 27, FALSE
+          7, A2W, Area 2 West, FALSE",
+  col_types = readr::cols("i", "c", "c", "l")
+)
+
+# Possible regions by type (return to the main level)
+allRegions <- list(
+  major = as.character(regions$Region[regions$Major]),
+  minor = as.character(regions$Region[!regions$Major])
+)
 
 # Load parameter values (for spawn index)
 data( pars )
@@ -408,6 +434,9 @@ areas <- LoadAreaData( where=areaLoc, reg=region, secSub=sectionSub )
 
 # Get BC land data etc (for plots)
 shapes <- LoadShapefiles( where=shapesLoc, a=areas )
+
+# Load median widths to correct surface spawns
+barWidth <- GetWidth(where = widthLoc, a = areas)
 
 # Load raw catch data, and some light wrangling
 LoadCatchData <- function( where ) {
@@ -619,7 +648,8 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
   # Progress message
   cat( "\tsurface...\n" )
   # Access and calculate surface spawn
-  surface <- CalcSurfSpawn( where=whereSurf, a=areas, yrs=yrRange )
+  surface <- CalcSurfSpawn( where=whereSurf, a=areas, widths=barWidth,
+                            yrs=yrRange )
   # Progress message
   cat( "\tmacrocystis...\n" )
   # Access and calculate macrocystis spawn
@@ -631,7 +661,7 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
   # Update progress message
   cat( "\ttotal... " )
   # Load the all spawn data
-  allSpawn <- GetAllSpawn( where=underLoc, a=areas, yrs=yrRange, 
+  allSpawn <- LoadAllSpawn( where=underLoc, a=areas, yrs=yrRange, 
                            ft2m=convFac$ft2m )
   # Combine the spawn types (by spawn number)
   raw <- surface$biomassSpawn %>%
