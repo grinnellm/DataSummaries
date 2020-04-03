@@ -1,7 +1,4 @@
 ### General ###
-*.pptx
-*.bat
-*.xlsx
 *.7z
 *.pdf
 *.png
@@ -15,10 +12,6 @@
 
 ### LaTeX files ###
 *.tex
-*.rnw
-*.log
-*.bbl
-*.synctex.gz
 
 ### Miscelaneous ###
 .Rproj.user
