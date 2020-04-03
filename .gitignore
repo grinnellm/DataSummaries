@@ -20,13 +20,7 @@
 *.bbl
 *.synctex.gz
 
-### Temporary (for this year) ###
-DataSummary.pdf
-DataSummaryJS.pdf
-ModelSummary*.pdf
-Document/
-
 ### Miscelaneous ###
 .Rproj.user
 Animations/
-
+Revision2981/
