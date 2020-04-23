@@ -3320,8 +3320,8 @@ if( region == "All" ) {
   # Write raw spawn data to a csv for the FIND app
   spawnRaw %>%
     select( Year, Region, StatArea, Section, LocationCode, LocationName,
-            SpawnNumber, Eastings, Northings, Longitude, Latitude, Method, SurfSI,
-            MacroSI, UnderSI, Survey ) %>%
+            SpawnNumber, Start, End, Eastings, Northings, Longitude, Latitude,
+            Method, SurfSI, MacroSI, UnderSI, Survey ) %>%
     arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
     write_csv( path=file.path(regName, "SpawnRaw.csv") )
   # Write the locations with spatial inconsistencies
