@@ -3321,7 +3321,7 @@ if( region == "All" ) {
   spawnRaw %>%
     select( Year, Region, StatArea, Section, LocationCode, LocationName,
             SpawnNumber, Start, End, Eastings, Northings, Longitude, Latitude,
-            Method, SurfSI, MacroSI, UnderSI, Survey ) %>%
+            Length, Width, Method, SurfSI, MacroSI, UnderSI, Survey ) %>%
     arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
     write_csv( path=file.path(regName, "SpawnRaw.csv") )
   # Write the locations with spatial inconsistencies
