@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm( list=ls( ) )      # Clear the workspace
+# rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -345,6 +345,14 @@ regions <- readr::read_csv(
 allRegions <- list(
   major = as.character(regions$Region[regions$Major]),
   minor = as.character(regions$Region[!regions$Major])
+)
+
+# Possible regions by type (long)
+allRegionsLong <- list(
+  major = paste0(regions$RegionName[regions$Major], " (",
+                 regions$Region[regions$Major], ")"),
+  minor = paste0(regions$RegionName[!regions$Major], " (",
+                 regions$Region[!regions$Major], ")")
 )
 
 # Load parameter values (for spawn index)
