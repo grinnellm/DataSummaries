@@ -2648,7 +2648,7 @@ spawnTypePropPlot <- ggplot(
   myTheme +
   theme( legend.position="top" ) +
   ggsave( filename=file.path(regName, "SpawnTypeProp.png"), width=figWidth,
-          height=figWidth*0.5, dpi=figRes )
+          height=figWidth*0.67, dpi=figRes )
 
 # Plot percent contribution by Section faceted by Stat Area or Group
 PlotPCSecSA <- function( dat ) {
