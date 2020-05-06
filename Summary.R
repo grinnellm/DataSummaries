@@ -1338,6 +1338,20 @@ spawnYrType <- spawnYr %>%
           Survey=factor(Survey, levels=c("Surface", "Dive"))) %>%
   arrange( Year, Survey, Type )
 
+# Wrangle spawn showing proportion by type
+spawnYrTypeProp <- spawnYrType %>%
+  replace_na(replace = list(SI=0)) %>%
+  mutate(Type2 = ifelse(Type=="Surface", "Surface", "Dive")) %>%
+  group_by( Year, Survey, Type2 ) %>%
+  summarise( SI=SumNA(SI) ) %>%
+  mutate( Prop=SI/SumNA(SI)) %>%
+  ungroup() %>%
+  rename(Type = Type2) %>%
+  mutate(
+    Type = factor(Type, levels = c("Surface", "Dive")),
+    Survey = factor(Survey, levels = c("Surface", "Dive"))
+    )
+
 # Smaller subset for table: spawn by year
 spawnYrTab <- spawnYr %>%
   filter( Year >= firstYrTab ) %>%
@@ -2621,6 +2635,20 @@ pctPlots <- plot_grid( spawnIndexPlot, spawnChangePlot, align="v", ncol=1,
                        rel_heights=c(2.1, 2.1) ) +
   ggsave( filename=file.path(regName, "SpawnIndexChange.png"), width=figWidth,
           height=figWidth, dpi=figRes )
+
+# Plot proportion of spawn from surface vs dive surveys
+spawnTypePropPlot <- ggplot(
+  data = spawnYrTypeProp, mapping = aes(x = Year, y = Prop, fill = Type)
+) + 
+  geom_bar(stat = "identity") +
+  geom_vline(xintercept = newSurvYr-0.5, linetype = "dashed") +
+  labs(y = "Proportion") +
+  scale_x_continuous( breaks=yrBreaks ) +
+  scale_fill_viridis_d() +
+  myTheme +
+  theme( legend.position="top" ) +
+  ggsave( filename=file.path(regName, "SpawnTypeProp.png"), width=figWidth,
+          height=figWidth*0.5, dpi=figRes )
 
 # Plot percent contribution by Section faceted by Stat Area or Group
 PlotPCSecSA <- function( dat ) {
