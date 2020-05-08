@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-# rm( list=ls( ) )      # Clear the workspace
+rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -99,7 +99,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "HG"
+if( !exists('region') )  region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1478,6 +1478,11 @@ siYearLoc <- spawnRaw %>%
              SITotal=SumNA(c(SurfSI, MacroSI, UnderSI)) ) %>%
   ungroup( ) %>%
   complete( Year=yrRange )
+
+# Length at age data
+lenAge <- bio %>%
+  filter(Year %in% c((max(yrRange)-4):max(yrRange))) %>%
+  select(Year, Length, Age)
 
 ##### Privacy #####
 
@@ -2888,6 +2893,15 @@ if( exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07") ) {
     ggsave( filename=file.path(regName, "SpawnLayersSASec.png"), 
             width=figWidth, height=figWidth, dpi=figRes )
 }  # End if spawn depth by year and statistical area
+
+# Plot length at age
+lengthAgePlot <- ggplot( data = lenAge, mapping = aes(x = Length)) +
+  geom_bar() +
+  labs(x = "Length (mm)", y = "Count") + 
+  facet_wrap(Age ~ ., ncol = 2, dir = "v", scales = "free_y") +
+  myTheme + 
+  ggsave(filename=file.path(regName, "LengthAge.png"), width=figWidth,
+         height=figWidth*0.67, dpi=figRes)
 
 # Show spawn index by locations by year
 PlotLocationsYear <- function( dat ) {
