@@ -2894,8 +2894,9 @@ if( exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07") ) {
             width=figWidth, height=figWidth, dpi=figRes )
 }  # End if spawn depth by year and statistical area
 
-# Plot length at age
-lengthAgePlot <- ggplot( data = lenAge, mapping = aes(x = Length)) +
+# Plot length at age if data
+if( nrow(lenAge)>0)
+  lengthAgePlot <- ggplot( data = lenAge, mapping = aes(x = Length)) +
   geom_bar() +
   labs(x = "Length (mm)", y = "Count") + 
   facet_wrap(Age ~ ., ncol = 2, dir = "v", scales = "free_y") +
