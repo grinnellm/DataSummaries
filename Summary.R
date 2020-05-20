@@ -2946,8 +2946,7 @@ PlotLocationsYear <- function( dat ) {
       labs( x=NULL, y=NULL ) +
       guides( shape=FALSE ) +
       theme_tufte( ) +
-      theme( plot.background=element_rect(fill=alpha("white", 0.5), 
-                                          size=0.1),
+      theme( plot.background=element_rect(fill=alpha("white", 0.5), size=0.1),
              plot.margin=unit(c(0.3, 0.6, 0.1, 0.1), "lines") )
     # Convert to a grob
     subGrob <- ggplotGrob( x=subPlot )
