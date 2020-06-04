@@ -99,7 +99,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "SoG"
+if( !exists('region') )  region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -737,6 +737,15 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
 # Load spawn data
 spawnRaw <- LoadSpawnData( whereSurf=surfLoc, whereMacro=macroLoc, 
                            whereUnder=underLoc, XY=transectXY )
+
+# # For Lynn Lee (HG and A2W)
+# spawnRaw %>% 
+#   filter( Year > 2015 ) %>% 
+#   select( Year, Region, StatArea, Section, LocationCode, LocationName,
+#           SpawnNumber, Length, Width, Start, End, Method, Survey, SurfLyrs,
+#           MacroLyrs, UnderLyrs, SurfSI, MacroSI, UnderSI ) %>%
+#   arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
+#   write_csv( path = paste(regName, "csv", sep=".") )
 
 # # For Kristen, CC spawn
 # spawnRaw %>% 
