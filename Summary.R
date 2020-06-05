@@ -99,7 +99,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "HG"
+if( !exists('region') )  region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -167,7 +167,7 @@ makeFrench <- FALSE
 ##### Parameters #####
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- 1951:2019
+yrRange <- 1951:2020
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
