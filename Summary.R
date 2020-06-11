@@ -99,7 +99,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "WCVI"
+if( !exists('region') )  region <- "A2W"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -167,7 +167,7 @@ makeFrench <- FALSE
 ##### Parameters #####
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- 1951:2020
+yrRange <- 1951:2019
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -738,14 +738,14 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
 spawnRaw <- LoadSpawnData( whereSurf=surfLoc, whereMacro=macroLoc, 
                            whereUnder=underLoc, XY=transectXY )
 
-# # For Lynn Lee (HG and A2W)
-# spawnRaw %>% 
-#   filter( Year > 2015 ) %>% 
-#   select( Year, Region, StatArea, Section, LocationCode, LocationName,
-#           SpawnNumber, Length, Width, Start, End, Method, Survey, SurfLyrs,
-#           MacroLyrs, UnderLyrs, SurfSI, MacroSI, UnderSI ) %>%
-#   arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
-#   write_csv( path = paste(regName, "csv", sep=".") )
+# For Lynn Lee (HG and A2W)
+spawnRaw %>%
+  # filter( Year > 2015 ) %>%
+  select( Year, Region, StatArea, Section, LocationCode, LocationName,
+          SpawnNumber, Longitude, Latitude, Length, Width, Start, End, Method,
+          Survey, SurfSI, MacroSI, UnderSI ) %>%
+  arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
+  write_csv( path = paste(regName, "csv", sep=".") )
 
 # # For Kristen, CC spawn
 # spawnRaw %>% 
