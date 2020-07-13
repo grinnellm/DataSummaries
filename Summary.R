@@ -99,7 +99,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "SoG"
+if( !exists('region') )  region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -738,14 +738,14 @@ LoadSpawnData <- function( whereSurf, whereMacro, whereUnder, XY ) {
 spawnRaw <- LoadSpawnData( whereSurf=surfLoc, whereMacro=macroLoc, 
                            whereUnder=underLoc, XY=transectXY )
 
-# For Lynn Lee (HG and A2W)
-spawnRaw %>%
-  # filter( Year > 2015 ) %>%
-  select( Year, Region, StatArea, Section, LocationCode, LocationName,
-          SpawnNumber, Longitude, Latitude, Length, Width, Start, End, Method,
-          Survey, SurfSI, MacroSI, UnderSI ) %>%
-  arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
-  write_csv( path = paste(regName, "csv", sep=".") )
+# # For Lynn Lee (HG and A2W)
+# spawnRaw %>%
+#   # filter( Year > 2015 ) %>%
+#   select( Year, Region, StatArea, Section, LocationCode, LocationName,
+#           SpawnNumber, Longitude, Latitude, Length, Width, Start, End, Method,
+#           Survey, SurfSI, MacroSI, UnderSI ) %>%
+#   arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
+#   write_csv( path = paste(regName, "csv", sep=".") )
 
 # # For Kristen, CC spawn
 # spawnRaw %>% 
@@ -1368,6 +1368,13 @@ spawnYrTypeProp <- spawnYrType %>%
     Type = factor(Type, levels = c("Surface", "Dive")),
     Survey = factor(Survey, levels = c("Surface", "Dive"))
     )
+
+# # Data for landmark
+# spawnYrTypeProp %>%
+#   select(Year, Type, SI) %>%
+#   filter(Year >= newSurvYr) %>%
+#   pivot_wider(names_from = Type, values_from = SI) %>%
+#   write_csv(path="Spawn.csv")
 
 # Smaller subset for table: spawn by year
 spawnYrTab <- spawnYr %>%
