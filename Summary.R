@@ -756,6 +756,24 @@ spawnRaw <- LoadSpawnData( whereSurf=surfLoc, whereMacro=macroLoc,
 #   arrange(Year, Region, StatArea, Section, LocationCode ) %>% 
 #   write_csv( path="SpawnCC.csv" )
 
+# HG 1972-2006 (D,G): roe seine (7,29), roe gillnet (7,19), test seine (8,29), 
+# and test gillnet (8,19)
+# dispGear <- catchRaw %>%
+#   filter(
+#     Year %in% 1972:2006, DisposalCode %in% c(7, 8), GearCode %in% c(19, 29)
+#   ) %>%
+#   mutate(
+#     Disposal = ifelse(DisposalCode == 7, "Roe", "Test"),
+#     Gear = ifelse(GearCode == 19, "Gillnet", "Seine")
+#   ) %>%
+#   group_by(Year, Disposal, Gear) %>%
+#   summarise(Catch = SumNA(Catch)) %>%
+#   ungroup() %>%
+#   expand( Year=1972:2006 ) %>%
+#   pivot_wider(names_from = c(Disposal, Gear), values_from = Catch, 
+#               values_fill=list(Catch=0)) %>%
+#   write_csv(path="DisposalGear.csv")
+
 # For comparing tweaks to the SpawnIndex script
 spawnSummary <- spawnRaw %>%
   group_by( Year ) %>%
