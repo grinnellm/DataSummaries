@@ -119,7 +119,7 @@ Sec003 <- c( 3 )
 # Select a subset of sections (or NA for all)
 sectionSub <- NA
 
-# Generate the annual spawn survey animation (this takes a few mins!)
+# Generate the annual spawn survey animation (takes 5--8 mins per SAR)
 makeAnimation <- FALSE
 
 # Include test fishery catch
