@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm( list=ls( ) )      # Clear the workspace
+# rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -167,7 +167,7 @@ makeFrench <- FALSE
 ##### Parameters #####
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- 1951:2019
+yrRange <- 1951:2020
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
