@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-# rm( list=ls( ) )      # Clear the workspace
+rm( list=ls( ) )      # Clear the workspace
 sTime <- Sys.time( )  # Start the timer
 graphics.off( )       # Turn graphics off
 
@@ -99,7 +99,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "HG"
+if( !exists('region') )  region <- "A2W"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -1749,11 +1749,13 @@ if( region == "WCVI" ) {
     complete( SampleSource2=unique(SampleSource2), Age=ageRange, 
               fill=list(Number=0, Proportion=0) ) %>%
     arrange( SampleSource2, Age )
-  # Get differences in number-at-age
-  deltaNumAgeYr <- npwAge %>%
-    select( Age, SampleSource2, Number ) %>%
-    spread( key=Age, value=Number ) %>%
-    rename( 'Sample type'=SampleSource2 )
+  # TODO: Uncomment this when biosample data are available for WCVI -- this
+  # should restore all the tables etc.
+  # # Get differences in number-at-age
+  # deltaNumAgeYr <- npwAge %>%
+  #   select( Age, SampleSource2, Number ) %>%
+  #   spread( key=Age, value=Number ) %>%
+  #   rename( 'Sample type'=SampleSource2 )
   # Get differences in proportion-at-age
   deltaPropAgeYr <- npwAge %>%
     select( Age, SampleSource2, Proportion ) %>%
