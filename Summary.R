@@ -99,7 +99,7 @@ UsePackages( pkgs=c("tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp",
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if( !exists('region') )  region <- "A2W"
+if( !exists('region') )  region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c( 173, 181, 182, 191:193 )
@@ -119,7 +119,8 @@ Sec003 <- c( 3 )
 # Select a subset of sections (or NA for all)
 sectionSub <- NA
 
-# Generate the annual spawn survey animation (takes 5--8 mins per SAR)
+# Generate the annual spawn survey animation (takes 5--8 mins per SAR) -- see
+# issue #3
 makeAnimation <- FALSE
 
 # Include test fishery catch
@@ -3004,7 +3005,8 @@ PlotLocationsYear <- function( dat ) {
   # Save a copy (for later, if desired)
   file.copy( from=file.path(regName, "SpawnIndexAnimation.pdf"),
              to=file.path("Animations", 
-                          paste("SpawnIndexAnimation", regName, "pdf", sep=".")),
+                          paste("SpawnIndexAnimation", regName, "pdf", 
+                                sep=".")),
              overwrite=TRUE )
 }  # End PlotLocationsYear
 
