@@ -103,7 +103,7 @@ UsePackages(pkgs = c(
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -2238,9 +2238,17 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
 
   # Write header for fishery flags
   write(x = "#\n##### Fishery flags #####", file = out, append = TRUE)
-  # Determine ratio of last x years of catch
+  # Determine first year of catch data to include
+  yrFirstCatch <- cADMB %>%
+    select(Year, Gear, Value) %>%
+    pivot_wider(names_from = Gear, values_from = Value) %>%
+    select(Year) %>%
+    top_n(n=20) %>%
+    pull(Year) %>%
+    min()
+  # Determine ratio of catch since first year
   cHist <- cADMB %>%
-    filter(Year >= max(yrRange) - (pADMB$General$HistoricCatch - 1)) %>%
+    filter(Year >= yrFirstCatch) %>%
     group_by(Gear) %>%
     summarise(Total = SumNA(Value)) %>%
     ungroup() %>%
@@ -2249,7 +2257,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     arrange(Gear)
   # Write fishery flags
   write(x = paste(paste(cHist$Proportion, collapse = "\t"),
-    "\t# TAC allocations (mean of last ", pADMB$General$HistoricCatch,
+    "\t# TAC allocations (mean of last ", pADMB$General$HistoricCatch, 
     " years)",
     sep = ""
   ), file = out, append = TRUE)
