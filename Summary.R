@@ -103,7 +103,7 @@ UsePackages(pkgs = c(
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1329,7 +1329,7 @@ CalcWeightAtAge <- function(dat) {
     arrange(Year)
   # Reshape from wide to long, and fill in NAs
   wtAgeL <- wtAgeW %>%
-    gather(key = Age, value = "Weight", ageRange, convert = TRUE) %>%
+    gather(key = Age, value = "Weight", all_of(ageRange), convert = TRUE) %>%
     group_by(Age) %>%
     # Replace NAs: mean of (up to) previous n years
     mutate(Weight = RollMeanNA(Weight, n = nRoll)) %>%
@@ -1378,7 +1378,7 @@ CalcLengthAtAge <- function(dat) {
     arrange(Year)
   # Reshape from wide to long, and fill in NAs
   lenAgeL <- lenAgeW %>%
-    gather(key = Age, value = "Length", ageRange, convert = TRUE) %>%
+    gather(key = Age, value = "Length", all_of(ageRange), convert = TRUE) %>%
     group_by(Age) %>%
     # Replace NAs: mean of (up to) previous n years
     mutate(Length = RollMeanNA(Length, n = nRoll)) %>%
@@ -1445,7 +1445,7 @@ bioLocations <- GetBioLocations(dat = bioRaw, spObj = shapes$regSPDF)
 # Calculate spawn summary by groups (e.g., year and section)
 CalcSpawnSummary <- function(dat, g) {
   # Calculate some basic yearly spawn statistics by section, and ensure that
-  # years are complete (i.e., missing years are populated with NA).
+  # years are complete (i.e., missing years are populated with NA)
   # Some wrangling
   spawnByYear <- dat %>%
     select(
@@ -1453,7 +1453,7 @@ CalcSpawnSummary <- function(dat, g) {
       MacroLyrs, UnderLyrs, MacroSI, SurfSI, UnderSI
     ) %>%
     mutate(Group = as.character(Group)) %>%
-    group_by_(.dots = g) %>%
+    group_by(.dots = g) %>%
     summarise(
       TotalLength = SumNA(Length),
       MeanWidth = MeanNA(Width),
@@ -1542,7 +1542,7 @@ spawnYrTypeProp <- spawnYrType %>%
 #   select(Year, Type, SI) %>%
 #   filter(Year >= newSurvYr) %>%
 #   pivot_wider(names_from = Type, values_from = SI) %>%
-#   write_csv(path="Spawn.csv")
+#   write_csv(path=paste(regName, sectionSub, "csv", sep="."))
 
 # Smaller subset for table: spawn by year
 spawnYrTab <- spawnYr %>%
@@ -1929,7 +1929,7 @@ if (region == "WCVI") {
   # Combine the grouped statistics with the total statistics
   npwAge <- bind_rows(npwAgeGrp, npwAgeTot) %>%
     complete(
-      SampleSource2 = unique(SampleSource2), Age = ageRange,
+      SampleSource2 = unique(SampleSource2), Age = all_of(ageRange),
       fill = list(Number = 0, Proportion = 0)
     ) %>%
     arrange(SampleSource2, Age)
@@ -1986,7 +1986,7 @@ if (region == "WCVI") {
     select(Year, Age, Number, Proportion, Weight, Length)
   # Combine totals with annual stats
   nearAll <- bind_rows(nearYearAge, nearAge) %>%
-    complete(Age = ageRange) %>%
+    complete(Age = all_of(ageRange)) %>%
     # filter( !is.na(Year) ) %>%
     arrange(Year, Age)
   # Nearshore number-at-age
