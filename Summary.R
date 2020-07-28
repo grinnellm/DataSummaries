@@ -124,7 +124,7 @@ Sec003 <- c(3)
 sectionSub <- NA
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
-makeAnimation <- TRUE
+makeAnimation <- FALSE
 
 # Include test fishery catch
 inclTestCatch <- TRUE
