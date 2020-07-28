@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm(list = ls()) # Clear the workspace
+# rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -97,13 +97,13 @@ UsePackages(pkgs = c(
   "maptools", "rgdal", "rgeos", "raster", "xtable", "cowplot",
   "grid", "colorRamps", "RColorBrewer", "stringr",
   "lubridate", "readxl", "plyr", "ggforce", "viridis",
-  "ggthemes", "SpawnIndex"
+  "ggthemes", "SpawnIndex", "tidyselect"
 ))
 
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -124,7 +124,7 @@ Sec003 <- c(3)
 sectionSub <- NA
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
-makeAnimation <- FALSE
+makeAnimation <- TRUE
 
 # Include test fishery catch
 inclTestCatch <- TRUE
@@ -1687,22 +1687,22 @@ lenAge <- bio %>%
 ##### Privacy #####
 
 # Load catch and harvest (i.e., SOK) privacy info
-LoadPrivacy <- function(where, spat) {
+LoadPrivacy <- function(where, a) {
   # Load the privacy data: region
   privRegion <- read_csv(
     file = file.path(where$loc, where$fn$Region),
     col_types = cols()
   ) %>%
-    filter(Region %in% areas$Region) %>%
+    filter(Region %in% a$Region) %>%
     mutate(Private = TRUE)
   # Null if there are no rows for region
   if (nrow(privRegion) == 0) privRegion <- NULL
   # Load the privacy data: stat area
   privStatArea <- read_csv(
-    file = file.path(where$loc, where$fn$StatArea),
-    col_types = cols()
+    file = file.path(where$loc, where$fn$StatArea), col_types = cols()
   ) %>%
-    filter(StatArea %in% areas$StatArea) %>%
+    mutate(StatArea = formatC(StatArea, width = 2, flag = "0")) %>%
+    filter(StatArea %in% a$StatArea) %>%
     mutate(Private = TRUE)
   # Null if there are no rows for stat area
   if (nrow(privStatArea) == 0) privStatArea <- NULL
@@ -1711,7 +1711,7 @@ LoadPrivacy <- function(where, spat) {
 } # End LoadPrivacy function
 
 # Load catch privacy data (if any)
-privDat <- LoadPrivacy(where = privLoc)
+privDat <- LoadPrivacy(where = privLoc, a = areas)
 
 # Apply privacy to catch data
 catchPriv <- privDat$region %>%
