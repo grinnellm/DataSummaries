@@ -103,7 +103,7 @@ UsePackages(pkgs = c(
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -122,7 +122,6 @@ Sec003 <- c(3)
 
 # Select a subset of sections (or NA for all)
 sectionSub <- NA
-mySec <- 12
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
@@ -851,8 +850,7 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
 spawnRaw <- LoadSpawnData(
   whereSurf = surfLoc, whereMacro = macroLoc,
   whereUnder = underLoc, XY = transectXY
-) %>% 
-  filter( Section == mySec )
+)
 
 # # For Lynn Lee (HG and A2W)
 # spawnRaw %>%
@@ -1539,12 +1537,12 @@ spawnYrTypeProp <- spawnYrType %>%
     Survey = factor(Survey, levels = c("Surface", "Dive"))
   )
 
-# Data for landmark
-spawnYrTypeProp %>%
-  select(Year, Type, SI) %>%
-  filter(Year >= newSurvYr) %>%
-  pivot_wider(names_from = Type, values_from = SI) %>%
-  write_csv(path=paste(regName, mySec, "csv", sep="."))
+# # Data for landmark
+# spawnYrTypeProp %>%
+#   select(Year, Type, SI) %>%
+#   filter(Year >= newSurvYr) %>%
+#   pivot_wider(names_from = Type, values_from = SI) %>%
+#   write_csv(path=paste(regName, sectionSub, "csv", sep="."))
 
 # Smaller subset for table: spawn by year
 spawnYrTab <- spawnYr %>%
