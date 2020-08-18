@@ -103,7 +103,7 @@ UsePackages(pkgs = c(
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "WCVI"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1492,23 +1492,17 @@ CalcSpawnSummary <- function(dat, g) {
   return(res)
 } # End CalcSpawnSummary function
 
+browser()
+mySecs <- c(024)
+
 # Calculate spawn summary by year
-spawnYr <- CalcSpawnSummary(dat = spawnRaw, g = c("Year")) %>%
+spawnYr <- CalcSpawnSummary(dat = filter(spawnRaw, Section %in% mySecs), g = c("Year")) %>%
   mutate(
     PctChange = DeltaPercent(TotalSI, type = "PctChange"),
     PctDiff = DeltaPercent(TotalSI, type = "PctDiff"),
     PctChange = ifelse(Year == newSurvYr, NA, PctChange),
     PctDiff = ifelse(Year == newSurvYr, NA, PctDiff)
   )
-
-# sYr <- spawnYr %>%
-#   filter( !is.na(TotalSI) ) %>%
-#   complete( Year=full_seq(Year, 1) ) %>%
-#   arrange( Year )
-# p <- ggplot( data=sYr, aes(x=Year, y=TotalSI) ) +
-#   geom_line( )  +
-#   labs(title=paste(range(sYr$Year), collapse=" - "), y="Spawn index (t)" ) +
-#   ggsave( filename=paste("SpawnIndex", regName, ".png", sep=""), dpi=figRes )
 
 # Wrangle spawn by type to long
 spawnYrType <- spawnYr %>%
@@ -1537,12 +1531,11 @@ spawnYrTypeProp <- spawnYrType %>%
     Survey = factor(Survey, levels = c("Surface", "Dive"))
   )
 
-# # Data for landmark
-# spawnYrTypeProp %>%
-#   select(Year, Type, SI) %>%
-#   filter(Year >= newSurvYr) %>%
-#   pivot_wider(names_from = Type, values_from = SI) %>%
-#   write_csv(path=paste(regName, sectionSub, "csv", sep="."))
+# Data for landmark
+spawnYrTypeProp %>%
+  select(Year, Type, SI) %>%
+  pivot_wider(names_from = Type, values_from = SI) %>%
+  write_csv(path=paste("Sec", paste(mySecs, collapse=""), ".csv", sep=""))
 
 # Smaller subset for table: spawn by year
 spawnYrTab <- spawnYr %>%
