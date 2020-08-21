@@ -103,7 +103,7 @@ UsePackages(pkgs = c(
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "WCVI"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1018,6 +1018,44 @@ UpdateCatchData <- function(dat, a) {
 
 # Update catch data
 catch <- UpdateCatchData(dat = catchRaw, a = areas)
+
+catch %>% 
+  filter(Section %in% c(011, 012, 022)) %>% 
+  select(Gear, Year, Region, StatArea, Section, Catch) %>% 
+  arrange(Gear, Year, Section) %>% 
+  write_csv(path = "Catch011012022.csv")
+tG <- tGear %>% select(GearCode, Gear)
+tD <- tDisposal %>% select(DisposalCode, DisposalLong)
+catchOut <- catchRaw %>%
+  filter(Section %in% c(011, 012, 022))
+# Period 1
+pd1a <- catchOut %>%
+  filter(Source == "Tab", DisposalCode %in% c(1, 3, 4, 5, 6)) %>%
+  left_join(y = tG, by="GearCode") %>%
+  left_join(y = tD, by="DisposalCode") %>%
+  mutate(Period = "Other")
+pd1b <- catchOut %>%
+  filter(Source == "Hail", DisposalCode %in% c(3, 6)) %>%
+  left_join(y = tG, by="GearCode") %>%
+  left_join(y = tD, by="DisposalCode") %>%
+  mutate(Period = "Other")
+# Period 2
+pd2 <- catchOut %>%
+  filter(Source == "Tab", GearCode == 29, DisposalCode %in% c(7, 8)) %>%
+  left_join(y = tG, by="GearCode") %>%
+  left_join(y = tD, by="DisposalCode") %>%
+  mutate(Period = "RoeSN")
+# Period 3
+pd3 <- catchOut %>%
+  filter(Source == "Tab", GearCode == 19, DisposalCode %in% c(7, 8)) %>%
+  left_join(y = tG, by="GearCode") %>%
+  left_join(y = tD, by="DisposalCode") %>%
+  mutate(Period = "RoeGN")
+# Combine the data frames
+dfList <- list(pd1a, pd1b, pd2, pd3)
+# Merge the tables and wrangle
+pd123 <- Reduce(function(...) merge(..., all = TRUE), dfList) %>%
+  write_csv(path = "CatchLong011012022.csv")
 
 # Update biological data (more wrangling)
 UpdateBioData <- function(dat, rYr) {
