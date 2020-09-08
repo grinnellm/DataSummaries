@@ -102,7 +102,7 @@ UsePackages(pkgs = c(
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "PRD"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -510,10 +510,13 @@ LoadCatchData <- function(where) {
   }
   # Wrangle catch
   tCatch <- tCatch %>%
-    mutate(Year = Season2Year(Season), Source = rep("Tab", times = n())) %>%
+    mutate(
+      Year = Season2Year(Season), Source = rep("Tab", times = n()), 
+      Date=date(Date)
+    ) %>%
     left_join(y = areas, by = "LocationCode") %>%
     filter(Section %in% areas$Section) %>%
-    group_by(Year, Source, Section, GearCode, DisposalCode) %>%
+    group_by(Year, Source, Section, GearCode, DisposalCode, Date) %>%
     summarise(Catch = SumNA(Catch)) %>%
     ungroup()
   # Access the hail worksheet
@@ -527,9 +530,9 @@ LoadCatchData <- function(where) {
     filter(Active == 1, Section %in% areas$Section) %>%
     mutate(
       Year = Season2Year(Season), Catch = CatchTons * convFac$st2t,
-      Source = rep("Hail", times = n())
+      Source = rep("Hail", times = n()), Date = NA
     ) %>%
-    group_by(Year, Source, Section, GearCode, DisposalCode) %>%
+    group_by(Year, Source, Section, GearCode, DisposalCode, Date) %>%
     summarise(Catch = SumNA(Catch)) %>%
     ungroup()
   # Access the sok worksheet
@@ -540,10 +543,12 @@ LoadCatchData <- function(where) {
   }
   # Wrangle sok
   sokCatch <- sokCatch %>%
-    mutate(Year = Season2Year(Season), Source = rep("SOK", times = n())) %>%
+    mutate(
+      Year = Season2Year(Season), Source = rep("SOK", times = n()), Date = NA
+    ) %>%
     rename(Catch = ProductLanded) %>%
     filter(Section %in% areas$Section) %>%
-    group_by(Year, Source, Section, GearCode, DisposalCode) %>%
+    group_by(Year, Source, Section, GearCode, DisposalCode, Date) %>%
     summarise(Catch = SumNA(Catch)) %>%
     ungroup()
   # Combine the three tables
@@ -556,9 +561,12 @@ LoadCatchData <- function(where) {
   res <- allCatch %>%
     left_join(y = areasSm, by = "Section") %>%
     select(
-      Year, Source, Region, StatArea, Section, GearCode, DisposalCode, Catch
+      Year, Source, Region, StatArea, Section, GearCode, DisposalCode, Date,
+      Catch
     ) %>%
-    arrange(Year, Source, Region, StatArea, Section, GearCode, DisposalCode)
+    arrange(
+      Year, Source, Region, StatArea, Section, GearCode, DisposalCode, Date
+    )
   # Warning if more recent data is available
   if (max(res$Year, na.rm = TRUE) > max(yrRange)) {
     warning("Recent catch data exists; update 'yrRange' to include ",
@@ -912,16 +920,16 @@ UpdateCatchData <- function(dat, a) {
     # Update tCatch for Period 1
     tc1 <- df %>%
       filter(Source == "Tab", DisposalCode %in% c(1, 3, 4, 5, 6)) %>%
-      select(Year, Catch)
+      select(Year, Catch, Date)
     # Update hCatch for Period 1
     hc1 <- df %>%
       filter(Source == "Hail", DisposalCode %in% c(3, 6)) %>%
-      select(Year, Catch)
+      select(Year, Catch, Date)
     # Combine catches for period 1
     dat1 <- bind_rows(tc1, hc1)
     # Period 1 catch
     pd1 <- dat1 %>%
-      group_by(Year) %>%
+      group_by(Year, Date) %>%
       summarise(Gear1 = SumNA(Catch)) %>%
       ungroup()
     # Updated tCatch for Period 2
@@ -937,7 +945,7 @@ UpdateCatchData <- function(dat, a) {
     } # End if exclude
     # Period 2 catch
     pd2 <- tc2 %>%
-      group_by(Year) %>%
+      group_by(Year, Date) %>%
       summarise(Gear2 = SumNA(Catch)) %>%
       ungroup()
     # Updated tCatch for Period 3
@@ -953,7 +961,7 @@ UpdateCatchData <- function(dat, a) {
     } # End if exclude
     # Period 3 catch
     pd3 <- tc3 %>%
-      group_by(Year) %>%
+      group_by(Year, Date) %>%
       summarise(Gear3 = SumNA(Catch)) %>%
       ungroup()
     # Combine the data frames
@@ -965,8 +973,8 @@ UpdateCatchData <- function(dat, a) {
     res <- pd123 %>%
       filter(Year %in% yrRange) %>%
       gather(key = Period, value = Catch, Gear1, Gear2, Gear3) %>%
-      arrange(Period, Year) %>%
-      select(Period, Year, Catch) %>%
+      arrange(Period, Year, Date) %>%
+      select(Period, Year, Date, Catch) %>%
       as_tibble()
     # Return catch by year and period
     return(res)
@@ -983,20 +991,20 @@ UpdateCatchData <- function(dat, a) {
     rList[[i]] <- catchRaw %>%
       filter(Section == iSec) %>%
       WrangleCatch() %>%
-      group_by(Period, Year) %>%
+      group_by(Period, Year, Date) %>%
       summarise(Catch = SumNA(Catch)) %>%
       ungroup() %>%
       # mutate( Catch=ifelse(Catch == 0, NA, Catch) ) %>%
       mutate(Section = iSec) %>%
       # filter( !is.na(Catch) )
       filter(Catch > 0) %>%
-      select(Period, Year, Section, Catch)
+      select(Period, Year, Date, Section, Catch)
   } # End i loop over sections
   # Combine the data frames and add gear types
   res <- bind_rows(rList) %>%
     left_join(y = areasSm, by = "Section") %>%
-    select(Period, Year, Region, StatArea, Group, Section, Catch) %>%
-    arrange(Period, Year, Region, StatArea, Group, Section) %>%
+    select(Period, Year, Region, StatArea, Group, Section, Date, Catch) %>%
+    arrange(Period, Year, Region, StatArea, Group, Section, Date) %>%
     left_join(y = tPeriod, by = "Period") %>%
     mutate(Gear = factor(Gear, levels = tPeriod$Gear))
   # Return the results
@@ -1005,6 +1013,21 @@ UpdateCatchData <- function(dat, a) {
 
 # Update catch data
 catch <- UpdateCatchData(dat = catchRaw, a = areas)
+
+catchDate <- catch %>%
+  mutate(YDay = yday(Date), Date = as.Date(YDay, origin="2020-01-01"))
+noDate <- catch %>%
+  filter(is.na(Date)) %>%
+  pull(Catch)%>%
+  sum() %>%
+  round()
+ggplot(data = catchDate, mapping = aes(x=Date, y=Catch)) +
+  geom_bar(stat = "identity", position = "stack", width = 1) +
+  scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+  facet_grid(Gear ~ ., scales = "free_y") +
+  labs(title = paste("Catch without date info:", noDate, "t")) +
+  ggsave(filename = paste("CatchDate", regName, "png", sep="."), height = 6,
+         width = 6)
 
 # Update biological data (more wrangling)
 UpdateBioData <- function(dat, rYr) {
