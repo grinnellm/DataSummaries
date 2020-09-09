@@ -85,8 +85,8 @@ UsePackages <- function(pkgs, locn = "https://cran.rstudio.com/") {
   for (i in 1:length(rPkgs)) {
     # Load required packages using 'library'
     eval(parse(text = paste("suppressPackageStartupMessages(library(", rPkgs[i],
-      "))",
-      sep = ""
+                            "))",
+                            sep = ""
     )))
   } # End i loop over package names
 } # End UsePackages function
@@ -401,8 +401,8 @@ data(underWidthFac)
 
 # Message re region
 cat("Region(s): ", paste(region, collapse = ", "), " (",
-  paste(range(yrRange), collapse = ":"), ")\n",
-  sep = ""
+    paste(range(yrRange), collapse = ":"), ")\n",
+    sep = ""
 )
 
 # Breaks for years
@@ -570,8 +570,8 @@ LoadCatchData <- function(where) {
   # Warning if more recent data is available
   if (max(res$Year, na.rm = TRUE) > max(yrRange)) {
     warning("Recent catch data exists; update 'yrRange' to include ",
-      paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse = ", "),
-      call. = FALSE
+            paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse = ", "),
+            call. = FALSE
     )
   }
   # Trim years outside the desired year range
@@ -708,8 +708,8 @@ LoadBioData <- function(where, XY) {
   # Message re missing X and Y, if any
   if (nrow(noXY) >= 1) {
     warning("There are ", nrow(noXY),
-      " biological sample location(s) with missing or incorrect spatial info",
-      call. = FALSE
+            " biological sample location(s) with missing or incorrect spatial info",
+            call. = FALSE
     )
   }
   # Stop if we're missing rows
@@ -717,8 +717,8 @@ LoadBioData <- function(where, XY) {
   # Warning if more recent data is available
   if (max(res$Year, na.rm = TRUE) > max(yrRange)) {
     warning("Recent biological data exists; update 'yrRange' to include ",
-      paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse = ", "),
-      call. = FALSE
+            paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse = ", "),
+            call. = FALSE
     )
   }
   # Trim years outside the desired year range
@@ -815,8 +815,8 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   # Message re missing X and Y, if any
   if (nrow(noXY) >= 1) {
     warning("There are ", nrow(noXY),
-      " spawn location(s) with missing or incorrect spatial info",
-      call. = FALSE
+            " spawn location(s) with missing or incorrect spatial info",
+            call. = FALSE
     )
   }
   # Stop if we're missing rows
@@ -824,8 +824,8 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   # Warning if more recent data is available
   if (max(res$Year, na.rm = TRUE) > max(yrRange)) {
     warning("Recent spawn data exists; update 'yrRange' to include ",
-      paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse = ", "),
-      call. = FALSE
+            paste(unique(res$Year[which(res$Year > max(yrRange))]), collapse = ", "),
+            call. = FALSE
     )
   }
   # Add a column to indicate the survey period
@@ -1014,20 +1014,35 @@ UpdateCatchData <- function(dat, a) {
 # Update catch data
 catch <- UpdateCatchData(dat = catchRaw, a = areas)
 
-catchDate <- catch %>%
-  mutate(YDay = yday(Date), Date = as.Date(YDay, origin="2020-01-01"))
-noDate <- catch %>%
-  filter(is.na(Date)) %>%
-  pull(Catch)%>%
-  sum() %>%
-  round()
-ggplot(data = catchDate, mapping = aes(x=Date, y=Catch)) +
-  geom_bar(stat = "identity", position = "stack", width = 1) +
-  scale_x_date(date_labels = "%b", date_breaks = "1 month") +
-  facet_grid(Gear ~ ., scales = "free_y") +
-  labs(title = paste("Catch without date info:", noDate, "t")) +
-  ggsave(filename = paste("CatchDate", regName, "png", sep="."), height = 6,
-         width = 6)
+# # For Landmark MSE
+# catchDate <- catch %>%
+#   mutate(YDay = yday(Date), Date = as.Date(YDay, origin="2020-01-01"))
+# noDate <- catch %>%
+#   filter(is.na(Date)) %>%
+#   group_by(Gear)%>%
+#   summarise(Catch=SumNA(Catch)) %>%
+#   ungroup() %>%
+#   mutate(
+#     Catch = format(Catch, big.mark = ",", digits = 0, scientific = FALSE)
+#   ) %>%
+#   filter(!is.na(Gear))
+# catchDatePlot <- ggplot(data = catchDate, mapping = aes(x=Date, y=Catch)) +
+#   geom_bar(stat = "identity", position = "stack", width = 1) +
+#   scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+#   scale_y_continuous(labels = comma) + 
+#   facet_grid(Gear ~ ., scales = "free_y") +
+#   labs(y = "Catch (t)", title = regName)
+# if (nrow(noDate) >= 1)
+#   catchDatePlot <- catchDatePlot + 
+#   geom_text(
+#     data = noDate %>%filter(!is.na(Gear)),
+#     mapping = aes(x = as.Date(180, origin="2020-01-01"), y = Inf, 
+#                   label = paste("Catch with no date info:", Catch, "t"),
+#                   vjust = 1)
+#   )
+# catchDatePlot <- catchDatePlot +
+#   ggsave(filename = paste("CatchDate", regName, "png", sep="."), height = 6,
+#          width = 6)
 
 # Update biological data (more wrangling)
 UpdateBioData <- function(dat, rYr) {
@@ -1076,9 +1091,9 @@ UpdateBioData <- function(dat, rYr) {
   p123 <- bind_rows(pd1, pd2, pd3)
   # Warning re representative samples
   warning("Biosamples: keep all samples from ", min(yrRange), " to ", rYr - 1,
-    ", and 'representative' samples from ", rYr, " to ", max(yrRange),
-    sep = "",
-    call. = FALSE
+          ", and 'representative' samples from ", rYr, " to ", max(yrRange),
+          sep = "",
+          call. = FALSE
   )
   # Include only representative samples (ish)
   res <- p123 %>%
@@ -1421,7 +1436,7 @@ GetBioLocations <- function(dat, spObj) {
   samp <- dat %>%
     filter(Year == max(yrRange), !is.na(Eastings), !is.na(Northings)) %>%
     mutate(Type = ifelse(SourceCode == 2, "Nearshore",
-      ifelse(SourceCode %in% c(3, 5), "Seine test", "Commercial")
+                         ifelse(SourceCode %in% c(3, 5), "Seine test", "Commercial")
     )) %>%
     group_by(Type, Eastings, Northings) %>%
     summarise(Number = n_distinct(Sample)) %>%
@@ -1749,7 +1764,7 @@ catchCommUseYr <- catchPriv %>%
   summarise(Catch = SumNA(Catch), Private = all(isTRUE(Private))) %>%
   ungroup() %>%
   mutate(Catch = ifelse(Private, "WP",
-    format(Catch, big.mark = ",", digits = 0, scientific = FALSE)
+                        format(Catch, big.mark = ",", digits = 0, scientific = FALSE)
   )) %>%
   select(Gear, Catch)
 
@@ -2175,7 +2190,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
   )
   # Start a connection (binary)
   out <- file(description = fName, open = "wb")
-
+  
   # Initialize the file and write the start of the main header
   write(x = paste(rep("#", times = 80), collapse = ""), file = out, append = FALSE)
   # Write the main title
@@ -2185,7 +2200,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
   )
   # Write the region(s)
   write(x = paste("# Region(s):\t", PasteNicely(unique(areas$RegionName)),
-    sep = ""
+                  sep = ""
   ), file = out, append = TRUE)
   # Write the subset of sections, if it applies
   if (!all(is.na(sectionSub))) {
@@ -2204,7 +2219,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
   write(
     x = paste(rep("#", times = 80), collapse = ""), file = out, append = TRUE
   )
-
+  
   # Write header for model dimensions
   write(x = "#\n##### Model dimensions #####", file = out, append = TRUE)
   # Get number of distinct gears
@@ -2248,7 +2263,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     x = paste(ngear, "\t# Number of gears (ngear)", sep = ""), file = out,
     append = TRUE
   )
-
+  
   # Write header for fishery flags
   write(x = "#\n##### Fishery flags #####", file = out, append = TRUE)
   # Determine first year of catch data to include
@@ -2270,14 +2285,14 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     arrange(Gear)
   # Write fishery flags
   write(x = paste(paste(cHist$Proportion, collapse = "\t"),
-    "\t# TAC allocations (mean of last ", pADMB$General$HistoricCatch,
-    " years)",
-    sep = ""
+                  "\t# TAC allocations (mean of last ", pADMB$General$HistoricCatch,
+                  " years)",
+                  sep = ""
   ), file = out, append = TRUE)
   # These are for testing only:
   # write( x=paste(paste(c(0.5, 0.3, 0.2, 0, 0), collapse="\t"),
   #         "\t# TAC allocations", sep=""), file=out, append=TRUE )
-
+  
   # Write header for age and population parameters
   write(
     x = "#\n##### Age and population parameters #####", file = out,
@@ -2287,11 +2302,11 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
   for (p in 1:length(pADMB$AgePopulation)) {
     # Write age and population parameters, and names
     write(x = paste(paste(pADMB$AgePopulation[[p]], collapse = ", "), "\t# ",
-      names(pADMB$AgePopulation)[p],
-      sep = ""
+                    names(pADMB$AgePopulation)[p],
+                    sep = ""
     ), file = out, append = TRUE)
   }
-
+  
   # Write header for delay-difference data
   write(
     x = "#\n##### Delay-difference parameters (not used) #####", file = out,
@@ -2301,11 +2316,11 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
   for (d in 1:length(pADMB$DelayDifference)) {
     # Write delay-difference parameters, and names
     write(x = paste(paste(pADMB$DelayDifference[[d]], collapse = ", "), "\t# ",
-      names(pADMB$DelayDifference)[d],
-      sep = ""
+                    names(pADMB$DelayDifference)[d],
+                    sep = ""
     ), file = out, append = TRUE)
   }
-
+  
   # Write header for catch data
   write(x = "#\n##### Catch (t*10^3) #####", file = out, append = TRUE)
   # Write catch information
@@ -2319,7 +2334,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     append = TRUE
   )
   write_delim(x = cADMB, path = out, delim = "\t", append = TRUE)
-
+  
   # Write header for spawn data
   write(x = "#\n##### Spawn (t*10^3) #####", file = out, append = TRUE)
   # Determine spawn dimensions
@@ -2333,12 +2348,12 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     file = out, append = TRUE
   )
   write(x = paste(paste(dimSpawn$Number, collapse = "\t"),
-    "\t# Number of years per survey",
-    sep = ""
+                  "\t# Number of years per survey",
+                  sep = ""
   ), file = out, append = TRUE)
   write(
     x = paste(paste(rep(pADMB$General$SurveyType, times = nrow(dimSpawn)),
-      collapse = "\t"
+                    collapse = "\t"
     ), "\t# Survey type (1=vuln. number, ",
     "2=vuln. biomass, 3=spawn biomass)",
     sep = ""
@@ -2350,7 +2365,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     append = TRUE
   )
   write_delim(x = sADMB, path = out, delim = "\t", append = TRUE)
-
+  
   # Write header for number-at-age data
   write(x = "#\n##### Number-at-age #####", file = out, append = TRUE)
   # Determine model aged dimensions
@@ -2364,30 +2379,30 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     file = out, append = TRUE
   )
   write(x = paste(paste(dimNumAged$Number, collapse = "\t"),
-    "\t# Number of years per gear",
-    sep = ""
+                  "\t# Number of years per gear",
+                  sep = ""
   ), file = out, append = TRUE)
   write(
     x = paste(paste(rep(min(ageRange), times = nrow(dimNumAged)),
-      collapse = "\t"
+                    collapse = "\t"
     ), "\t# Youngest age", sep = ""), file = out,
     append = TRUE
   )
   write(
     x = paste(paste(rep(max(ageRange), times = nrow(dimNumAged)),
-      collapse = "\t"
+                    collapse = "\t"
     ), "\t# Plus group", sep = ""), file = out,
     append = TRUE
   )
   write(
     x = paste(paste(rep(pADMB$General$SampleSize, times = nrow(dimNumAged)),
-      collapse = "\t"
+                    collapse = "\t"
     ), "\t# Effective sample size", sep = ""), file = out,
     append = TRUE
   )
   write(
     x = paste(paste(rep(pADMB$General$Composition, times = nrow(dimNumAged)),
-      collapse = "\t"
+                    collapse = "\t"
     ), "\t# Composition (1=age, 2=length)", sep = ""),
     file = out, append = TRUE
   )
@@ -2397,7 +2412,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     append = TRUE
   )
   write_delim(x = nADMB, path = out, delim = "\t", append = TRUE)
-
+  
   # Write header for weight-at-age data
   write(x = "#\n##### Weight-at-age (kg) #####", file = out, append = TRUE)
   # Write weight-at-age dimensions
@@ -2416,7 +2431,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     append = TRUE
   )
   write_delim(x = wADMB, path = out, delim = "\t", append = TRUE)
-
+  
   # Write header for annual mean weight data
   write(
     x = "#\n##### Annual mean weight (not used) #####", file = out,
@@ -2433,7 +2448,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     x = paste(0, "\t# Number of observations per table"), file = out,
     append = TRUE
   )
-
+  
   # Write header for end of data file
   write(
     x = "#\n##### Marker for end of data file #####", file = out,
@@ -2745,8 +2760,8 @@ numAgedPlot <- ggplot(data = numAgedYear, mapping = aes(x = Year, y = Number)) +
 
 # Arrange and save the proportion-at-age and number aged plots
 pnPlots <- plot_grid(propAgedPlot, numAgedPlot,
-  align = "v",
-  ncol = 1, rel_heights = c(1, 0.7)
+                     align = "v",
+                     ncol = 1, rel_heights = c(1, 0.7)
 ) +
   ggsave(
     filename = file.path(regName, "ProportionAged.png"), width = figWidth,
@@ -2856,11 +2871,11 @@ wtLenAgePlot <- ggplot(
   expand_limits(x = yrRange) +
   labs(y = NULL) +
   facet_wrap(Measure ~ .,
-    scales = "free_y", strip.position = "left",
-    labeller = as_labeller(c(
-      Weight = "Weight-at-age (g)",
-      Length = "Length-at-age (mm)"
-    )), nrow = 2
+             scales = "free_y", strip.position = "left",
+             labeller = as_labeller(c(
+               Weight = "Weight-at-age (g)",
+               Length = "Length-at-age (mm)"
+             )), nrow = 2
   ) +
   myTheme +
   theme(
@@ -3074,7 +3089,7 @@ spawnLayersPlot <- ggplot(
 
 # Arrange and save length, width, and layer plots
 plot_grid(spawnLengthPlot, spawnWidthPlot, spawnLayersPlot,
-  align = "v", ncol = 1, rel_heights = c(1.2, 1, 1.1)
+          align = "v", ncol = 1, rel_heights = c(1.2, 1, 1.1)
 ) +
   ggsave(
     filename = file.path(regName, "SpawnDimensions.png"), width = figWidth,
@@ -3189,9 +3204,9 @@ spawnChangePlot <- ggplot(
 
 # Arrange and save the index and proportion plots
 ipPlots <- plot_grid(spawnIndexPlot, spawnPercentSAStackPlot,
-  spawnPercentSecStackPlot,
-  align = "v", ncol = 1,
-  rel_heights = c(2.1, 2.5, 2.5)
+                     spawnPercentSecStackPlot,
+                     align = "v", ncol = 1,
+                     rel_heights = c(2.1, 2.5, 2.5)
 ) +
   ggsave(
     filename = file.path(regName, "SpawnIndexPercent.png"), width = figWidth,
@@ -3200,7 +3215,7 @@ ipPlots <- plot_grid(spawnIndexPlot, spawnPercentSAStackPlot,
 
 # Arrange and save the spawn index and percent change plots
 pctPlots <- plot_grid(spawnIndexPlot, spawnChangePlot,
-  align = "v", ncol = 1, rel_heights = c(2.1, 2.1)
+                      align = "v", ncol = 1, rel_heights = c(2.1, 2.1)
 ) +
   ggsave(
     filename = file.path(regName, "SpawnIndexChange.png"), width = figWidth,
@@ -3466,7 +3481,7 @@ if (exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07")) {
     theme(legend.position = "bottom")
   # Arrange and save the depth plots
   depthPlots <- plot_grid(spawnDepthSAPlot, spawnDepthSecPlot,
-    align = "v", ncol = 1, rel_heights = c(2, 2)
+                          align = "v", ncol = 1, rel_heights = c(2, 2)
   ) +
     ggsave(
       filename = file.path(regName, "SpawnDepthSASec.png"),
@@ -3510,7 +3525,7 @@ if (exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07")) {
     theme(legend.position = "bottom")
   # Arrange and save the depth plots
   layerPlots <- plot_grid(spawnLayersSAPlot, spawnLayersSecPlot,
-    align = "v", ncol = 1, rel_heights = c(2, 2)
+                          align = "v", ncol = 1, rel_heights = c(2, 2)
   ) +
     ggsave(
       filename = file.path(regName, "SpawnLayersSASec.png"),
@@ -3566,7 +3581,7 @@ PlotLocationsYear <- function(dat) {
     # The plot
     layersPlot <- MapGIF +
       facet_wrap_paginate(~Year,
-        ncol = 1, nrow = 1, page = i, labeller = label_both
+                          ncol = 1, nrow = 1, page = i, labeller = label_both
       ) +
       geom_point(data = dat, aes(colour = SITotal), size = 4, alpha = 0.75) +
       scale_colour_viridis(labels = comma) +
@@ -3613,7 +3628,7 @@ PlotLocationsYear <- function(dat) {
     to = file.path(
       "Animations",
       paste("SpawnIndexAnimation", regName, "pdf",
-        sep = "."
+            sep = "."
       )
     ),
     overwrite = TRUE
@@ -3735,8 +3750,8 @@ print(
 
 # Number-, proportion-, weight- and length-at-age
 if (exists("deltaNumAgeYr") & exists("deltaPropAgeYr") &
-  exists("deltaWtAgeYr") & exists("deltaLenAgeYr") & exists("nearNum") &
-  exists("nearProp") & exists("nearWt") & exists("nearLen")) {
+    exists("deltaWtAgeYr") & exists("deltaLenAgeYr") & exists("nearNum") &
+    exists("nearProp") & exists("nearWt") & exists("nearLen")) {
   # Format number-at-age
   xDeltaNumAgeYr <- deltaNumAgeYr %>%
     xtable(digits = c(0, 0, rep(0, times = length(ageRange))))
@@ -3844,8 +3859,8 @@ if (exists("weightAgeGroupN")) {
 xSpawnYrTab <- spawnYrTab %>%
   mutate(
     TotalLength = format(TotalLength,
-      big.mark = ",", digits = 0,
-      scientific = FALSE
+                         big.mark = ",", digits = 0,
+                         scientific = FALSE
     ),
     MeanWidth = format(MeanWidth, big.mark = ",", digits = 0),
     MeanLayers = format(MeanLayers, big.mark = ",", digits = 1),
@@ -4014,8 +4029,8 @@ if (region == "CC") {
 
 # If number-, proportion-, weight-, and length-at-age: set the toggle to true
 if (exists("deltaNumAgeYr") & exists("deltaPropAgeYr") & exists("deltaWtAgeYr")
-& exists("deltaLenAgeYr") & exists("nearNum") & exists("nearProp") &
-  exists("nearWt") & exists("nearLen")) {
+    & exists("deltaLenAgeYr") & exists("nearNum") & exists("nearProp") &
+    exists("nearWt") & exists("nearLen")) {
   tfNumPropWtAge <- "\\toggletrue{numPropWtAge}"
 }
 
@@ -4068,7 +4083,7 @@ qYrs <- list(
 
 # Justification for age tables
 ageTableAlign <- paste(c("{l", rep("r", times = length(ageRange)), "}"),
-  collapse = ""
+                       collapse = ""
 )
 
 ##### Tables #####
@@ -4173,7 +4188,7 @@ write_csv(
 write_csv(
   x = propSpawn,
   path = file.path(regName, paste("prop-spawn-", tolower(regName), ".csv",
-    sep = ""
+                                  sep = ""
   ))
 )
 
@@ -4181,7 +4196,7 @@ write_csv(
 write_csv(
   x = allHarvSOK,
   path = file.path(regName, paste("harvest-sok-", tolower(regName), ".csv",
-    sep = ""
+                                  sep = ""
   ))
 )
 
