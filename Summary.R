@@ -102,7 +102,7 @@ UsePackages(pkgs = c(
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "PRD"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1952,13 +1952,11 @@ if (region == "WCVI") {
       fill = list(Number = 0, Proportion = 0)
     ) %>%
     arrange(SampleSource2, Age)
-  # TODO: Uncomment this when biosample data are available for WCVI -- this
-  # should restore all the tables etc.
-  # # Get differences in number-at-age
-  # deltaNumAgeYr <- npwAge %>%
-  #   select( Age, SampleSource2, Number ) %>%
-  #   spread( key=Age, value=Number ) %>%
-  #   rename( 'Sample type'=SampleSource2 )
+  # Get differences in number-at-age
+  deltaNumAgeYr <- npwAge %>%
+    select( Age, SampleSource2, Number ) %>%
+    spread( key=Age, value=Number ) %>%
+    rename( 'Sample type'=SampleSource2 )
   # Get differences in proportion-at-age
   deltaPropAgeYr <- npwAge %>%
     select(Age, SampleSource2, Proportion) %>%
