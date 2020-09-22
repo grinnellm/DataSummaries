@@ -3193,16 +3193,16 @@ spawnPercentSecStackPlot <- ggplot(
 #   filter(Section %in% secCC, !is.na(Survey)) %>%
 #   left_join( y=qVals, by="Survey") %>%
 #   mutate(
-#     Biomass = TotalSI/q, 
+#     Biomass = TotalSI/q,
 #     Survey = factor(Survey, levels = c("Surface", "Dive"))
 #   ) %>%
 #   select(Year, Section, Survey, TotalSI, q, Biomass)
 # sectionsCCPlot <- ggplot(
-#   data = spawnYrSecCC, mapping = aes(x=Year, y=TotalSI)
+#   data = spawnYrSecCC, mapping = aes(x=Year, y=Biomass)
 # ) +
 #   geom_point(mapping = aes(shape = Survey), size = 1) +
 #   geom_line(mapping = aes(group = Survey), size = 0.5) +
-#   labs(y = expression(paste("Spawn index (t" %*% 10^3, ")", sep = ""))) +
+#   labs(y = expression(paste("Biomass (t" %*% 10^3, ")", sep = ""))) +
 #   scale_x_continuous(breaks = yrBreaks) +
 #   scale_y_continuous(labels = function(x) comma(x / 1000)) +
 #   expand_limits(x = c(firstYrFig - 0.5, max(yrRange) + 0.5), y = 0) +
