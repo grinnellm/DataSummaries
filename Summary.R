@@ -3017,9 +3017,9 @@ spawnTimingPlot <- ggplot(data = spawnRaw, mapping = aes(x = StartDOY)) +
   coord_cartesian(xlim = c(1, 182)) +
   {
     if (spawnTimingGroup) {
-      facet_grid(Decade ~ Group, labeller = label_both)
+      facet_grid(Decade ~ Group)
     } else {
-      facet_grid(Decade ~ StatArea, labeller = label_both)
+      facet_grid(Decade ~ StatArea)
     }
   } +
   myTheme +
@@ -3185,6 +3185,27 @@ spawnPercentSecStackPlot <- ggplot(
   ) +
   myTheme +
   theme(legend.position = "top")
+
+# # For Brigitte
+# spawnYrSec07 <- spawnYrSec %>%
+#   filter(StatArea == "07", !Section %in% c("070", "079"), !is.na(Survey)) %>%
+#   select(Year, Section, Survey, TotalSI)
+# statArea07Plot <- ggplot(
+#   data = spawnYrSec07, mapping = aes(x=Year, y=TotalSI)
+# ) +
+#   geom_point(mapping = aes(shape = Survey), size = 1) +
+#   geom_line(mapping = aes(group = Survey), size = 0.5) +
+#   labs(y = expression(paste("Spawn index (t" %*% 10^3, ")", sep = ""))) +
+#   scale_x_continuous(breaks = yrBreaks) +
+#   scale_y_continuous(labels = function(x) comma(x / 1000)) +
+#   expand_limits(x = c(firstYrFig - 0.5, max(yrRange) + 0.5), y = 0) +
+#   facet_wrap(~ Section, labeller = label_both, scales = "free_y") +
+#   myTheme +
+#   theme(
+#     legend.position = "top",
+#     axis.text.x = element_text(angle = 45, hjust = 1)) + 
+#   ggsave(filename = "StatArea07.png", width = figWidth, height = figWidth*0.67,
+#          dpi = figRes)
 
 # Plot percent change in spawn by year
 spawnChangePlot <- ggplot(
