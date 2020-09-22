@@ -3187,11 +3187,18 @@ spawnPercentSecStackPlot <- ggplot(
   theme(legend.position = "top")
 
 # # For Brigitte
-# spawnYrSec07 <- spawnYrSec %>%
-#   filter(StatArea == "07", !Section %in% c("070", "079"), !is.na(Survey)) %>%
-#   select(Year, Section, Survey, TotalSI)
-# statArea07Plot <- ggplot(
-#   data = spawnYrSec07, mapping = aes(x=Year, y=TotalSI)
+# secCC <- formatC(x = c(72:78, 86), width = 3, format = "d", flag = "0")
+# qVals <- tibble(Survey = c("Surface", "Dive"), q = c(0.328, 0.999))
+# spawnYrSecCC <- spawnYrSec %>%
+#   filter(Section %in% secCC, !is.na(Survey)) %>%
+#   left_join( y=qVals, by="Survey") %>%
+#   mutate(
+#     Biomass = TotalSI/q, 
+#     Survey = factor(Survey, levels = c("Surface", "Dive"))
+#   ) %>%
+#   select(Year, Section, Survey, TotalSI, q, Biomass)
+# sectionsCCPlot <- ggplot(
+#   data = spawnYrSecCC, mapping = aes(x=Year, y=TotalSI)
 # ) +
 #   geom_point(mapping = aes(shape = Survey), size = 1) +
 #   geom_line(mapping = aes(group = Survey), size = 0.5) +
@@ -3203,9 +3210,11 @@ spawnPercentSecStackPlot <- ggplot(
 #   myTheme +
 #   theme(
 #     legend.position = "top",
-#     axis.text.x = element_text(angle = 45, hjust = 1)) + 
-#   ggsave(filename = "StatArea07.png", width = figWidth, height = figWidth*0.67,
-#          dpi = figRes)
+#     axis.text.x = element_text(angle = 45, hjust = 1)) +
+#   ggsave(
+#     filename = "SectionsCC.png", width = figWidth, height = figWidth*0.67,
+#          dpi = figRes
+#   )
 
 # Plot percent change in spawn by year
 spawnChangePlot <- ggplot(
