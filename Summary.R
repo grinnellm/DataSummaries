@@ -3187,8 +3187,8 @@ spawnPercentSecStackPlot <- ggplot(
   theme(legend.position = "top")
 
 # # For Brigitte
-# secCC <- formatC(x = c(72:78, 86), width = 3, format = "d", flag = "0")
-# qVals <- tibble(Survey = c("Surface", "Dive"), q = c(0.328, 0.999))
+# secCC <- formatC(x = c(67, 72:78, 86), width = 3, format = "d", flag = "0")
+# qVals <- tibble(Survey = c("Surface", "Dive"), q = c(0.326, 0.999))
 # spawnYrSecCC <- spawnYrSec %>%
 #   filter(Section %in% secCC, !is.na(Survey)) %>%
 #   left_join( y=qVals, by="Survey") %>%
@@ -3202,7 +3202,7 @@ spawnPercentSecStackPlot <- ggplot(
 # ) +
 #   geom_point(mapping = aes(shape = Survey), size = 1) +
 #   geom_line(mapping = aes(group = Survey), size = 0.5) +
-#   labs(y = expression(paste("Biomass (t" %*% 10^3, ")", sep = ""))) +
+#   labs(y = expression(paste("Scaled abundance (t" %*% 10^3, ")", sep = ""))) +
 #   scale_x_continuous(breaks = yrBreaks) +
 #   scale_y_continuous(labels = function(x) comma(x / 1000)) +
 #   expand_limits(x = c(firstYrFig - 0.5, max(yrRange) + 0.5), y = 0) +
