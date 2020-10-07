@@ -220,6 +220,9 @@ parsADMB <- list(
   )
 )
 
+# Last year of the reduction fishery
+lastRedYr <- 1970
+
 # Spawn survey method changed from surface (1951--1987) to dive (1988--present)
 newSurvYr <- 1988
 
