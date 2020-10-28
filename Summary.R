@@ -118,6 +118,7 @@ Sec021025 <- c(21, 25)
 Sec023024 <- c(23, 24)
 Sec002 <- c(2)
 Sec003 <- c(3)
+outHG <- c(11, 12, 22)
 
 # Select a subset of sections (or NA for all)
 sectionSub <- NA
