@@ -99,10 +99,13 @@ UsePackages(pkgs = c(
   "SpawnIndex", "tidyselect"
 ))
 
+# Suppress summarise info
+options(dplyr.summarise.inform = FALSE)
+
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -534,7 +537,7 @@ LoadCatchData <- function(where) {
     filter(Active == 1, Section %in% areas$Section) %>%
     mutate(
       Year = Season2Year(Season), Catch = CatchTons * convFac$st2t,
-      Source = rep("Hail", times = n()), Date = NA
+      Source = rep("Hail", times = n()), Date = as.Date(NA)
     ) %>%
     group_by(Year, Source, Section, GearCode, DisposalCode, Date) %>%
     summarise(Catch = SumNA(Catch)) %>%
@@ -548,7 +551,8 @@ LoadCatchData <- function(where) {
   # Wrangle sok
   sokCatch <- sokCatch %>%
     mutate(
-      Year = Season2Year(Season), Source = rep("SOK", times = n()), Date = NA
+      Year = Season2Year(Season), Source = rep("SOK", times = n()), 
+      Date = as.Date(NA)
     ) %>%
     rename(Catch = ProductLanded) %>%
     filter(Section %in% areas$Section) %>%
@@ -2940,7 +2944,6 @@ if (exists("weightAgeGroup")) {
     labs(y = "Weight (g)") +
     scale_x_continuous(breaks = pretty_breaks()) +
     scale_fill_viridis(discrete = TRUE, alpha = 0.5) +
-    expand_limits(y = 0) +
     facet_grid(. ~ Decade, labeller = label_both) +
     myTheme +
     theme(legend.position = "top") +
