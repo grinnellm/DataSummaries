@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1297,6 +1297,31 @@ numAgedYear <- bio %>%
   mutate(Proportion = Number / SumNA(Number)) %>%
   ungroup() %>%
   arrange(Year, Age)
+
+# # Cleary Jan 11
+# yrs <- (max(yrRange)-4) : max(yrRange)
+# 
+# npaJC <- bio %>%
+#   filter(GearCode %in% c(19, 29), SourceCode == 0, Year %in% yrs) %>%
+#   left_join(y = tGear, by="GearCode") %>%
+#   select(Gear, Age, SampWt) %>%
+#   na.omit() %>%
+#   group_by(Gear, Age) %>%
+#   summarise(Number = SumNA(SampWt)) %>%
+#   mutate(Proportion = Number / SumNA(Number)) %>%
+#   ungroup() %>%
+#   arrange(Age) %>%
+#   write_csv(file = paste0("PropAgeSoGRoe", min(yrs), ".csv"))
+# 
+# p <- ggplot(data=npaJC, mapping = aes(x = Age, y = Proportion, fill = Gear)) +
+#   geom_col(position = position_dodge()) +
+#   scale_fill_viridis_d() +
+#   scale_x_continuous(breaks = ageRange, labels = ageRange) +
+#   labs(title = paste0("Roe catch (", paste(unique(range(yrs)), collapse = " to "),
+#                       ")")) +
+#   theme(legend.position = "top") +
+#   ggsave(filename = paste0("PropAgeSoGRoe", min(yrs), ".png"),
+#          width = 6, height = 4)
 
 # Reshape and format proportion-at-age
 FormatPropAtAge <- function(dat) {
