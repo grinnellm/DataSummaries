@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "PRD"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -121,6 +121,7 @@ Sec021025 <- c(21, 25)
 Sec023024 <- c(23, 24)
 Sec002 <- c(2)
 Sec003 <- c(3)
+Sec002003 <- c(2, 3)
 OutHG <- c(11, 12, 22)
 Broughton <- c(111, 112, 121:127)
 
@@ -1136,6 +1137,13 @@ overBio <- CheckSpatialOverlay(
 
 ##### Main #####
 
+# WCVI data
+# catch %>% 
+#   group_by(Year, Gear) %>% 
+#   summarise(Catch = sum(Catch)) %>% 
+#   ungroup() %>% 
+#   write_csv(file = paste0("Catch", regName, ".csv"))
+
 # Calculate commercial catch in current year
 catchCommUseYr <- catch %>%
   complete(Year = yrRange, Gear, fill = list(Catch = 0)) %>%
@@ -1158,6 +1166,11 @@ harvestSOK <- catchRaw %>%
 # Table that doesn't get pruned for privacy, recent years, etc (for the res doc)
 allHarvSOK <- harvestSOK %>%
   mutate(Region = regName, Harvest = Harvest * convFac$lb2kg)
+
+# WCVI data
+# allHarvSOK %>%
+#   select(Year, Harvest) %>% 
+#   write_csv(file = paste0("SOK", regName, ".csv"))
 
 # Count the number of biological samples per year
 CountBiosamplesYear <- function(dat) {
@@ -3145,10 +3158,18 @@ spawnIndexTypePlot <- ggplot(
     height = figWidth * 1.15, dpi = figRes
   )
 
+# HG rebuilding
+# mu8292 <- spawnYr %>%
+#   filter( Year %in% c(1982:1992)) %>%
+#   pull(TotalSI) %>%
+#   mean()
+
 # Plot total spawn index by year
 spawnIndexPlot <- ggplot(data = spawnYr, mapping = aes(x = Year, y = TotalSI)) +
   geom_point(mapping = aes(shape = Survey)) +
   geom_line(mapping = aes(group = Survey)) +
+  # geom_hline(yintercept = mu8292) +
+  # geom_hline(yintercept = 0.5 * mu8292) +
   #    geom_smooth( method=smLine, colour="black", level=ciLevel ) +
   labs(
     x = NULL, y = expression(paste("Spawn index (t" %*% 10^3, ")", sep = ""))
@@ -3156,7 +3177,7 @@ spawnIndexPlot <- ggplot(data = spawnYr, mapping = aes(x = Year, y = TotalSI)) +
   scale_x_continuous(breaks = yrBreaks) +
   scale_y_continuous(labels = function(x) comma(x / 1000)) +
   #    guides( shape=FALSE ) +
-  expand_limits(x = c(firstYrFig - 0.5, max(yrRange) + 0.5), y = 0) +
+  expand_limits(x = c(min(yrRange) - 0.5, max(yrRange) + 0.5), y = 0) +
   annotate(
     geom = "text", x = -Inf, y = Inf, label = "(a)", vjust = 1.3, hjust = -0.1
   ) +
@@ -3173,7 +3194,7 @@ if (exists("spawnYrGrp")) {
     labs(x = NULL, y = "Spawn index (%)", fill = "Group") +
     scale_x_continuous(breaks = yrBreaks) +
     scale_y_continuous(labels = comma) +
-    expand_limits(x = c(firstYrFig, max(yrRange))) +
+    expand_limits(x = c(min(yrRange) - 0.5, max(yrRange) + 0.5), y = 0) +
     scale_fill_viridis(discrete = TRUE) +
     annotate(
       geom = "text", x = -Inf, y = Inf, label = "(b)", vjust = 1.3, hjust = -0.1
@@ -3189,7 +3210,7 @@ if (exists("spawnYrGrp")) {
     labs(x = NULL, y = "Spawn index (%)", fill = "SA") +
     scale_x_continuous(breaks = yrBreaks) +
     scale_y_continuous(labels = comma) +
-    expand_limits(x = c(firstYrFig, max(yrRange))) +
+    expand_limits(x = c(min(yrRange) - 0.5, max(yrRange) + 0.5), y = 0) +
     scale_fill_viridis(discrete = TRUE) +
     annotate(
       geom = "text", x = -Inf, y = Inf, label = "(b)", vjust = 1.3, hjust = -0.1
@@ -3209,7 +3230,7 @@ spawnPercentSecStackPlot <- ggplot(
   labs(y = "Spawn index (%)") +
   scale_x_continuous(breaks = yrBreaks) +
   scale_y_continuous(labels = comma) +
-  expand_limits(x = c(firstYrFig, max(yrRange))) +
+  expand_limits(x = c(min(yrRange) - 0.5, max(yrRange) + 0.5), y = 0) +
   scale_fill_viridis(
     guide = guide_legend(nrow = ceiling(nSecCol / 8)), discrete = TRUE
   ) +
@@ -3259,6 +3280,7 @@ spawnChangePlot <- ggplot(
   ) +
   scale_fill_viridis(discrete = TRUE) +
   scale_x_continuous(breaks = yrBreaks) +
+  expand_limits(x = c(min(yrRange) - 0.5, max(yrRange) + 0.5), y = 0) +
   labs(y = "Percent change (%)") +
   guides(fill = FALSE) +
   myTheme
