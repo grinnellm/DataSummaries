@@ -127,7 +127,7 @@ Broughton <- c(111, 112, 121:127)
 Area13 <- c(131:136)
 
 # Select a subset of sections (or NA for all)
-sectionSub <- NA
+sectionSub <- AllHG
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
@@ -496,6 +496,13 @@ tPeriod <- read_csv(
 
 # Load herring areas
 areas <- LoadAreaData(where = areaLoc, reg = region, secSub = sectionSub)
+
+# areas$Group[areas$Section %in% c(6, 21, 23:25)] <- "Area 2 East"
+# areas$Group[areas$Section %in% c(1:5)] <- "Area 2 West"
+# areas$Group[areas$Section %in% c(11)] <- "Masset"
+# areas$Group[areas$Section %in% c(12)] <- "Naden"
+# areas$Group[areas$Section %in% c(22)] <- "Skidegate"
+# areas$Group[areas$Section %in% c(0)] <- "None"
 
 # Get BC land data etc (for plots)
 shapes <- LoadShapefiles(where = shapesLoc, a = areas)
@@ -2622,7 +2629,7 @@ RegionMap <- BaseMap +
     colour = "black", linetype = "dotted"
   ) +
   {
-    if (!is.null(shapes$grpDF) & region %in% c("CC", "SoG")) {
+    if (!is.null(shapes$grpDF) & region %in% c("CC", "SoG")) { # , "All"
       geom_polygon(
         data = shapes$grpDF, mapping = aes(group = id, fill = id), alpha = 0.25
       )
