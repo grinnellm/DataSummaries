@@ -127,7 +127,7 @@ Broughton <- c(111, 112, 121:127)
 Area13 <- c(131:136)
 
 # Select a subset of sections (or NA for all)
-sectionSub <- AllHG
+sectionSub <- OutHG
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
@@ -1256,7 +1256,7 @@ GetSampleNumType <- function(dat) {
     # Ensure there are 3 columns
     if (ncol(res) != 4) warning("Result must have 4 columns", call. = FALSE)
     # Add a dummy row
-    res[1, ] <- c(NA, NA, NA, as.integer(0))
+    res[1, ] <- list(NA, NA, NA, as.integer(0))
   } # End if there are no rows
   # Warning if number of biosamples don't match
   if (bioNum$Total[bioNum$Year == max(yrRange)] != sum(res$Number)) {
@@ -1389,11 +1389,11 @@ CalcWeightAtAge <- function(dat) {
     group_by(Year, Age) %>%
     summarise(MeanWeight = WtMeanNA(x = Weight, w = SampWt)) %>%
     ungroup() %>%
+    complete(Year = yrRange, Age = ageRange) %>%
     arrange(Year, Age)
   # Reshape from long to wide and merge with complete year sequence
   wtAgeW <- wtAge %>%
     spread(key = Age, value = MeanWeight) %>%
-    complete(Year = yrRange) %>%
     arrange(Year)
   # Reshape from wide to long, and fill in NAs
   wtAgeL <- wtAgeW %>%
@@ -1438,11 +1438,11 @@ CalcLengthAtAge <- function(dat) {
     group_by(Year, Age) %>%
     summarise(MeanLength = WtMeanNA(x = Length, w = SampWt)) %>%
     ungroup() %>%
+    complete(Year = yrRange, Age = ageRange) %>%
     arrange(Year, Age)
   # Reshape from long to wide and merge with complete year sequence
   lenAgeW <- lenAge %>%
     spread(key = Age, value = MeanLength) %>%
-    complete(Year = yrRange) %>%
     arrange(Year)
   # Reshape from wide to long, and fill in NAs
   lenAgeL <- lenAgeW %>%
@@ -1762,8 +1762,6 @@ LoadPrivacy <- function(where, a) {
   ) %>%
     filter(Region %in% a$Region) %>%
     mutate(Private = TRUE)
-  # Null if there are no rows for region
-  if (nrow(privRegion) == 0) privRegion <- NULL
   # Load the privacy data: stat area
   privStatArea <- read_csv(
     file = file.path(where$loc, where$fn$StatArea), col_types = cols()
@@ -1771,8 +1769,6 @@ LoadPrivacy <- function(where, a) {
     mutate(StatArea = formatC(StatArea, width = 2, flag = "0")) %>%
     filter(StatArea %in% a$StatArea) %>%
     mutate(Private = TRUE)
-  # Null if there are no rows for stat area
-  if (nrow(privStatArea) == 0) privStatArea <- NULL
   # Return the data
   return(privDat = list(region = privRegion, statArea = privStatArea))
 } # End LoadPrivacy function
