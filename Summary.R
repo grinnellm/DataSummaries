@@ -2656,14 +2656,6 @@ RegionMap <- BaseMap +
   #     ) +
   # }
   # } +
-  # {
-  # if (nrow(shapes$saCentDF) >= 1) {
-  #   geom_label(
-  #     data = shapes$saCentDF, alpha = 0.25,
-  #     mapping = aes(label = paste("SA", StatArea, sep = " "))
-  #   )
-  # }
-  # } +
   scale_fill_viridis(discrete = TRUE) +
   labs(fill = "Group") +
   theme(legend.position = c(0.01, 0.01), legend.justification = c(0, 0)) +
