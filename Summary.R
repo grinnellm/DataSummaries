@@ -96,7 +96,7 @@ UsePackages(pkgs = c(
   "tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp", "maptools", "rgdal",
   "rgeos", "raster", "xtable", "cowplot", "grid", "colorRamps", "RColorBrewer",
   "stringr", "lubridate", "readxl", "plyr", "ggforce", "viridis", "ggthemes",
-  "SpawnIndex", "tidyselect"
+  "SpawnIndex", "tidyselect", "ggrepel"
 ))
 
 # Suppress summarise info
@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -126,8 +126,8 @@ OutHG <- c(11, 12, 22)
 Broughton <- c(111, 112, 121:127)
 Area13 <- c(131:136)
 
-# Select a subset of sections (or NA for all)
-sectionSub <- OutHG
+# Select a subset of sections (or NULL for all)
+sectionSub <- NULL
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
@@ -279,7 +279,7 @@ codesLoc <- list(
   loc = dirDBs,
   fns = list(
     tDisposal = "tDisposal.csv", tGear = "tGear.csv", tSource = "tSource.csv",
-    tPeriod = "tPeriod.csv"
+    tPeriod = "tPeriod.csv", tGroup = "tGroup.csv"
   )
 )
 
@@ -295,7 +295,7 @@ widthLoc <- list(
   loc = file.path(dirDBs, dbLoc),
   db = dbName,
   fns = list(
-    regionStd = "RegionStd", sectionStd = "SectionStd", poolStd = "PoolStd"
+    region_std = "RegionStd", section_std = "SectionStd", pool_std = "PoolStd"
   )
 )
 
@@ -327,8 +327,8 @@ surfLoc <- list(
   loc = file.path(dirDBs, dbLoc),
   db = dbName,
   fns = list(
-    regionStd = "RegionStd", sectionStd = "SectionStd", poolStd = "PoolStd",
-    surface = "tSSSurface", allSpawn = "tSSAllspawn"
+    region_std = "RegionStd", section_std = "SectionStd", pool_std = "PoolStd",
+    surface = "tSSSurface", all_spawn = "tSSAllspawn"
   )
 )
 
@@ -337,7 +337,7 @@ macroLoc <- list(
   loc = file.path(dirDBs, dbLoc),
   db = dbName,
   fns = list(
-    allSpawn = "tSSAllspawn", plants = "tSSMacPlant", transects = "tSSMacTrans"
+    all_spawn = "tSSAllspawn", plants = "tSSMacPlant", transects = "tSSMacTrans"
   )
 )
 
@@ -346,7 +346,7 @@ underLoc <- list(
   loc = file.path(dirDBs, dbLoc),
   db = dbName,
   fns = list(
-    allSpawn = "tSSAllspawn", algTrans = "tSSVegTrans",
+    all_spawn = "tSSAllspawn", alg_trans = "tSSVegTrans",
     stations = "tSSStations", algae = "tSSVegetation"
   )
 )
@@ -404,10 +404,10 @@ data(pars)
 data(intensity)
 
 # Load algae coefficients
-data(algaeCoefs)
+data(algae_coefs)
 
 # Load understory width adjustments
-data(underWidthFac)
+data(under_width_facs)
 
 # Message re region
 cat("Region(s): ", paste(region, collapse = ", "), " (",
@@ -494,14 +494,20 @@ tPeriod <- read_csv(
   col_types = cols("c", "c")
 )
 
+# Load groups
+tGroup <- read_csv(
+  file = file.path(codesLoc$loc, codesLoc$fns$tGroup), col_types = cols()
+)
+
 # Load herring areas
-areas <- LoadAreaData(where = areaLoc, reg = region, secSub = sectionSub)
+areas <- load_area_data(where = areaLoc, reg = region, sec_sub = sectionSub,
+                      groups = tGroup)
 
 # Get BC land data etc (for plots)
 shapes <- LoadShapefiles(where = shapesLoc, a = areas)
 
 # Load median widths to correct surface spawns
-barWidth <- GetWidth(where = widthLoc, a = areas)
+barWidth <- get_width(where = widthLoc, a = areas)
 
 # Load raw catch data, and some light wrangling
 LoadCatchData <- function(where) {
@@ -748,40 +754,40 @@ bioRaw <- LoadBioData(where = bioLoc, XY = transectXY)
 
 # Load spawn data, and some light wrangling
 LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
-  # This function loads the herring spawn data, and drops nnnecessary rows and
+  # This function loads the herring spawn data, and drops unnecessary rows and
   # columns. The output is a data frame for the region(s) in question.
   # Progress message
   cat("Calculating spawn index:\n")
   # Fecundity conversion factor
-  ECF <<- CalcEggConversion()
+  ECF <<- calc_egg_conversion()
   # Progress message
   cat("\tsurface...\n")
   # Access and calculate surface spawn
-  surface <- CalcSurfSpawn(
+  surface <- calc_surf_spawn(
     where = whereSurf, a = areas, widths = barWidth, yrs = yrRange
   )
   # Progress message
   cat("\tmacrocystis...\n")
   # Access and calculate macrocystis spawn
-  macrocystis <- CalcMacroSpawn(where = whereMacro, a = areas, yrs = yrRange)
+  macrocystis <- calc_macro_spawn(where = whereMacro, a = areas, yrs = yrRange)
   # Progress message
   cat("\tunderstory...\n")
   # Access and calculate understory spawn
-  understory <- CalcUnderSpawn(where = whereUnder, a = areas, yrs = yrRange)
+  understory <- calc_under_spawn(where = whereUnder, a = areas, yrs = yrRange)
   # Update progress message
   cat("\ttotal... ")
   # Load the all spawn data
-  allSpawn <- LoadAllSpawn(
+  allSpawn <- load_all_spawn(
     where = underLoc, a = areas, yrs = yrRange, ft2m = convFac$ft2m
   )
   # Combine the spawn types (by spawn number)
-  raw <- surface$biomassSpawn %>%
-    full_join(y = macrocystis$biomassSpawn, by = c(
+  raw <- surface$biomass_spawn %>%
+    full_join(y = macrocystis$biomass_spawn, by = c(
       "Year", "Region", "StatArea", "Section", "LocationCode", "SpawnNumber"
     )) %>%
     # TODO: Look into why this Width is different from the allSpawn$Width
     select(-Width) %>%
-    full_join(y = understory$biomassSpawn, by = c(
+    full_join(y = understory$biomass_spawn, by = c(
       "Year", "Region", "StatArea", "Section", "LocationCode", "SpawnNumber"
     )) %>%
     full_join(y = allSpawn, by = c(
@@ -1160,7 +1166,7 @@ harvestSOK <- catchRaw %>%
   summarise(Harvest = SumNA(Catch)) %>%
   ungroup() %>%
   # Covert harvest (lb) to spawning biomass (t)
-  mutate(Biomass = CalcBiomassSOK(SOK = Harvest * convFac$lb2kg)) %>%
+  mutate(Biomass = calc_biomass_sok(SOK = Harvest * convFac$lb2kg)) %>%
   complete(Year = yrRange, fill = list(Harvest = 0, Biomass = 0)) %>%
   arrange(Year)
 
@@ -2632,6 +2638,32 @@ RegionMap <- BaseMap +
       )
     }
   } +
+      # geom_polygon(
+        # data = filter(shapes$grpDF, 
+        #               id %in% c("Prt Louis/Chanal", "Seal/Rennel/Kano",
+        #                         "Englefield", "Juan Perez/Skincuttle",
+        #                         "Cumshewa/Selwyn")),
+        # mapping = aes(group = id, fill = id), alpha = 0.25
+      # ) +
+  # guides(fill = FALSE)+
+  #     geom_path(
+  #       data = shapes$grpDF, mapping = aes(group = id), size = 0.25,
+  #       colour = "black"
+  #     ) +
+  #     geom_label_repel(
+  #       data = shapes$grpCentDF,
+  #       mapping = aes(label = Group), alpha = 0.75, min.segment.length = 0
+  #     ) +
+  # }
+  # } +
+  # {
+  # if (nrow(shapes$saCentDF) >= 1) {
+  #   geom_label(
+  #     data = shapes$saCentDF, alpha = 0.25,
+  #     mapping = aes(label = paste("SA", StatArea, sep = " "))
+  #   )
+  # }
+  # } +
   scale_fill_viridis(discrete = TRUE) +
   labs(fill = "Group") +
   theme(legend.position = c(0.01, 0.01), legend.justification = c(0, 0)) +
