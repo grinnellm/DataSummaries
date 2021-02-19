@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -176,8 +176,11 @@ makeFrench <- FALSE
 
 ##### Parameters #####
 
+# Load parameter values (for spawn index)
+data(pars)
+
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- 1951:2020
+yrRange <- pars$year$assessment:2020
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -231,7 +234,7 @@ parsADMB <- list(
 lastRedYr <- 1970
 
 # Spawn survey method changed from surface (1951--1987) to dive (1988--present)
-newSurvYr <- 1988
+newSurvYr <- pars$years$dive
 
 # Figure width
 figWidth <- 6
@@ -326,10 +329,7 @@ bioLoc <- list(
 surfLoc <- list(
   loc = file.path(dirDBs, dbLoc),
   db = dbName,
-  fns = list(
-    region_std = "RegionStd", section_std = "SectionStd", pool_std = "PoolStd",
-    surface = "tSSSurface", all_spawn = "tSSAllspawn"
-  )
+  fns = list(surface = "tSSSurface", all_spawn = "tSSAllspawn")
 )
 
 # Location and name of the macrocystis database and tables
@@ -349,6 +349,13 @@ underLoc <- list(
     all_spawn = "tSSAllspawn", alg_trans = "tSSVegTrans",
     stations = "tSSStations", algae = "tSSVegetation"
   )
+)
+
+# Location and name of the all spawn tables
+allLoc <- list(
+  loc = file.path(dirDBs, dbLoc),
+  db = dbName,
+  fns = list(all_spawn = "tSSAllspawn", stations = "tSSStations")
 )
 
 # Location and name of catch and harvest privacy data
@@ -396,9 +403,6 @@ allRegionsLong <- list(
     ")"
   )
 )
-
-# Load parameter values (for spawn index)
-data(pars)
 
 # Load intensity categories
 data(intensity)
@@ -778,7 +782,7 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   cat("\ttotal... ")
   # Load the all spawn data
   allSpawn <- load_all_spawn(
-    where = underLoc, a = areas, yrs = yrRange, ft2m = convFac$ft2m
+    where = allLoc, a = areas, yrs = yrRange, ft2m = convFac$ft2m
   )
   # Combine the spawn types (by spawn number)
   raw <- surface$biomass_spawn %>%
@@ -4215,6 +4219,16 @@ if (region == "All") {
     ) %>%
     arrange(Region, Year, StatArea, Section, LocationCode, SpawnNumber) %>%
     write_csv(path = file.path(regName, "SpawnRaw.csv"))
+  # Write raw spawn data to a csv for Open Data portal
+  spawnRaw %>%
+    select(
+      Region, Year, StatArea, Section, LocationCode, LocationName,
+      SpawnNumber, Start, End, Longitude, Latitude, Length, Width, Method,
+      SurfSI, MacroSI, UnderSI
+    ) %>%
+    rename(Surface = SurfSI, Macrocystis = MacroSI, Understory = UnderSI) %>%
+    arrange(Region, Year, StatArea, Section, LocationCode, SpawnNumber) %>%
+    write_csv(path = file.path(regName, "OpenData.csv"))
   # Write the locations with spatial inconsistencies
   spatialInconsistent <- bind_rows(overAreas, overSpawn, overBio) %>%
     distinct() %>%
