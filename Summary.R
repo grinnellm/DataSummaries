@@ -233,9 +233,6 @@ parsADMB <- list(
 # Last year of the reduction fishery
 lastRedYr <- 1970
 
-# Spawn survey method changed from surface (1951--1987) to dive (1988--present)
-newSurvYr <- pars$years$dive
-
 # Figure width
 figWidth <- 6
 
@@ -852,7 +849,7 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   # Add a column to indicate the survey period
   res <- res %>%
     mutate(
-      Survey = ifelse(Year < newSurvYr, "Surface", "Dive"),
+      Survey = ifelse(Year < pars$years$dive, "Surface", "Dive"),
       Survey = factor(Survey, levels = c("Surface", "Dive"))
     ) %>%
     filter(Year %in% yrRange)
@@ -1560,7 +1557,7 @@ CalcSpawnSummary <- function(dat, g) {
     filter(Year %in% yrRange) %>%
     arrange_(g) %>%
     mutate(
-      Survey = ifelse(Year < newSurvYr, "Surface", "Dive"),
+      Survey = ifelse(Year < pars$years$dive, "Surface", "Dive"),
       Survey = factor(Survey, levels = c("Surface", "Dive"))
     )
   # Return the data
@@ -1572,8 +1569,8 @@ spawnYr <- CalcSpawnSummary(dat = spawnRaw, g = c("Year")) %>%
   mutate(
     PctChange = DeltaPercent(TotalSI, type = "PctChange"),
     PctDiff = DeltaPercent(TotalSI, type = "PctDiff"),
-    PctChange = ifelse(Year == newSurvYr, NA, PctChange),
-    PctDiff = ifelse(Year == newSurvYr, NA, PctDiff)
+    PctChange = ifelse(Year == pars$years$dive, NA, PctChange),
+    PctDiff = ifelse(Year == pars$years$dive, NA, PctDiff)
   )
 
 # sYr <- spawnYr %>%
@@ -1613,7 +1610,7 @@ spawnYrTypeProp <- spawnYrType %>%
 # # Data for landmark
 # spawnYrTypeProp %>%
 #   select(Year, Type, SI) %>%
-#   filter(Year >= newSurvYr) %>%
+#   filter(Year >= pars$years$dive) %>%
 #   pivot_wider(names_from = Type, values_from = SI) %>%
 #   write_csv(path=paste(regName, sectionSub, "csv", sep="."))
 
@@ -1929,7 +1926,7 @@ if (region == "CC") {
     ungroup()
   #  # Average length-at-age by year and statistical area
   #  lengthAgeSA <- bio %>%
-  #      filter( GearCode == 29, Year >= 1988 ) %>%
+  #      filter( GearCode == 29, Year >= pars$years$dive ) %>%
   #      select( Year, StatArea, Age, Length ) %>%
   #      na.omit( ) %>%
   #      group_by( Year, StatArea, Age ) %>%
@@ -2204,9 +2201,9 @@ spawnADMB <- spawnYr %>%
   na.omit() %>%
   mutate(
     Spawn = round(Spawn / 1000, digits = 3),
-    Gear = ifelse(Year < newSurvYr, as.integer(4), as.integer(5)),
+    Gear = ifelse(Year < pars$years$dive, as.integer(4), as.integer(5)),
     Area = as.integer(1), Group = as.integer(1), Sex = as.integer(0),
-    Weight = ifelse(Year < newSurvYr, 1, 1.1666), Timing = as.integer(1)
+    Weight = ifelse(Year < pars$years$dive, 1, 1.1666), Timing = as.integer(1)
   ) %>%
   arrange(Gear, Year)
 
@@ -3335,7 +3332,7 @@ spawnTypePropPlot <- ggplot(
   data = spawnYrTypeProp, mapping = aes(x = Year, y = Prop, fill = Type)
 ) +
   geom_bar(stat = "identity") +
-  geom_vline(xintercept = newSurvYr - 0.5, linetype = "dashed") +
+  geom_vline(xintercept = pars$years$dive - 0.5, linetype = "dashed") +
   labs(y = "Proportion") +
   scale_x_continuous(breaks = yrBreaks) +
   scale_fill_viridis_d() +
@@ -3662,7 +3659,7 @@ PlotLocationsYear <- function(dat) {
     summarise(SITotal = SumNA(SITotal)) %>%
     ungroup() %>%
     mutate(
-      Survey = ifelse(Year < newSurvYr, "Surface", "Dive"),
+      Survey = ifelse(Year < pars$years$dive, "Surface", "Dive"),
       Survey = factor(Survey, levels = c("Surface", "Dive"))
     )
   # Get the number of plots
@@ -4185,8 +4182,8 @@ namesSpatialGroup <- paste(names(xSpatialGroup), collapse = " & ")
 
 # Formatted year ranges for q1 (surface) and q2 (dive)
 qYrs <- list(
-  q1 = paste(range(yrRange[yrRange < newSurvYr]), collapse = " to "),
-  q2 = paste(range(yrRange[yrRange >= newSurvYr]), collapse = " to ")
+  q1 = paste(range(yrRange[yrRange < pars$years$dive]), collapse = " to "),
+  q2 = paste(range(yrRange[yrRange >= pars$years$dive]), collapse = " to ")
 )
 
 # Justification for age tables
@@ -4248,8 +4245,8 @@ if (region == "All") {
 # spawnYr %>%
 #   select( Year, TotalSI ) %>%
 #   rename( Spawn=TotalSI ) %>%
-#   mutate( Spawn=Spawn/1000, Gear=ifelse(Year<newSurvYr, 4, 5),
-#           Weight=ifelse(Year<newSurvYr, 1, 1.1666)) %>%
+#   mutate( Spawn=Spawn/1000, Gear=ifelse(Year<pars$years$dive, 4, 5),
+#           Weight=ifelse(Year<pars$years$dive, 1, 1.1666)) %>%
 #   write_csv( path=file.path(regName, "Spawn.csv") )
 
 # # Write number-at-age data to a csv (same as ADMB input data file)
