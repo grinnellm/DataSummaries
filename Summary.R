@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm(list = ls()) # Clear the workspace
+# rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -180,7 +180,7 @@ makeFrench <- FALSE
 data(pars)
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- pars$year$assessment:2020
+yrRange <- pars$year$assess:2020
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -765,21 +765,25 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   cat("\tsurface...\n")
   # Access and calculate surface spawn
   surface <- calc_surf_spawn(
-    where = whereSurf, a = areas, widths = barWidth, yrs = yrRange
+    where = whereSurf, areas = areas, widths = barWidth, yrs = yrRange
   )
   # Progress message
   cat("\tmacrocystis...\n")
   # Access and calculate macrocystis spawn
-  macrocystis <- calc_macro_spawn(where = whereMacro, a = areas, yrs = yrRange)
+  macrocystis <- calc_macro_spawn(
+    where = whereMacro, areas = areas, yrs = yrRange
+  )
   # Progress message
   cat("\tunderstory...\n")
   # Access and calculate understory spawn
-  understory <- calc_under_spawn(where = whereUnder, a = areas, yrs = yrRange)
+  understory <- calc_under_spawn(
+    where = whereUnder, areas = areas, yrs = yrRange
+  )
   # Update progress message
   cat("\ttotal... ")
   # Load the all spawn data
   allSpawn <- load_all_spawn(
-    where = allLoc, a = areas, yrs = yrRange, ft2m = convFac$ft2m
+    where = allLoc, areas = areas, yrs = yrRange, ft2m = convFac$ft2m
   )
   # Combine the spawn types (by spawn number)
   raw <- surface$biomass_spawn %>%
@@ -1167,7 +1171,7 @@ harvestSOK <- catchRaw %>%
   summarise(Harvest = SumNA(Catch)) %>%
   ungroup() %>%
   # Covert harvest (lb) to spawning biomass (t)
-  mutate(Biomass = calc_biomass_sok(SOK = Harvest * convFac$lb2kg)) %>%
+  mutate(Biomass = calc_biomass_sok(sok = Harvest * convFac$lb2kg)) %>%
   complete(Year = yrRange, fill = list(Harvest = 0, Biomass = 0)) %>%
   arrange(Year)
 
