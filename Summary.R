@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1488,6 +1488,17 @@ muLengthAge <- lengthAge %>%
 # Combine length- and weight-at-age by year
 muWtLenAge <- bind_rows(muWeightAge, muLengthAge) %>%
   mutate(Measure = factor(Measure, levels = unique(Measure)))
+
+# Proportion female
+propFemale <- bio %>%
+  filter(GearCode == 29) %>%
+  select(Year, Sex, SampWt) %>%
+  na.omit() %>%
+  group_by(Year) %>%
+  summarise(Proportion = SumNA(SampWt[Sex == "F"]) / SumNA(SampWt)) %>%
+  ungroup() %>%
+  complete(Year = yrRange) %>%
+  arrange(Year)
 
 # Get biosample locations in the current year
 GetBioLocations <- function(dat, spObj) {
@@ -2880,6 +2891,21 @@ if (exists("numAgedYearGrp")) {
     )
 } # End if proportion-at-age by group
 
+# Proportion female plot
+propFemalePlot <- ggplot(
+  data=propFemale, mapping = aes(x = Year, y=Proportion)
+) +
+  geom_point() +
+  geom_line() + 
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  labs(y = "Proportion female") +
+  scale_x_continuous(breaks = yrBreaks) +
+  myTheme +
+  ggsave(
+    filename = file.path(regName, "PropFemale.png"), width = figWidth,
+    height = figWidth, dpi = figRes
+  )
+
 # If nearshore comparison
 if (exists("compNear") & exists("compNearSA") & exists("nSampleSA")) {
   # Plot proportion-at-age
@@ -4227,6 +4253,7 @@ if (region == "All") {
       SpawnNumber, Start, End, Longitude, Latitude, Length, Width, Method,
       SurfSI, MacroSI, UnderSI
     ) %>%
+    # TODO: Fix this in the database: change "Milt Only" to "Incomplete"
     mutate(Method = ifelse(Method=="Milt Only", "Incomplete", Method),
            StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
            Section = formatC(Section, width = 3, format = "d", flag = "0") ) %>%
