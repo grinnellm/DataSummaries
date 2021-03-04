@@ -4227,7 +4227,9 @@ if (region == "All") {
       SpawnNumber, Start, End, Longitude, Latitude, Length, Width, Method,
       SurfSI, MacroSI, UnderSI
     ) %>%
-    mutate(Method = ifelse(Method=="Milt Only", "Incomplete", Method)) %>%
+    mutate(Method = ifelse(Method=="Milt Only", "Incomplete", Method),
+           StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
+           Section = formatC(Section, width = 3, format = "d", flag = "0") ) %>%
     rename(StatisticalArea = StatArea, StartDate = Start, EndDate = End,
            Surface = SurfSI, Macrocystis = MacroSI, Understory = UnderSI) %>%
     arrange(
