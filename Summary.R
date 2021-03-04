@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -4220,16 +4220,28 @@ if (region == "All") {
     ) %>%
     arrange(Region, Year, StatArea, Section, LocationCode, SpawnNumber) %>%
     write_csv(path = file.path(regName, "SpawnRaw.csv"))
-  # Write raw spawn data to a csv for Open Data portal
+  # Write raw spawn data to a csv for Open Data portal (English and French)
   spawnRaw %>%
     select(
       Region, Year, StatArea, Section, LocationCode, LocationName,
       SpawnNumber, Start, End, Longitude, Latitude, Length, Width, Method,
       SurfSI, MacroSI, UnderSI
     ) %>%
-    rename(Surface = SurfSI, Macrocystis = MacroSI, Understory = UnderSI) %>%
-    arrange(Region, Year, StatArea, Section, LocationCode, SpawnNumber) %>%
-    write_csv(path = file.path(regName, "OpenData.csv"))
+    mutate(Method = ifelse(Method=="Milt Only", "Incomplete", Method)) %>%
+    rename(StatisticalArea = StatArea, StartDate = Start, EndDate = End,
+           Surface = SurfSI, Macrocystis = MacroSI, Understory = UnderSI) %>%
+    arrange(
+      Region, Year, StatisticalArea, Section, LocationCode, SpawnNumber
+    ) %>%
+    write_csv(path = file.path(regName, "OpenDataEng.csv")) %>%
+    mutate(Method = ifelse(Method=="Dive", "Plongée", Method),
+           Method = ifelse(Method=="Incomplete ", "Incomplet", Method)) %>%
+    rename('Région' = Region, 'Année' = Year, ZoneStatistique = StatisticalArea,
+           CodeLieu = LocationCode, NomLieu = LocationName,
+           'NuméroFrai' = SpawnNumber, 'DateDébut' = StartDate,
+           DateFin = EndDate, Longeur = Length, Largeur = Width, 
+           'Méthode' = Method, 'Sous-étage' = Understory) %>%
+    write_csv(path = file.path(regName, "OpenDataFra.csv"))
   # Write the locations with spatial inconsistencies
   spatialInconsistent <- bind_rows(overAreas, overSpawn, overBio) %>%
     distinct() %>%
