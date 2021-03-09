@@ -156,7 +156,7 @@ dirShape <- file.path(dirDBs, "Polygons")
 dirPriv <- file.path(dirDBs, "Privacy")
 
 # Databases: remote (i.e., H:\ for hdata$) or local (e.g., C:\)
-dbLoc <- "Local"
+dbLoc <- "Remote"
 
 # Database name
 dbName <- "HSA_Program_v6.2.mdb"
@@ -4254,9 +4254,7 @@ if (region == "All") {
       SpawnNumber, Start, End, Longitude, Latitude, Length, Width, Method,
       SurfSI, MacroSI, UnderSI
     ) %>%
-    # TODO: Fix this in the database: change "Milt Only" to "Incomplete"
-    mutate(Method = ifelse(Method=="Milt Only", "Incomplete", Method),
-           StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
+    mutate(StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
            Section = formatC(Section, width = 3, format = "d", flag = "0") ) %>%
     rename(StatisticalArea = StatArea, StartDate = Start, EndDate = End,
            Surface = SurfSI, Macrocystis = MacroSI, Understory = UnderSI) %>%
