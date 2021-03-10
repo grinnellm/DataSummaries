@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -156,7 +156,7 @@ dirShape <- file.path(dirDBs, "Polygons")
 dirPriv <- file.path(dirDBs, "Privacy")
 
 # Databases: remote (i.e., H:\ for hdata$) or local (e.g., C:\)
-dbLoc <- "Remote"
+dbLoc <- "Local"
 
 # Database name
 dbName <- "HSA_Program_v6.2.mdb"
@@ -760,23 +760,23 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   # Progress message
   cat("Calculating spawn index:\n")
   # Fecundity conversion factor
-  ECF <<- calc_egg_conversion()
+  ECF <<- eggs_to_sb()
   # Progress message
   cat("\tsurface...\n")
   # Access and calculate surface spawn
-  surface <- calc_surf_spawn(
+  surface <- calc_surf_index(
     where = whereSurf, areas = areas, widths = barWidth, yrs = yrRange
   )
   # Progress message
   cat("\tmacrocystis...\n")
   # Access and calculate macrocystis spawn
-  macrocystis <- calc_macro_spawn(
+  macrocystis <- calc_macro_index(
     where = whereMacro, areas = areas, yrs = yrRange
   )
   # Progress message
   cat("\tunderstory...\n")
   # Access and calculate understory spawn
-  understory <- calc_under_spawn(
+  understory <- calc_under_index(
     where = whereUnder, areas = areas, yrs = yrRange
   )
   # Update progress message
@@ -1171,7 +1171,7 @@ harvestSOK <- catchRaw %>%
   summarise(Harvest = SumNA(Catch)) %>%
   ungroup() %>%
   # Covert harvest (lb) to spawning biomass (t)
-  mutate(Biomass = calc_biomass_sok(sok = Harvest * convFac$lb2kg)) %>%
+  mutate(Biomass = calc_sok_sb(sok = Harvest * convFac$lb2kg)) %>%
   complete(Year = yrRange, fill = list(Harvest = 0, Biomass = 0)) %>%
   arrange(Year)
 
