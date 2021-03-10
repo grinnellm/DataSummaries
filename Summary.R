@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -765,19 +765,20 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   cat("\tsurface...\n")
   # Access and calculate surface spawn
   surface <- calc_surf_index(
-    where = whereSurf, areas = areas, widths = barWidth, yrs = yrRange
+    where = whereSurf, areas = areas, widths = barWidth, yrs = yrRange,
+    quiet = TRUE
   )
   # Progress message
   cat("\tmacrocystis...\n")
   # Access and calculate macrocystis spawn
   macrocystis <- calc_macro_index(
-    where = whereMacro, areas = areas, yrs = yrRange
+    where = whereMacro, areas = areas, yrs = yrRange, quiet = TRUE
   )
   # Progress message
   cat("\tunderstory...\n")
   # Access and calculate understory spawn
   understory <- calc_under_index(
-    where = whereUnder, areas = areas, yrs = yrRange
+    where = whereUnder, areas = areas, yrs = yrRange, quiet = TRUE
   )
   # Update progress message
   cat("\ttotal... ")
