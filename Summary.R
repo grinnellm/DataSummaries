@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "A2W"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -3223,7 +3223,7 @@ spawnIndexPlot <- ggplot(data = spawnYr, mapping = aes(x = Year, y = TotalSI)) +
   geom_point(mapping = aes(shape = Survey)) +
   geom_line(mapping = aes(group = Survey)) +
   # geom_hline(yintercept = mu8292) +
-  # geom_hline(yintercept = 0.5 * mu8292) +
+  # geom_hline(yintercept = 0.5 * mu8292, linetype = "dashed") +
   #    geom_smooth( method=smLine, colour="black", level=ciLevel ) +
   labs(
     x = NULL, y = expression(paste("Spawn index (t" %*% 10^3, ")", sep = ""))
@@ -3332,7 +3332,7 @@ spawnChangePlot <- ggplot(
   annotate(
     geom = "text", x = -Inf, y = Inf, label = "(b)", vjust = 1.3, hjust = -0.1
   ) +
-  scale_fill_viridis(discrete = TRUE) +
+  scale_fill_grey(start = 0, end = 0.5) +
   scale_x_continuous(breaks = yrBreaks) +
   expand_limits(x = c(min(yrRange) - 0.5, max(yrRange) + 0.5), y = 0) +
   labs(y = "Percent change (%)") +
@@ -3358,6 +3358,15 @@ pctPlots <- plot_grid(spawnIndexPlot, spawnChangePlot,
     filename = file.path(regName, "SpawnIndexChange.png"), width = figWidth,
     height = figWidth, dpi = figRes
   )
+
+# # Arrange and save the spawn index and percent change plots
+# pctPlots <- plot_grid(spawnIndexPlot, spawnChangePlot, spawnPercentSecStackPlot,
+#                       align = "v", ncol = 1, rel_heights = c(2.3, 2.1, 2.5)
+# ) +
+#   ggsave(
+#     filename = file.path(regName, "SpawnIndexChange.png"), width = figWidth,
+#     height = figWidth, dpi = figRes
+#   )
 
 # Plot proportion of spawn from surface vs dive surveys
 spawnTypePropPlot <- ggplot(
