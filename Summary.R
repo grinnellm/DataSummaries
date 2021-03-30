@@ -105,7 +105,7 @@ options(dplyr.summarise.inform = FALSE)
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
-if (!exists("region")) region <- "A2W"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -4248,21 +4248,12 @@ cat("Writing tables... ")
 #
 # If looking at all regions
 if (region == "All") {
-  # Write raw spawn data to a csv for the FIND app
-  spawnRaw %>%
-    select(
-      Year, Region, StatArea, Section, LocationCode, LocationName,
-      SpawnNumber, Start, End, Eastings, Northings, Longitude, Latitude,
-      Length, Width, Method, SurfSI, MacroSI, UnderSI, Survey
-    ) %>%
-    arrange(Region, Year, StatArea, Section, LocationCode, SpawnNumber) %>%
-    write_csv(path = file.path(regName, "SpawnRaw.csv"))
-  # Write raw spawn data to a csv for Open Data portal (English and French)
+  # Write spawn data to a csv for Open Data portal (English and French) and FIND
   spawnRaw %>%
     select(
       Region, Year, StatArea, Section, LocationCode, LocationName,
-      SpawnNumber, Start, End, Longitude, Latitude, Length, Width, Method,
-      SurfSI, MacroSI, UnderSI
+      SpawnNumber, Start, End, Eastings, Northings, Longitude, Latitude,
+      Length, Width, Method, SurfSI, MacroSI, UnderSI, Survey
     ) %>%
     mutate(StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
            Section = formatC(Section, width = 3, format = "d", flag = "0") ) %>%
@@ -4271,6 +4262,8 @@ if (region == "All") {
     arrange(
       Region, Year, StatisticalArea, Section, LocationCode, SpawnNumber
     ) %>%
+    write_csv(path = file.path(regName, "FIND.csv")) %>%
+    select(-Eastings, -Northings, -Survey) %>%
     write_csv(path = file.path(regName, "OpenDataEng.csv")) %>%
     mutate(Method = ifelse(Method=="Dive", "Plongée", Method),
            Method = ifelse(Method=="Incomplete ", "Incomplet", Method)) %>%
