@@ -4256,7 +4256,9 @@ if (region == "All") {
       Length, Width, Method, SurfSI, MacroSI, UnderSI, Survey
     ) %>%
     mutate(StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
-           Section = formatC(Section, width = 3, format = "d", flag = "0") ) %>%
+           Section = formatC(Section, width = 3, format = "d", flag = "0"),
+           Longitude = ifelse(Longitude == 0, NA, Longitude),
+           Latitude = ifelse(Latitude == 0, NA, Latitude)) %>%
     rename(StatisticalArea = StatArea, StartDate = Start, EndDate = End,
            Surface = SurfSI, Macrocystis = MacroSI, Understory = UnderSI) %>%
     arrange(
