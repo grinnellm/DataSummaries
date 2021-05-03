@@ -508,7 +508,7 @@ areas <- load_area_data(where = areaLoc, reg = region, sec_sub = sectionSub,
 shapes <- LoadShapefiles(where = shapesLoc, a = areas)
 
 # Load median widths to correct surface spawns
-barWidth <- get_width(where = widthLoc, a = areas)
+barWidth <- load_width(where = widthLoc, a = areas)
 
 # Load raw catch data, and some light wrangling
 LoadCatchData <- function(where) {
@@ -765,20 +765,20 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   cat("\tsurface...\n")
   # Access and calculate surface spawn
   surface <- calc_surf_index(
-    where = whereSurf, areas = areas, widths = barWidth, yrs = yrRange,
+    where = whereSurf, areas = areas, widths = barWidth, years = yrRange,
     quiet = TRUE
   )
   # Progress message
   cat("\tmacrocystis...\n")
   # Access and calculate macrocystis spawn
   macrocystis <- calc_macro_index(
-    where = whereMacro, areas = areas, yrs = yrRange, quiet = TRUE
+    where = whereMacro, areas = areas, years = yrRange, quiet = TRUE
   )
   # Progress message
   cat("\tunderstory...\n")
   # Access and calculate understory spawn
   understory <- calc_under_index(
-    where = whereUnder, areas = areas, yrs = yrRange, quiet = TRUE
+    where = whereUnder, areas = areas, years = yrRange, quiet = TRUE
   )
   # Update progress message
   cat("\ttotal... ")
