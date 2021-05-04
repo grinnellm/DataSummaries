@@ -784,7 +784,7 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   cat("\ttotal... ")
   # Load the all spawn data
   allSpawn <- load_all_spawn(
-    where = allLoc, areas = areas, yrs = yrRange, ft2m = convFac$ft2m
+    where = allLoc, areas = areas, years = yrRange, ft2m = convFac$ft2m
   )
   # Combine the spawn types (by spawn number)
   raw <- surface$biomass_spawn %>%
@@ -1172,7 +1172,7 @@ harvestSOK <- catchRaw %>%
   summarise(Harvest = SumNA(Catch)) %>%
   ungroup() %>%
   # Covert harvest (lb) to spawning biomass (t)
-  mutate(Biomass = calc_sok_sb(sok = Harvest * convFac$lb2kg)) %>%
+  mutate(Biomass = calc_sok_index(sok = Harvest * convFac$lb2kg)) %>%
   complete(Year = yrRange, fill = list(Harvest = 0, Biomass = 0)) %>%
   arrange(Year)
 
