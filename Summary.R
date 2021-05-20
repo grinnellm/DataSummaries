@@ -104,7 +104,7 @@ options(dplyr.summarise.inform = FALSE)
 
 ##### Controls #####
 
-# Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W, JS); All
+# Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); all (All)
 if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
@@ -125,6 +125,8 @@ Sec002003 <- c(2, 3)
 OutHG <- c(11, 12, 22)
 Broughton <- c(111, 112, 121:127)
 Area13 <- c(131:136)
+JS <- c(111, 112, 121:127, 131:136)
+A10 <- c(101:103)
 
 # Select a subset of sections (or NULL for all)
 sectionSub <- NULL
@@ -370,35 +372,29 @@ source(file = file.path("..", "HerringFunctions", "Functions.R"))
 
 ##### Data #####
 
-# Cross-walk table for SAR to region and region name
-regions <- readr::read_csv(
-  file =
-    "SAR, Region, RegionName, Major
-          1, HG, Haida Gwaii, TRUE
-          2, PRD, Prince Rupert District, TRUE
-          3, CC, Central Coast, TRUE
-          4, SoG, Strait of Georgia, TRUE
-          5, WCVI, West Coast of Vancouver Island, TRUE
-          6, A27, Area 27, FALSE
-          7, A2W, Area 2 West, FALSE",
-  col_types = readr::cols("i", "c", "c", "l")
-)
+# Load regions table
+data(regions)
 
-# Possible regions by type (return to the main level)
+# Possible regions by type
 allRegions <- list(
-  major = as.character(regions$Region[regions$Major]),
-  minor = as.character(regions$Region[!regions$Major])
+  major = regions %>%
+    filter(Type == "Major") %>%
+    pull(Region),
+  minor = regions %>%
+    filter(Type == "Minor") %>%
+    pull(Region)
 )
 
 # Possible regions by type (long)
 allRegionsLong <- list(
-  major = paste0(
-    regions$RegionName[regions$Major], " (", regions$Region[regions$Major], ")"
-  ),
-  minor = paste0(
-    regions$RegionName[!regions$Major], " (", regions$Region[!regions$Major],
-    ")"
-  )
+  major = regions %>%
+    mutate(Name = paste0(RegionName, " (", Region, ")")) %>%
+    filter(Type == "Major") %>%
+    pull(Name),
+  minor = regions %>%
+    mutate(Name = paste0(RegionName, " (", Region, ")")) %>%
+    filter(Type == "Minor") %>%
+    pull(Name)
 )
 
 # Load intensity categories
@@ -2701,10 +2697,11 @@ catchGearPlot <- ggplot(
     shape = guide_legend(order = 2, title = NULL)
   ) +
   # expand_limits( x=yrRange, y=0 ) +
-  facet_zoom(
+  {if(max(catchPriv$Year) >= firstYrFig)
+    facet_zoom(
     xy = Year >= firstYrFig, zoom.size = 1, horizontal = FALSE,
     show.area = FALSE
-  ) +
+  )} +
   myTheme +
   theme(legend.position = "top") +
   ggsave(
@@ -3803,8 +3800,7 @@ cat("done\n")
 
 # Format regions table
 xRegions <- regions %>%
-  mutate(Major = ifelse(Major, "Major", "Minor")) %>%
-  rename(Name = RegionName, Code = Region, Type = Major) %>%
+  rename(Name = RegionName, Code = Region) %>%
   select(Name, Code, Type) %>%
   xtable()
 
