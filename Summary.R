@@ -2185,18 +2185,28 @@ if (region == "A2W") {
 
 # If region is JS
 if (region == "JS") {
+  # Remove Group info
+  spatialGroup <- spatialGroup %>%
+    select(-Group)
   # Plot spawn timing by Stat Area
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "StatArea")
+  # Dummy variable
+  yrsNearshore <- 0
 } # End if region is JS
 
 # If region is A10
 if (region == "A10") {
+  # Remove Group info
+  spatialGroup <- spatialGroup %>%
+    select(-Group)
   # Plot spawn timing by Stat Area
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "StatArea")
+  # Dummy variable
+  yrsNearshore <- 0
 } # End if region is A10
 
 # If region is all
@@ -2205,6 +2215,8 @@ if (region == "All") {
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "StatArea")
+  # Dummy variable
+  yrsNearshore <- 0
 } # End if region is all
 
 ##### ADMB #####
@@ -4097,6 +4109,8 @@ tfSpawnByLoc <- "\\toggletrue{spawnByLoc}"
 tfSpawnByLocXY <- "\\toggletrue{spawnByLocXY}"
 # Turn the toggle to false: show spatial table of stat area, section, and group
 tfSpatialGroup <- "\\togglefalse{spatialGroup}"
+# Turn the toggle to false: special region
+tfSpecialRegion <- "\\togglefalse{specialRegion}"
 
 # Group name
 spawnIndexGroupName <- list(a = "Statistical Area", b = "Statistical Area (SA)")
@@ -4184,6 +4198,9 @@ if (region == "CC") {
   histRat <- ""
   fixYrs <- ""
 } # End if not Central Coast
+
+# Special region
+if( regionType == "special") tfSpecialRegion <- "\\toggletrue{specialRegion}"
 
 # If number-, proportion-, weight-, and length-at-age: set the toggle to true
 if (exists("deltaNumAgeYr") & exists("deltaPropAgeYr") & exists("deltaWtAgeYr")
