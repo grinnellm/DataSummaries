@@ -104,7 +104,8 @@ options(dplyr.summarise.inform = FALSE)
 
 ##### Controls #####
 
-# Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); all (All)
+# Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
+# (JS, A10); or all (All)
 if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
@@ -2182,6 +2183,22 @@ if (region == "A2W") {
   yrsNearshore <- 0
 } # End if region is Area 2 West
 
+# If region is JS
+if (region == "JS") {
+  # Plot spawn timing by Stat Area
+  spawnTimingGroup <- FALSE
+  # Determine the spatial distribution of spawn
+  propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "StatArea")
+} # End if region is JS
+
+# If region is A10
+if (region == "A10") {
+  # Plot spawn timing by Stat Area
+  spawnTimingGroup <- FALSE
+  # Determine the spatial distribution of spawn
+  propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "StatArea")
+} # End if region is A10
+
 # If region is all
 if (region == "All") {
   # Plot spawn timing by Stat Area
@@ -2697,7 +2714,7 @@ catchGearPlot <- ggplot(
     shape = guide_legend(order = 2, title = NULL)
   ) +
   # expand_limits( x=yrRange, y=0 ) +
-  {if(max(catchPriv$Year) >= firstYrFig)
+  {if(max(catchPriv$Year) >= firstYrFig & !region %in% c("JS", "A10"))
     facet_zoom(
     xy = Year >= firstYrFig, zoom.size = 1, horizontal = FALSE,
     show.area = FALSE
@@ -4056,9 +4073,8 @@ WriteLongTable(dat = xSpatialGroup, fn = file.path(regName, "SpatialGroup.tex"))
 # Number of years in the time series
 nYrs <- length(yrRange)
 
-# Determine if region is major or minor
-if (region %in% allRegions$major) regionType <- "major"
-if (region %in% allRegions$minor) regionType <- "minor"
+# Determine if region is major or minor (or special)
+regionType <- tolower(regions$Type[which(regions$Region == region)])
 
 # Current season code
 thisSeason <- paste(yrRange[nYrs - 1], yrRange[nYrs], sep = "/")
