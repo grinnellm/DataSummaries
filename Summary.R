@@ -376,7 +376,24 @@ source(file = file.path("..", "HerringFunctions", "Functions.R"))
 # Load regions table
 data(regions)
 
-# Possible regions by type
+# Determine if region is major or minor (or special)
+regionType <- tolower(regions$Type[which(regions$Region == region)])
+
+# Fix for all regions
+if(region == "All") regionType <- "All"
+
+# If region is special
+if(regionType == "special") {
+  # Include major, minor, and this region
+  regions <- regions %>%
+    filter(Type != "Special" | Region == region)
+} else{ # End if special, otherwise
+  # Omit special regions
+  regions <- regions %>% 
+    filter(Type != "Special")  
+} # End if not special
+
+# Possible regions by type (major and minor)
 allRegions <- list(
   major = regions %>%
     filter(Type == "Major") %>%
@@ -386,7 +403,7 @@ allRegions <- list(
     pull(Region)
 )
 
-# Possible regions by type (long)
+# Possible regions by type (long; major and minor)
 allRegionsLong <- list(
   major = regions %>%
     mutate(Name = paste0(RegionName, " (", Region, ")")) %>%
@@ -4085,9 +4102,6 @@ WriteLongTable(dat = xSpatialGroup, fn = file.path(regName, "SpatialGroup.tex"))
 # Number of years in the time series
 nYrs <- length(yrRange)
 
-# Determine if region is major or minor (or special)
-regionType <- tolower(regions$Type[which(regions$Region == region)])
-
 # Current season code
 thisSeason <- paste(yrRange[nYrs - 1], yrRange[nYrs], sep = "/")
 
@@ -4201,6 +4215,15 @@ if (region == "CC") {
 
 # Special region
 if( regionType == "special") tfSpecialRegion <- "\\toggletrue{specialRegion}"
+
+# If the region is Johnstone Strait
+if(region == "JS") {
+  sectionsJS <- 
+  "In addition, note that sections 132 and 135 are included in Johnstone Strait
+  here, but they are officially in the Strait of Georgia SAR."
+} else { # End if JS, otherwise
+  sectionsJS <- ""
+} # End if not JS
 
 # If number-, proportion-, weight-, and length-at-age: set the toggle to true
 if (exists("deltaNumAgeYr") & exists("deltaPropAgeYr") & exists("deltaWtAgeYr")
