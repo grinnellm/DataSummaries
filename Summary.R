@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "A10"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -183,7 +183,7 @@ makeFrench <- FALSE
 data(pars)
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- pars$year$assess:2020
+yrRange <- pars$year$assess:2021
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -2743,7 +2743,7 @@ catchGearPlot <- ggplot(
     shape = guide_legend(order = 2, title = NULL)
   ) +
   # expand_limits( x=yrRange, y=0 ) +
-  {if(max(catchPriv$Year) >= firstYrFig & !region %in% c("JS", "A10"))
+  {if(max(catchPriv$Year) >= firstYrFig & !region %in% c("JS", "A10", "A2W"))
     facet_zoom(
     xy = Year >= firstYrFig, zoom.size = 1, horizontal = FALSE,
     show.area = FALSE
