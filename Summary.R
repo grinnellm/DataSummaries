@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "A10"
+if (!exists("region")) region <- "A2W"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -183,7 +183,7 @@ makeFrench <- FALSE
 data(pars)
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- pars$year$assess:2021
+yrRange <- pars$year$assess:2020
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -3256,18 +3256,30 @@ spawnIndexTypePlot <- ggplot(
   )
 
 # HG rebuilding
-# mu8292 <- spawnYr %>%
-#   filter( Year %in% c(1982:1992)) %>%
-#   pull(TotalSI) %>%
-#   mean()
+mu8292 <- spawnYr %>%
+  filter( Year %in% c(1982:1992)) %>%
+  pull(TotalSI) %>%
+  mean()
+
+# catchGearPlot <- ggplot(
+#   data = catchPriv, mapping = aes(x = Year, y = CatchPriv)
+# ) +
+#   geom_bar(stat = "identity", position = "stack", aes(fill = Gear)) +
 
 # Plot total spawn index by year
 spawnIndexPlot <- ggplot(data = spawnYr, mapping = aes(x = Year, y = TotalSI)) +
+  geom_bar(data = catchPriv, mapping = aes(x = Year, y = CatchPriv, fill = Gear),
+           stat = "identity", position = "stack") +
+  geom_point(
+    data = filter(catchPriv, Private),
+    mapping = aes(x = Year), shape = 8, y = 0
+  ) +
   geom_point(mapping = aes(shape = Survey)) +
   geom_line(mapping = aes(group = Survey)) +
-  # geom_hline(yintercept = mu8292) +
-  # geom_hline(yintercept = 0.5 * mu8292, linetype = "dashed") +
-  #    geom_smooth( method=smLine, colour="black", level=ciLevel ) +
+  scale_fill_viridis_d() +
+  geom_hline(yintercept = mu8292) +
+  geom_hline(yintercept = 0.5 * mu8292, linetype = "dashed") +
+  # geom_smooth( method=smLine, colour="black", level=ciLevel ) +
   labs(
     x = NULL, y = expression(paste("Spawn index (t" %*% 10^3, ")", sep = ""))
   ) +
@@ -3279,7 +3291,9 @@ spawnIndexPlot <- ggplot(data = spawnYr, mapping = aes(x = Year, y = TotalSI)) +
     geom = "text", x = -Inf, y = Inf, label = "(a)", vjust = 1.3, hjust = -0.1
   ) +
   myTheme +
-  theme(axis.text.x = element_blank(), legend.position = "top")
+  theme(axis.text.x = element_blank(), legend.position = "top",
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 10))
 
 # If using groups
 if (exists("spawnYrGrp")) {
@@ -3383,10 +3397,10 @@ spawnChangePlot <- ggplot(
   myTheme
 
 # Arrange and save the index and proportion plots
-ipPlots <- plot_grid(spawnIndexPlot, spawnPercentSAStackPlot,
+ipPlots <- plot_grid(spawnIndexPlot, spawnChangePlot,
                      spawnPercentSecStackPlot,
                      align = "v", ncol = 1,
-                     rel_heights = c(2.1, 2.5, 2.5)
+                     rel_heights = c(2.7, 2.5, 2.5)
 ) +
   ggsave(
     filename = file.path(regName, "SpawnIndexPercent.png"), width = figWidth,
