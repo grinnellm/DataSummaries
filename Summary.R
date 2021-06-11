@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "A10"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -183,7 +183,7 @@ makeFrench <- FALSE
 data(pars)
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- pars$year$assess:2021
+yrRange <- pars$year$assess:2020
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -920,24 +920,6 @@ spawnRaw <- LoadSpawnData(
 #               values_fill=list(Catch=0)) %>%
 #   write_csv(path="DisposalGear.csv")
 
-# For comparing tweaks to the SpawnIndex script
-spawnSummary <- spawnRaw %>%
-  group_by(Year) %>%
-  summarise(
-    Surf = SumNA(SurfSI), Macro = SumNA(MacroSI), Under = SumNA(UnderSI),
-    Total = SumNA(c(Surf, Macro, Under))
-  ) %>%
-  ungroup() %>%
-  mutate(
-    Surf = formatC(as.numeric(Surf), digits = 3, format = "f"),
-    Macro = formatC(as.numeric(Macro), digits = 3, format = "f"),
-    Under = formatC(as.numeric(Under), digits = 3, format = "f"),
-    Total = formatC(as.numeric(Total), digits = 3, format = "f")
-  )
-
-# Write to disc
-write_csv(x = spawnSummary, path = paste("Spawn", region, ".csv", sep = ""))
-
 ##### Update #####
 
 # Update catch data (more wrangling)
@@ -1051,6 +1033,21 @@ UpdateCatchData <- function(dat, a) {
 # Update catch data
 catch <- UpdateCatchData(dat = catchRaw, a = areas)
 
+# Calculate commercial SoK harvest and biomass
+harvestSOK <- catchRaw %>%
+  filter(DisposalCode == 2, Source == "SOK") %>%
+  group_by(Year) %>%
+  summarise(Harvest = SumNA(Catch)) %>%
+  ungroup() %>%
+  # Covert harvest (lb) to spawning biomass (t)
+  mutate(Biomass = calc_sok_index(sok = Harvest * convFac$lb2kg)) %>%
+  complete(Year = yrRange, fill = list(Harvest = 0, Biomass = 0)) %>%
+  arrange(Year)
+
+# Table that doesn't get pruned for privacy, recent years, etc (for the res doc)
+allHarvSOK <- harvestSOK %>%
+  mutate(Region = regName, Harvest = Harvest * convFac$lb2kg)
+
 # # For Landmark MSE
 # catchDate <- catch %>%
 #   mutate(YDay = yday(Date), Date = as.Date(YDay, origin="2020-01-01"))
@@ -1145,6 +1142,80 @@ UpdateBioData <- function(dat, rYr) {
 # Update biological data
 bio <- UpdateBioData(dat = bioRaw, rYr = 2014)
 
+##### Summaries #####
+
+# Spawn summary
+spawnSummary <- spawnRaw %>%
+  group_by(Year) %>%
+  summarise(
+    Surf = SumNA(SurfSI), Macro = SumNA(MacroSI), Under = SumNA(UnderSI)
+  ) %>%
+  ungroup() %>%
+  mutate(
+    Surf = formatC(as.numeric(Surf), digits = 3, format = "f"),
+    Macro = formatC(as.numeric(Macro), digits = 3, format = "f"),
+    Under = formatC(as.numeric(Under), digits = 3, format = "f")
+  ) %>%
+  complete(Year = yrRange) %>%
+  arrange(Year) %>%
+  select(Year, Surf, Macro, Under)
+
+# Write spawn summary to disc
+write_csv(
+  x = spawnSummary,
+  path = file.path("Summaries", paste("Spawn", region, ".csv", sep = ""))
+)
+
+# Catch summary
+catchSummary <- catch %>%
+  select(Year, Catch, Gear) %>%
+  group_by(Year, Gear) %>%
+  summarise(Catch = SumNA(Catch)) %>%
+  ungroup() %>%
+  complete(
+    Year = yrRange, Gear = c("RoeSN", "RoeGN", "Other"),
+    fill = list(Catch = 0)
+  ) %>%
+  pivot_wider(names_from = Gear, values_from = Catch, values_fill = 0) %>%
+  full_join(y = select(allHarvSOK, Year, Harvest), by = "Year") %>%
+  mutate(
+    RoeSN = formatC(RoeSN, digits = 3, format = "f"),
+    RoeGN = formatC(RoeGN, digits = 3, format = "f"),
+    Other = formatC(Other, digits = 3, format = "f"),
+    SOK = formatC(Harvest / 1000, digits = 3, format = "f")
+    ) %>%
+  arrange(Year) %>%
+  select(Year, Other, RoeSN, RoeGN, SOK) %>%
+  replace_na(replace = list(SOK = 0))
+
+# Write catch summary to disc
+write_csv(
+  x = catchSummary, 
+  path = file.path("Summaries", paste("Catch", region, ".csv", sep = ""))
+)
+
+# Biological summary
+bioSummary <- bio %>%
+  group_by(Year) %>%
+  summarise(
+    Sample = n_distinct(na.omit(Sample)),
+    Length = length(na.omit(Length)),
+    Weight = length(na.omit(Weight)),
+    Age = length(na.omit(Age))
+  ) %>%
+  ungroup() %>%
+  complete(
+    Year = yrRange, fill = list(Sample = 0, Length = 0, Weight = 0, Age = 0)
+  ) %>%
+  arrange(Year) %>%
+  select(Year, Sample, Length, Weight, Age)
+
+# Write bio summary to disc
+write_csv(
+  x = bioSummary, 
+  path = file.path("Summaries", paste("Bio", region, ".csv", sep = ""))
+)
+
 ##### Overlay #####
 
 # Check area data for inconsistent spatial overlays
@@ -1178,21 +1249,6 @@ catchCommUseYr <- catch %>%
   group_by(Gear) %>%
   summarise(Catch = SumNA(Catch)) %>%
   ungroup()
-
-# Calculate commercial SoK harvest and biomass
-harvestSOK <- catchRaw %>%
-  filter(DisposalCode == 2, Source == "SOK") %>%
-  group_by(Year) %>%
-  summarise(Harvest = SumNA(Catch)) %>%
-  ungroup() %>%
-  # Covert harvest (lb) to spawning biomass (t)
-  mutate(Biomass = calc_sok_index(sok = Harvest * convFac$lb2kg)) %>%
-  complete(Year = yrRange, fill = list(Harvest = 0, Biomass = 0)) %>%
-  arrange(Year)
-
-# Table that doesn't get pruned for privacy, recent years, etc (for the res doc)
-allHarvSOK <- harvestSOK %>%
-  mutate(Region = regName, Harvest = Harvest * convFac$lb2kg)
 
 # WCVI data
 # allHarvSOK %>%
