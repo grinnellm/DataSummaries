@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -127,7 +127,7 @@ OutHG <- c(11, 12, 22)
 Broughton <- c(111, 112, 121:127)
 Area13 <- c(131:136)
 JS <- c(111, 112, 121:127, 131:136)
-A10 <- c(101:103)
+Area10 <- c(101:103)
 
 # Select a subset of sections (or NULL for all)
 sectionSub <- NULL
@@ -1158,13 +1158,10 @@ spawnSummary <- spawnRaw %>%
   ) %>%
   complete(Year = yrRange) %>%
   arrange(Year) %>%
-  select(Year, Surf, Macro, Under)
-
-# Write spawn summary to disc
-write_csv(
-  x = spawnSummary,
-  path = file.path("Summaries", paste("Spawn", region, ".csv", sep = ""))
-)
+  select(Year, Surf, Macro, Under) %>%
+  write_csv(
+    path = file.path("Summaries", paste("Spawn", region, ".csv", sep = ""))
+  )
 
 # Catch summary
 catchSummary <- catch %>%
@@ -1186,15 +1183,12 @@ catchSummary <- catch %>%
     ) %>%
   arrange(Year) %>%
   select(Year, Other, RoeSN, RoeGN, SOK) %>%
-  replace_na(replace = list(SOK = 0))
+  replace_na(replace = list(SOK = 0)) %>%
+  write_csv(
+    path = file.path("Summaries", paste("Catch", region, ".csv", sep = ""))
+  )
 
-# Write catch summary to disc
-write_csv(
-  x = catchSummary, 
-  path = file.path("Summaries", paste("Catch", region, ".csv", sep = ""))
-)
-
-# Biological summary
+# Biosample summary
 bioSummary <- bio %>%
   group_by(Year) %>%
   summarise(
@@ -1208,13 +1202,10 @@ bioSummary <- bio %>%
     Year = yrRange, fill = list(Sample = 0, Length = 0, Weight = 0, Age = 0)
   ) %>%
   arrange(Year) %>%
-  select(Year, Sample, Length, Weight, Age)
-
-# Write bio summary to disc
-write_csv(
-  x = bioSummary, 
-  path = file.path("Summaries", paste("Bio", region, ".csv", sep = ""))
-)
+  select(Year, Sample, Length, Weight, Age) %>%
+  write_csv(
+    path = file.path("Summaries", paste("Bio", region, ".csv", sep = ""))
+  )
 
 ##### Overlay #####
 
