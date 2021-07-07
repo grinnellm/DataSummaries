@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm(list = ls()) # Clear the workspace
+# rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -183,7 +183,7 @@ makeFrench <- FALSE
 data(pars)
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- pars$year$assess:2020
+yrRange <- pars$year$assess:2021
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -1976,9 +1976,8 @@ if (region == "CC") {
     select(Year, StatArea, Depth, Layers) %>%
     filter(Year >= firstYrFig) %>%
     arrange(Year, StatArea)
-  # Calculate spawn depth by year and section for statistical area 7
-  spawnStatsYrSecSA07 <- spawnRaw %>%
-    filter(StatArea == 7) %>%
+  # Calculate spawn depth by year and section
+  spawnStatsYrSec <- spawnRaw %>%
     mutate(Section = formatC(Section, width = 3, flag = "0")) %>%
     rowwise() %>%
     mutate(Layers = MeanNA(c(SurfLyrs, MacroLyrs, UnderLyrs))) %>%
@@ -2647,11 +2646,11 @@ BCMap <- ggplot(data = shapes$landAllCropDF, aes(x = Eastings, y = Northings)) +
   labs(x = "Eastings (km)", y = "Northings (km)", caption = geoProj) +
   scale_x_continuous(labels = function(x) comma(x / 1000), expand = c(0, 0)) +
   scale_y_continuous(labels = function(x) comma(x / 1000), expand = c(0, 0)) +
-  myTheme +
-  ggsave(
-    filename = file.path(regName, "BC.png"), width = figWidth,
-    height = min(6.9, 5.75 / shapes$xyAllRatio), dpi = figRes
-  )
+  myTheme 
+ggsave(
+  BCMap, filename = file.path(regName, "BC.png"), width = figWidth,
+  height = min(6.9, 5.75 / shapes$xyAllRatio), dpi = figRes
+)
 
 # Make a french version if requested
 if (makeFrench) {
@@ -2695,10 +2694,10 @@ if (makeFrench) {
     labs(x = "Abcsisses (km)", y = "Ordonnées (km)", caption = geoProj) +
     scale_x_continuous(labels = function(x) comma(x / 1000), expand = c(0, 0)) +
     scale_y_continuous(labels = function(x) comma(x / 1000), expand = c(0, 0)) +
-    myTheme +
-    ggsave(
-      filename = file.path("BC-FR.png"), width = figWidth,
-      height = min(7, 5.75 / shapes$xyAllRatio), dpi = figRes
+    myTheme
+  ggsave(
+    BCMapFR, filename = file.path("BC-FR.png"), width = figWidth,
+    height = min(7, 5.75 / shapes$xyAllRatio), dpi = figRes
     )
 } # End if making french
 
@@ -2765,11 +2764,12 @@ RegionMap <- BaseMap +
   # } +
   scale_fill_viridis(discrete = TRUE) +
   labs(fill = "Group") +
-  theme(legend.position = c(0.01, 0.01), legend.justification = c(0, 0)) +
-  ggsave(
-    filename = file.path(regName, "Region.png"), width = figWidth,
-    height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
-  )
+  theme(legend.position = c(0.01, 0.01), legend.justification = c(0, 0)) 
+  
+ggsave(
+  RegionMap, filename = file.path(regName, "Region.png"), width = figWidth,
+  height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
+)
 
 # Plot catch by year and gear type (i.e., period)
 catchGearPlot <- ggplot(
@@ -2796,11 +2796,11 @@ catchGearPlot <- ggplot(
     show.area = FALSE
   )} +
   myTheme +
-  theme(legend.position = "top") +
-  ggsave(
-    filename = file.path(regName, "CatchGear.png"), width = figWidth,
-    height = figWidth, dpi = figRes
-  )
+  theme(legend.position = "top") 
+ggsave(
+  catchGearPlot, filename = file.path(regName, "CatchGear.png"), 
+  width = figWidth, height = figWidth, dpi = figRes
+)
 
 # Plot it again, in French
 # Instead of a different name, maybe put the plot in a /French subfolder; this
@@ -2831,11 +2831,11 @@ if (exists("weightCatchFig")) {
     ) +
     expand_limits(x = c(firstYrTab, max(yrRange)), y = 0) +
     myTheme +
-    theme(legend.position = "top") +
-    ggsave(
-      filename = file.path(regName, "WeightCatch.png"), width = figWidth,
-      height = 3.5, dpi = figRes
-    )
+    theme(legend.position = "top") 
+  ggsave(
+    weightCatchPlot, filename = file.path(regName, "WeightCatch.png"),
+    width = figWidth, height = 3.5, dpi = figRes
+  )
 } # End if weight by catch type
 
 # If catch by stat area
@@ -2856,11 +2856,11 @@ if (exists("catchStatArea")) {
     theme(
       legend.position = "none",
       axis.text.x = element_text(angle = 45, hjust = 1)
-    ) +
-    ggsave(
-      filename = file.path(regName, "CatchStatArea.png"), width = figWidth,
-      height = figWidth / 2, dpi = figRes
     )
+  ggsave(
+    catchStatAreaPlot, filename = file.path(regName, "CatchStatArea.png"),
+    width = figWidth, height = figWidth / 2, dpi = figRes
+  )
 } # End if catch by stat area
 
 # Plot biosample locations
@@ -2893,11 +2893,11 @@ if (nrow(bioLocations) > 0) {
       } else {
         "vertical"
       }
-    ) +
-    ggsave(
-      filename = file.path(regName, "BioLocations.png"), width = figWidth,
-      height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
     )
+  ggsave(
+    bioLocPlot, filename = file.path(regName, "BioLocations.png"),
+    width = figWidth, height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
+  )
 }
 
 # Plot proportion-at-age by year
@@ -2936,11 +2936,11 @@ numAgedPlot <- ggplot(data = numAgedYear, mapping = aes(x = Year, y = Number)) +
 pnPlots <- plot_grid(propAgedPlot, numAgedPlot,
                      align = "v",
                      ncol = 1, rel_heights = c(1, 0.7)
-) +
-  ggsave(
-    filename = file.path(regName, "ProportionAged.png"), width = figWidth,
-    height = figWidth, dpi = figRes
-  )
+) 
+ggsave(
+  pnPlots, filename = file.path(regName, "ProportionAged.png"), width = figWidth,
+  height = figWidth, dpi = figRes
+)
 
 # If proportion-at-age by group
 if (exists("numAgedYearGrp")) {
@@ -2961,11 +2961,11 @@ if (exists("numAgedYearGrp")) {
     expand_limits(x = c(min(yrRange) - 0.5, max(yrRange) + 0.5)) +
     myTheme +
     facet_grid(Group ~ .) +
-    theme(legend.position = "top") +
-    ggsave(
-      filename = file.path(regName, "PropAgedGroup.png"), width = figWidth,
-      height = figWidth, dpi = figRes
-    )
+    theme(legend.position = "top") 
+  ggsave(
+    propAgedGrpPlot, filename = file.path(regName, "PropAgedGroup.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
   # Plot number aged by year and group
   numAgedGrpPlot <- ggplot(
     data = numAgedYearGrp, mapping = aes(x = Year, y = Number)
@@ -2976,11 +2976,11 @@ if (exists("numAgedYearGrp")) {
     scale_y_continuous(labels = function(x) comma(x / 1000)) +
     expand_limits(x = yrRange, y = 0) +
     facet_grid(Group ~ .) +
-    myTheme +
-    ggsave(
-      filename = file.path(regName, "NumAgedGroup.png"), width = figWidth,
-      height = figWidth, dpi = figRes
-    )
+    myTheme 
+  ggsave(
+    numAgedGrpPlot, filename = file.path(regName, "NumAgedGroup.png"),
+    width = figWidth,height = figWidth, dpi = figRes
+  )
 } # End if proportion-at-age by group
 
 # Proportion female plot
@@ -2992,11 +2992,11 @@ propFemalePlot <- ggplot(
   geom_hline(yintercept = 0.5, linetype = "dashed") +
   labs(y = "Proportion female") +
   scale_x_continuous(breaks = yrBreaks) +
-  myTheme +
-  ggsave(
-    filename = file.path(regName, "PropFemale.png"), width = figWidth,
-    height = figWidth, dpi = figRes
-  )
+  myTheme 
+ggsave(
+  propFemalePlot, filename = file.path(regName, "PropFemale.png"),
+  width = figWidth, height = figWidth, dpi = figRes
+)
 
 # If nearshore comparison
 if (exists("compNear") & exists("compNearSA") & exists("nSampleSA")) {
@@ -3011,11 +3011,11 @@ if (exists("compNear") & exists("compNearSA") & exists("nSampleSA")) {
     ) +
     # scale_fill_viridis_d( ) +
     myTheme +
-    theme(legend.position = "top") +
-    ggsave(
-      filename = file.path(regName, "CompNear.png"), width = figWidth,
-      height = figWidth, dpi = figRes
-    )
+    theme(legend.position = "top") 
+  ggsave(
+    compNearPlot, filename = file.path(regName, "CompNear.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
   # Plot proportion-at-age by stat area
   compNearPlotSA <- ggplot(
     data = compNearSA, mapping = aes(x = Age, y = Proportion, fill = Sample)
@@ -3027,11 +3027,11 @@ if (exists("compNear") & exists("compNearSA") & exists("nSampleSA")) {
     ) +
     # scale_fill_viridis_d( ) +
     myTheme +
-    theme(legend.position = "top") +
-    ggsave(
-      filename = file.path(regName, "CompNearSA.png"), width = figWidth,
-      height = figWidth, dpi = figRes
-    )
+    theme(legend.position = "top") 
+  ggsave(
+    compNearPlotSA, filename = file.path(regName, "CompNearSA.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
   # Plot number aged by stat area
   numNearPlotSA <- ggplot(
     data = nSampleSA, mapping = aes(x = Sample, y = Number, fill = Sample)
@@ -3039,11 +3039,11 @@ if (exists("compNear") & exists("compNearSA") & exists("nSampleSA")) {
     geom_bar(stat = "identity", position = "dodge") +
     guides(fill = FALSE) +
     facet_grid(Year ~ StatArea) +
-    myTheme +
-    ggsave(
-      filename = file.path(regName, "NumNearSA.png"), width = figWidth,
-      height = figWidth, dpi = figRes
-    )
+    myTheme 
+  ggsave(
+    numNearPlotSA, filename = file.path(regName, "NumNearSA.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
 } # End if nearshore comparison
 
 # Plot weight- and length-at-age by year
@@ -3070,10 +3070,10 @@ wtLenAgePlot <- ggplot(
   theme(
     legend.position = "top", strip.background = element_blank(),
     strip.placement = "outside"
-  ) +
+  ) 
   ggsave(
-    filename = file.path(regName, "WtLenAge.png"), width = figWidth,
-    height = figWidth, dpi = figRes
+    wtLenAgePlot, filename = file.path(regName, "WtLenAge.png"),
+    width = figWidth, height = figWidth, dpi = figRes
   )
 
 # Plot percent change in weight- and length-at-age by year
@@ -3089,11 +3089,11 @@ wtLenAgeChangePlot <- ggplot(
   guides(fill = FALSE) +
   facet_grid(Measure ~ ., scales = "free_y") +
   myTheme +
-  theme(legend.position = "top") +
-  ggsave(
-    filename = file.path(regName, "WtLenAgeChange.png"), width = figWidth,
-    height = figWidth, dpi = figRes
-  )
+  theme(legend.position = "top") 
+ggsave(
+  wtLenAgeChangePlot, filename = file.path(regName, "WtLenAgeChange.png"),
+  width = figWidth, height = figWidth, dpi = figRes
+)
 
 # Plot percent change in weight- and length-at-age by year
 wtLenAgeChangePlot2 <- ggplot(
@@ -3108,11 +3108,11 @@ wtLenAgeChangePlot2 <- ggplot(
   guides(fill = FALSE) +
   facet_grid(Measure ~ ., scales = "free_y") +
   myTheme +
-  theme(legend.position = "top") +
-  ggsave(
-    filename = file.path(regName, "WtLenAgeChange2.png"), width = figWidth,
-    height = figWidth, dpi = figRes
-  )
+  theme(legend.position = "top") 
+ggsave(
+  wtLenAgeChangePlot2, filename = file.path(regName, "WtLenAgeChange2.png"),
+  width = figWidth, height = figWidth, dpi = figRes
+)
 
 # If weight by age and group
 if (exists("weightAgeGroup")) {
@@ -3129,11 +3129,11 @@ if (exists("weightAgeGroup")) {
     scale_fill_viridis(discrete = TRUE, alpha = 0.5) +
     facet_grid(. ~ Decade, labeller = label_both) +
     myTheme +
-    theme(legend.position = "top") +
-    ggsave(
-      filename = file.path(regName, "WeightAgeGroup.png"), width = figWidth,
-      height = figWidth * 0.67, dpi = figRes
-    )
+    theme(legend.position = "top") 
+  ggsave(
+    weightAgeGroupPlot, filename = file.path(regName, "WeightAgeGroup.png"),
+    width = figWidth, height = figWidth * 0.67, dpi = figRes
+  )
 } # End if weight by age and group
 
 # Plot the spawn index locations
@@ -3154,11 +3154,11 @@ spawnByLocPlot <- BaseMap +
   theme(
     legend.justification = c(0, 0),
     legend.position = if (region == "PRD") "right" else c(0.01, 0.01)
-  ) +
-  ggsave(
-    filename = file.path(regName, "SpawnByLoc.png"), width = figWidth,
-    height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
-  )
+  ) 
+ggsave(
+  spawnByLocPlot, filename = file.path(regName, "SpawnByLoc.png"),
+  width = figWidth, height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
+)
 
 # Plot the spawn index locations
 spawnDecadePlot <- BaseMap +
@@ -3186,11 +3186,11 @@ spawnDecadePlot <- BaseMap +
     } else {
       "vertical"
     }
-  ) +
-  ggsave(
-    filename = file.path(regName, "SpawnDecade.png"), width = figWidth,
-    height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
-  )
+  ) 
+ggsave(
+  spawnDecadePlot, filename = file.path(regName, "SpawnDecade.png"),
+  width = figWidth, height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
+)
 
 # Basic spawn timing plot
 spawnTimingPlot <- ggplot(data = spawnRaw, mapping = aes(x = StartDOY)) +
@@ -3213,11 +3213,13 @@ spawnTimingPlot <- ggplot(data = spawnRaw, mapping = aes(x = StartDOY)) +
     }
   } +
   myTheme +
-  theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggsave(
-    filename = file.path(regName, "SpawnTiming.png"), width = figWidth,
-    height = figWidth * 1.25, dpi = figRes
-  )
+  theme(
+    legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1)
+    ) 
+ggsave(
+  spawnTimingPlot, filename = file.path(regName, "SpawnTiming.png"),
+  width = figWidth,height = figWidth * 1.25, dpi = figRes
+)
 
 # Plot total spawn length by year
 spawnLengthPlot <- ggplot(
@@ -3276,13 +3278,13 @@ spawnLayersPlot <- ggplot(
   myTheme
 
 # Arrange and save length, width, and layer plots
-plot_grid(spawnLengthPlot, spawnWidthPlot, spawnLayersPlot,
+lwlPlots <- plot_grid(spawnLengthPlot, spawnWidthPlot, spawnLayersPlot,
           align = "v", ncol = 1, rel_heights = c(1.2, 1, 1.1)
-) +
-  ggsave(
-    filename = file.path(regName, "SpawnDimensions.png"), width = figWidth,
-    height = figWidth * 1.25, dpi = figRes
-  )
+) 
+ggsave(
+  lwlPlots, filename = file.path(regName, "SpawnDimensions.png"), width = figWidth,
+  height = figWidth * 1.25, dpi = figRes
+)
 
 # Plot spawn index by survey type: surface, macro, under
 spawnIndexTypePlot <- ggplot(
@@ -3296,11 +3298,11 @@ spawnIndexTypePlot <- ggplot(
   expand_limits(x = c(firstYrFig - 0.5, max(yrRange) + 0.5), y = 0) +
   facet_grid(Type ~ ., scales = "free_y", labeller = label_both) +
   myTheme +
-  theme(legend.position = "top") +
-  ggsave(
-    filename = file.path(regName, "SpawnIndexType.png"), width = figWidth,
-    height = figWidth * 1.15, dpi = figRes
-  )
+  theme(legend.position = "top") 
+ggsave(
+  spawnIndexTypePlot, filename = file.path(regName, "SpawnIndexType.png"),
+  width = figWidth, height = figWidth * 1.15, dpi = figRes
+)
 
 # HG rebuilding
 # mu8292 <- spawnYr %>%
@@ -3434,20 +3436,20 @@ ipPlots <- plot_grid(spawnIndexPlot, spawnPercentSAStackPlot,
                      spawnPercentSecStackPlot,
                      align = "v", ncol = 1,
                      rel_heights = c(2.1, 2.5, 2.5)
-) +
-  ggsave(
-    filename = file.path(regName, "SpawnIndexPercent.png"), width = figWidth,
-    height = 6.9, dpi = figRes
-  )
+) 
+ggsave(
+  ipPlots, filename = file.path(regName, "SpawnIndexPercent.png"),
+  width = figWidth, height = 6.9, dpi = figRes
+)
 
 # Arrange and save the spawn index and percent change plots
 pctPlots <- plot_grid(spawnIndexPlot, spawnChangePlot,
                       align = "v", ncol = 1, rel_heights = c(2.1, 2.1)
-) +
-  ggsave(
-    filename = file.path(regName, "SpawnIndexChange.png"), width = figWidth,
-    height = figWidth, dpi = figRes
-  )
+) 
+ggsave(
+  pctPlots, filename = file.path(regName, "SpawnIndexChange.png"),
+  width = figWidth,height = figWidth, dpi = figRes
+)
 
 # # Arrange and save the spawn index and percent change plots
 # pctPlots <- plot_grid(spawnIndexPlot, spawnChangePlot, spawnPercentSecStackPlot,
@@ -3468,11 +3470,11 @@ spawnTypePropPlot <- ggplot(
   scale_x_continuous(breaks = yrBreaks) +
   scale_fill_viridis_d() +
   myTheme +
-  theme(legend.position = "top") +
-  ggsave(
-    filename = file.path(regName, "SpawnTypeProp.png"), width = figWidth,
-    height = figWidth * 0.67, dpi = figRes
-  )
+  theme(legend.position = "top") 
+ggsave(
+  spawnTypePropPlot, filename = file.path(regName, "SpawnTypeProp.png"),
+  width = figWidth, height = figWidth * 0.67, dpi = figRes
+)
 
 # Plot percent contribution by Section faceted by Stat Area or Group
 PlotPCSecSA <- function(dat) {
@@ -3543,11 +3545,11 @@ PlotPCSecSA <- function(dat) {
   titleY <- ggdraw() +
     draw_label("Spawn index (%)", angle = 90, size = 12)
   # Combine the y-axis title, and save the plots
-  pGridXY <- plot_grid(titleY, pGridX, ncol = 2, rel_widths = c(0.04, 1)) +
-    ggsave(
-      filename = file.path(regName, "SpawnPercentGrid.png"),
-      width = figWidth, height = min(7.1, length(pList) * 3), dpi = figRes
-    )
+  pGridXY <- plot_grid(titleY, pGridX, ncol = 2, rel_widths = c(0.04, 1))
+  ggsave(
+    pGridXY, filename = file.path(regName, "SpawnPercentGrid.png"),
+    width = figWidth, height = min(7.1, length(pList) * 3), dpi = figRes
+  )
   # Return the plot list
   return(pGridXY)
 } # End PlotPCSecSA function
@@ -3570,12 +3572,12 @@ spawnPercentPanelPlot <- ggplot(
   myTheme +
   theme(
     legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)
-  ) +
-  ggsave(
-    filename = file.path(regName, "SpawnPercentPanel.png"),
-    width = figWidth, dpi = figRes,
-    height = min(7.5, 1.5 * (ceiling(n_distinct(spawnYrSec$Section) / 3)))
-  )
+  ) 
+ggsave(
+  spawnPercentPanelPlot, filename = file.path(regName, "SpawnPercentPanel.png"),
+  width = figWidth, dpi = figRes,
+  height = min(7.5, 1.5 * (ceiling(n_distinct(spawnYrSec$Section) / 3)))
+)
 
 # Plot index of spawn in each section and year
 spawnIndexPanelPlot <- ggplot(
@@ -3590,12 +3592,12 @@ spawnIndexPanelPlot <- ggplot(
   expand_limits(x = c(firstYrFig, max(yrRange))) +
   facet_wrap(~Section, labeller = label_both, drop = TRUE, ncol = 3) +
   myTheme +
-  theme(legend.position = "none") +
-  ggsave(
-    filename = file.path(regName, "SpawnIndexPanel.png"),
-    width = figWidth, dpi = figRes,
-    height = min(7.9, 1.5 * (ceiling(n_distinct(spawnYrSec$Section) / 3)))
-  )
+  theme(legend.position = "none") 
+ggsave(
+  spawnIndexPanelPlot, filename = file.path(regName, "SpawnIndexPanel.png"),
+  width = figWidth, dpi = figRes,
+  height = min(7.9, 1.5 * (ceiling(n_distinct(spawnYrSec$Section) / 3)))
+)
 
 # If length by sampling protocol
 if (exists("lenAgeSample")) {
@@ -3611,11 +3613,11 @@ if (exists("lenAgeSample")) {
     scale_x_continuous(breaks = pretty_breaks()) +
     scale_fill_viridis(discrete = TRUE, alpha = 0.5) +
     myTheme +
-    theme(legend.position = "top") +
-    ggsave(
-      filename = file.path(regName, "LengthAgeSample.png"), width = figWidth,
-      height = figWidth * 0.67, dpi = figRes
-    )
+    theme(legend.position = "top") 
+  ggsave(
+    lenAgeSamplePlot, filename = file.path(regName, "LengthAgeSample.png"),
+    width = figWidth,height = figWidth * 0.67, dpi = figRes
+  )
   # Compare the two sampling protocols by StatArea (length)
   lenAgeSamplePlotSA <- ggplot(
     data = lenAgeSample, mapping = aes(
@@ -3629,11 +3631,11 @@ if (exists("lenAgeSample")) {
     scale_fill_viridis(discrete = TRUE, alpha = 0.5) +
     myTheme +
     theme(legend.position = "top") +
-    facet_grid(SA ~ ., labeller = label_both) +
-    ggsave(
-      filename = file.path(regName, "LengthAgeSampleSA.png"), width = figWidth,
-      height = figWidth, dpi = figRes
-    )
+    facet_grid(SA ~ ., labeller = label_both) 
+  ggsave(
+    lenAgeSamplePlotSA, filename = file.path(regName, "LengthAgeSampleSA.png"), 
+    width = figWidth, height = figWidth, dpi = figRes
+  )
   # Compare the two sampling protocols by StatArea and year (length)
   lenAgeSamplePlotSAYr <- ggplot(
     data = lenAgeSample, mapping = aes(
@@ -3647,11 +3649,12 @@ if (exists("lenAgeSample")) {
     # scale_fill_viridis_d( alpha=0.5 ) +
     myTheme +
     theme(legend.position = "top") +
-    facet_grid(Year ~ SA, labeller = label_both) +
-    ggsave(
-      filename = file.path(regName, "LengthAgeSampleSAYr.png"),
-      width = figWidth, height = figWidth, dpi = figRes
-    )
+    facet_grid(Year ~ SA, labeller = label_both) 
+  ggsave(
+    lenAgeSamplePlotSAYr,
+    filename = file.path(regName, "LengthAgeSampleSAYr.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
   # Compare age distributions by year and stat area
   ageDistSamplePlotSA <- ggplot(
     data = lenAgeSample,
@@ -3666,17 +3669,17 @@ if (exists("lenAgeSample")) {
     scale_fill_viridis(discrete = TRUE, alpha = 0.5) +
     myTheme +
     theme(legend.position = "top") +
-    facet_grid(SA ~ ., labeller = label_both) +
-    ggsave(
-      filename = file.path(regName, "AgeDistSampleSA.png"),
-      width = figWidth, height = figWidth, dpi = figRes
-    )
+    facet_grid(SA ~ ., labeller = label_both)
+  ggsave(
+    ageDistSamplePlotSA, filename = file.path(regName, "AgeDistSampleSA.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
 } # End if length by sampling protocol
 
 # If spawn depth by year and statistical area
-if (exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07")) {
+if (exists("spawnStatsYrSA") & exists("spawnStatsYrSec")) {
   # Determine the number of sections
-  nSecCol <- n_distinct(spawnStatsYrSecSA07$Section)
+  nSecCol <- n_distinct(spawnStatsYrSec$Section)
   # Plot spawn depth (maximum by spawn number) in each statistical area and year
   spawnDepthSAPlot <- ggplot(
     data = spawnStatsYrSA, mapping = aes(
@@ -3698,7 +3701,7 @@ if (exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07")) {
     theme(legend.position = "top", axis.text.x = element_blank())
   # Plot spawn depth (maximum by spawn number) in each section and year
   spawnDepthSecPlot <- ggplot(
-    data = spawnStatsYrSecSA07, mapping = aes(
+    data = spawnStatsYrSec, mapping = aes(
       x = Year, y = Depth, fill = Section, group = interaction(Year, Section)
     )
   ) +
@@ -3718,11 +3721,11 @@ if (exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07")) {
   # Arrange and save the depth plots
   depthPlots <- plot_grid(spawnDepthSAPlot, spawnDepthSecPlot,
                           align = "v", ncol = 1, rel_heights = c(2, 2)
-  ) +
-    ggsave(
-      filename = file.path(regName, "SpawnDepthSASec.png"),
-      width = figWidth, height = figWidth, dpi = figRes
-    )
+  )
+  ggsave(
+    depthPlots, filename = file.path(regName, "SpawnDepthSASec.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
   # Plot spawn layers in each statistical area and year
   spawnLayersSAPlot <- ggplot(
     data = spawnStatsYrSA, mapping = aes(
@@ -3743,7 +3746,7 @@ if (exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07")) {
     theme(legend.position = "top", axis.text.x = element_blank())
   # Plot spawn layers in each section and year
   spawnLayersSecPlot <- ggplot(
-    data = spawnStatsYrSecSA07, mapping = aes(
+    data = spawnStatsYrSec, mapping = aes(
       x = Year, y = Layers, fill = Section,
       group = interaction(Year, Section)
     )
@@ -3762,11 +3765,11 @@ if (exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07")) {
   # Arrange and save the depth plots
   layerPlots <- plot_grid(spawnLayersSAPlot, spawnLayersSecPlot,
                           align = "v", ncol = 1, rel_heights = c(2, 2)
-  ) +
-    ggsave(
-      filename = file.path(regName, "SpawnLayersSASec.png"),
-      width = figWidth, height = figWidth, dpi = figRes
-    )
+  ) 
+  ggsave(
+    layerPlots, filename = file.path(regName, "SpawnLayersSASec.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
 } # End if spawn depth by year and statistical area
 
 # Plot length at age if data
@@ -3775,11 +3778,11 @@ if (nrow(lenAge) > 0) {
     geom_bar() +
     labs(x = "Length (mm)", y = "Count") +
     facet_wrap(Age ~ ., ncol = 2, dir = "v", scales = "free_y") +
-    myTheme +
-    ggsave(
-      filename = file.path(regName, "LengthAge.png"), width = figWidth,
-      height = figWidth * 0.67, dpi = figRes
-    )
+    myTheme 
+  ggsave(
+    lengthAgePlot, filename = file.path(regName, "LengthAge.png"),
+    width = figWidth,height = figWidth * 0.67, dpi = figRes
+  )
 }
 
 # Show spawn index by locations by year
@@ -4195,7 +4198,7 @@ if (exists("spawnYrGrp")) {
 }
 
 # If spawn depth by year and statistical area: set toggle to true
-if (exists("spawnStatsYrSA") & exists("spawnStatsYrSecSA07")) {
+if (exists("spawnStatsYrSA") & exists("spawnStatsYrSec")) {
   tfSpawnDepth <- "\\toggletrue{spawnDepth}"
 }
 
