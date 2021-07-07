@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "A10"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -3922,6 +3922,7 @@ print(
 # Format commercial harvest (recent years)
 xHarvestSOK <- harvestSOK %>%
   filter(Year >= firstYrTab) %>%
+  arrange(Year) %>%
   mutate(
     Year = as.integer(Year),
     Harvest = format(Harvest, big.mark = ",", digits = 0, scientific = FALSE),
