@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "A10"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1777,7 +1777,7 @@ spawnByLocXY <- spawnRaw %>%
   filter(Year == max(yrRange)) %>%
   group_by(StatArea, Section, LocationCode, LocationName) %>%
   summarise(
-    Start = min(Start), TotalSI = SumNA(c(MacroSI, SurfSI, UnderSI)),
+    Start = MinNA(Start), TotalSI = SumNA(c(MacroSI, SurfSI, UnderSI)),
     Eastings = unique(Eastings), Northings = unique(Northings)
   ) %>%
   ungroup() %>%
