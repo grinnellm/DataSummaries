@@ -34,8 +34,8 @@ graphics.off() # Turn graphics off
 
 # Region names: major, minor, special
 regionNames <- c("HG", "PRD", "CC", "SoG", "WCVI", 
-                 "A27", "A2W", "A10",
-                 "All")
+                 "A27", "A2W", 
+                 "A10", "JS")
 
 # Initialize some cores
 # clust <- makeCluster( 4 )

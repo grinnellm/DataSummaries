@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "A2W"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -3456,7 +3456,7 @@ pctPlots <- plot_grid(spawnIndexPlot, spawnChangePlot,
 ) 
 ggsave(
   pctPlots, filename = file.path(regName, "SpawnIndexChange.png"),
-  width = figWidth,height = figWidth, dpi = figRes
+  width = figWidth, height = figWidth, dpi = figRes
 )
 
 # # Arrange and save the spawn index and percent change plots
