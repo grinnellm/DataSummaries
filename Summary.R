@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "A2W"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -2771,6 +2771,13 @@ ggsave(
   height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
 )
 
+# Determine whether or not to show the catch zoom
+if(max(catchPriv$Year) >= firstYrFig & !region %in% c("JS", "A2W")){
+  showCatchZoom <- TRUE
+} else {
+  showCatchZoom <- FALSE
+}
+
 # Plot catch by year and gear type (i.e., period)
 catchGearPlot <- ggplot(
   data = catchPriv, mapping = aes(x = Year, y = CatchPriv)
@@ -2790,16 +2797,17 @@ catchGearPlot <- ggplot(
     shape = guide_legend(order = 2, title = NULL)
   ) +
   # expand_limits( x=yrRange, y=0 ) +
-  {if(max(catchPriv$Year) >= firstYrFig & !region %in% c("JS", "A10", "A2W"))
+  {if(showCatchZoom)
     facet_zoom(
-    xy = Year >= firstYrFig, zoom.size = 1, horizontal = FALSE,
+    xy = Year >= firstYrFig, zoom.size = 0.75, horizontal = FALSE, 
     show.area = FALSE
   )} +
   myTheme +
   theme(legend.position = "top") 
 ggsave(
   catchGearPlot, filename = file.path(regName, "CatchGear.png"), 
-  width = figWidth, height = figWidth, dpi = figRes
+  width = figWidth, height = ifelse(showCatchZoom, figWidth, figWidth * 0.6),
+  dpi = figRes
 )
 
 # Plot it again, in French
@@ -4176,6 +4184,8 @@ tfSpawnByLocXY <- "\\toggletrue{spawnByLocXY}"
 tfSpatialGroup <- "\\togglefalse{spatialGroup}"
 # Turn the toggle to false: special region
 tfSpecialRegion <- "\\togglefalse{specialRegion}"
+# Turn the toggle to false: catch zoom
+tfShowCatchZoom <- "\\togglefalse{showCatchZoom}"
 
 # Group name
 spawnIndexGroupName <- list(a = "Statistical Area", b = "Statistical Area (SA)")
@@ -4202,6 +4212,9 @@ if (exists("spawnYrGrp")) {
 if (exists("spawnStatsYrSA") & exists("spawnStatsYrSec")) {
   tfSpawnDepth <- "\\toggletrue{spawnDepth}"
 }
+
+# If there is a catch zoom: set toggle to true
+if(showCatchZoom) tfShowCatchZoom <- "\\toggletrue{showCatchZoom}"
 
 # If weight by age and group
 if (exists("weightAgeGroup")) {

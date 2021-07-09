@@ -33,9 +33,8 @@ graphics.off() # Turn graphics off
 ##### Controls #####
 
 # Region names: major, minor, special
-regionNames <- c("HG", "HG", "PRD", "CC", "SoG", "WCVI", 
-                 "A27", "A2W",
-                 "JS", "A10",
+regionNames <- c("HG", "PRD", "CC", "SoG", "WCVI", 
+                 "A27", "A2W", "A10",
                  "All")
 
 # Initialize some cores
