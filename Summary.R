@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm(list = ls()) # Clear the workspace
+# rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -2772,11 +2772,7 @@ ggsave(
 )
 
 # Determine whether or not to show the catch zoom
-if(max(catchPriv$Year) >= firstYrFig & !region %in% c("JS", "A2W")){
-  showCatchZoom <- TRUE
-} else {
-  showCatchZoom <- FALSE
-}
+showCatchZoom <- ifelse(max(catchPriv$Year) >= firstYrFig, TRUE, FALSE)
 
 # Plot catch by year and gear type (i.e., period)
 catchGearPlot <- ggplot(
@@ -2796,14 +2792,20 @@ catchGearPlot <- ggplot(
     fill = guide_legend(order = 1),
     shape = guide_legend(order = 2, title = NULL)
   ) +
-  # expand_limits( x=yrRange, y=0 ) +
-  {if(showCatchZoom)
-    facet_zoom(
-    xy = Year >= firstYrFig, zoom.size = 0.75, horizontal = FALSE, 
-    show.area = FALSE
-  )} +
+  expand_limits( x=yrRange, y=0 ) +
   myTheme +
-  theme(legend.position = "top") 
+  theme(legend.position = "top")
+if(showCatchZoom){
+  # Zoom into recent time
+  catchGearPlotZoom <- catchGearPlot + 
+    scale_x_continuous(breaks = yrBreaks, limits = c(firstYrFig, max(yrRange))) +
+    guides(fill = "none", shape = "none")
+  # Add zoom to plot
+  catchGearPlot <- plot_grid(
+    catchGearPlot, catchGearPlotZoom, align = "v", ncol = 1, 
+    rel_heights = c(1, 0.7)
+  )
+}
 ggsave(
   catchGearPlot, filename = file.path(regName, "CatchGear.png"), 
   width = figWidth, height = ifelse(showCatchZoom, figWidth, figWidth * 0.6),
