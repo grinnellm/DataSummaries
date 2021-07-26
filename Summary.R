@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -4479,6 +4479,18 @@ write_csv(
                                   sep = ""
   ))
 )
+
+# Write spawn by year and section to a csv if requested
+if(regName == "CC") {
+  write_csv(
+    x = spawnYrSec %>%
+      select(Year, StatArea, Section, Survey, TotalSI) %>%
+      rename(Index = TotalSI) %>%
+      filter(!is.na(Year)) %>%
+      arrange(Year, StatArea, Section),
+    path = file.path(regName, paste("spawn-yr-sec-", tolower(regName), ".csv",
+                                    sep = "")))
+}
 
 ## Format the spawn summary
 # spawnYrF <- spawnYr %>%
