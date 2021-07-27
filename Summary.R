@@ -1725,15 +1725,15 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
     stop("Grouping variable not specified")
   # Get the full year range and stat areas
   if (g == "Section") {
-    yrsFull <- expand.grid(Year = yrs, Section = unique(areas$Section))
+    yrsFull <- expand.grid(Year = yrs, Section = unique(dat$Section))
   }
   # Get the full year range and stat areas
   if (g == "StatArea") {
-    yrsFull <- expand.grid(Year = yrs, StatArea = unique(areas$StatArea))
+    yrsFull <- expand.grid(Year = yrs, StatArea = unique(dat$StatArea))
   }
   # Get the full year range and groups
   if (g == "Group") {
-    yrsFull <- expand.grid(Year = yrs, Group = unique(areas$Group)) %>%
+    yrsFull <- expand.grid(Year = yrs, Group = unique(dat$Group)) %>%
       mutate(Group = as.character(Group))
   }
   # Determin spawn proportions
@@ -2153,22 +2153,22 @@ if (region == "WCVI") {
   nearNum <- nearAll %>%
     select(Year, Age, Number) %>%
     spread(key = Age, value = Number, drop = FALSE, fill = 0) %>%
-    filter(!is.na(Year))
+    filter(!is.na(Year), Year != "Total")
   # Nearshore proportion-at-age
   nearProp <- nearAll %>%
     select(Year, Age, Proportion) %>%
     spread(key = Age, value = Proportion, drop = FALSE, fill = 0) %>%
-    filter(!is.na(Year))
+    filter(!is.na(Year), Year != "Total")
   # Nearshore weight-at-age
   nearWt <- nearAll %>%
     select(Year, Age, Weight) %>%
     spread(key = Age, value = Weight) %>%
-    filter(!is.na(Year))
+    filter(!is.na(Year), Year != "Total")
   # Nearshore length-at-age
   nearLen <- nearAll %>%
     select(Year, Age, Length) %>%
     spread(key = Age, value = Length) %>%
-    filter(!is.na(Year))
+    filter(!is.na(Year), Year != "Total")
   # Get length at age for the two sampling protocols
   lenAgeSample <- bioRaw %>%
     filter(
@@ -2279,6 +2279,12 @@ if (region == "A10") {
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "Section")
+  # If 101 is missing, add it
+  if(!"101" %in% names(propSpawn)) {
+    propSpawn <- propSpawn %>%
+      mutate(`101` = "0.000") %>%
+      select(Year, `Spawn index`, `101`, `102`, `103`)
+  } # End if no 101
   # Dummy variable
   yrsNearshore <- 0
 } # End if region is A10
@@ -3222,15 +3228,15 @@ spawnTimingPlot <- ggplot(data = spawnRaw, mapping = aes(x = StartDOY)) +
   geom_freqpoly(bins = 30, size = 0.5) +
   scale_x_continuous(
     breaks = c(1, 32, 60, 91, 121, 152, 182),
-    labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul")
+    labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"),
+    limits = c(1, 182) 
   ) +
   labs(x = "Start of spawn", y = "Number of spawns") +
-  coord_cartesian(xlim = c(1, 182)) +
   {
     if (spawnTimingGroup) {
-      facet_grid(Decade ~ Group)
+      facet_grid(Decade ~ Group, scales = "free_y")
     } else {
-      facet_grid(Decade ~ StatArea)
+      facet_grid(Decade ~ StatArea, scales = "free_y")
     }
   } +
   myTheme +
