@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "A10"
+if (!exists("region")) region <- "A27"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1482,21 +1482,33 @@ CalcWeightAtAge <- function(dat) {
   return(wtAgeL)
 } # End CalcWeightAtAge function
 
-# Calculate mean weight-at-age by year
-weightAge <- CalcWeightAtAge(dat = bio)
-
-# Calculate running mean weight-at-age by year
-muWeightAge <- weightAge %>%
-  mutate(Measure = "Weight") %>%
-  rename(Value = Weight) %>%
-  arrange(Age, Year) %>%
-  group_by(Age) %>%
-  mutate(
-    RollMean = rollmean(x = Value, k = nRoll, align = "right", na.pad = TRUE),
-    PctChange = DeltaPercent(x = Value, type = "PctChange")
-  ) %>%
-  ungroup() %>%
-  mutate(Age = factor(Age))
+# Different for major vs others
+if(regionType == "major") {
+  # Calculate mean weight-at-age by year
+  weightAge <- CalcWeightAtAge(dat = bio)
+  # Calculate running mean weight-at-age by year
+  muWeightAge <- weightAge %>%
+    mutate(Measure = "Weight") %>%
+    rename(Value = Weight) %>%
+    arrange(Age, Year) %>%
+    group_by(Age) %>%
+    mutate(
+      RollMean = rollmean(x = Value, k = nRoll, align = "right", na.pad = TRUE),
+      PctChange = DeltaPercent(x = Value, type = "PctChange")
+    ) %>%
+    ungroup() %>%
+    mutate(Age = factor(Age))
+} else {
+  weightAge <- bio %>%
+    filter(GearCode == 29) %>%
+    select(Year, Age, Weight, SampWt) %>%
+    na.omit() %>%
+    group_by(Year, Age) %>%
+    summarise(Weight = WtMeanNA(x = Weight, w = SampWt)) %>%
+    ungroup() %>%
+    complete(Year = yrRange, Age = ageRange) %>%
+    arrange(Year, Age)
+}
 
 # Calculate mean length-at-age by year
 CalcLengthAtAge <- function(dat) {
@@ -1531,25 +1543,51 @@ CalcLengthAtAge <- function(dat) {
   return(lenAgeL)
 } # End CalcLengthAtAge function
 
-# Calculate mean length-at-age by year
-lengthAge <- CalcLengthAtAge(dat = bio)
+# Different for major vs others
+if(regionType == "major") {
+  # Calculate mean length-at-age by year
+  lengthAge <- CalcLengthAtAge(dat = bio)
+  # Calculate running mean length-at-age by year
+  muLengthAge <- lengthAge %>%
+    mutate(Measure = "Length") %>%
+    rename(Value = Length) %>%
+    arrange(Age, Year) %>%
+    group_by(Age) %>%
+    mutate(
+      RollMean = rollmean(x = Value, k = nRoll, align = "right", na.pad = TRUE),
+      PctChange = DeltaPercent(x = Value, type = "PctChange")
+    ) %>%
+    ungroup() %>%
+    mutate(Age = factor(Age))
+} else {
+  lengthAge <- bio %>%
+    filter(GearCode == 29) %>%
+    select(Year, Age, Length, SampWt) %>%
+    na.omit() %>%
+    group_by(Year, Age) %>%
+    summarise(Length = WtMeanNA(x = Length, w = SampWt)) %>%
+    ungroup() %>%
+    complete(Year = yrRange, Age = ageRange) %>%
+    arrange(Year, Age)
+}
 
-# Calculate running mean length-at-age by year
-muLengthAge <- lengthAge %>%
-  mutate(Measure = "Length") %>%
-  rename(Value = Length) %>%
-  arrange(Age, Year) %>%
-  group_by(Age) %>%
-  mutate(
-    RollMean = rollmean(x = Value, k = nRoll, align = "right", na.pad = TRUE),
-    PctChange = DeltaPercent(x = Value, type = "PctChange")
-  ) %>%
-  ungroup() %>%
-  mutate(Age = factor(Age))
-
-# Combine length- and weight-at-age by year
-muWtLenAge <- bind_rows(muWeightAge, muLengthAge) %>%
-  mutate(Measure = factor(Measure, levels = unique(Measure)))
+# Different for major vs others
+if(regionType == "major") {
+  # Combine length- and weight-at-age by year
+  muWtLenAge <- bind_rows(muWeightAge, muLengthAge) %>%
+    mutate(Measure = factor(Measure, levels = unique(Measure)))
+} else {
+  # Temporary table
+  wtAgeCombine <- weightAge %>%
+    mutate(Measure = "Weight", Age = factor(Age)) %>%
+    rename(Value = Weight)
+  lenAgeCombine <- lengthAge %>%
+    mutate(Measure = "Length", Age = factor(Age)) %>%
+    rename(Value = Length) 
+  # Combine length- and weight-at-age by year
+  wtLenAge <- bind_rows(wtAgeCombine, lenAgeCombine) %>%
+    mutate(Measure = factor(Measure, levels = unique(Measure)))
+}
 
 # Proportion female
 propFemale <- bio %>%
@@ -3073,35 +3111,64 @@ if (exists("compNear") & exists("compNearSA") & exists("nSampleSA")) {
   )
 } # End if nearshore comparison
 
-# Plot weight- and length-at-age by year
-wtLenAgePlot <- ggplot(
-  data = muWtLenAge, mapping = aes(x = Year, y = RollMean)
-) +
-  geom_point(
-    data = filter(.data = muWtLenAge, Age == ageShow), mapping = aes(y = Value),
-    shape = 1, size = 1
+# Different plot for major vs others
+if(regionType == "major"){
+  # Plot weight- and length-at-age by year
+  wtLenAgePlot <- ggplot(
+    data = muWtLenAge, mapping = aes(x = Year, y = RollMean)
   ) +
-  geom_line(mapping = aes(group = Age, colour = Age), size = 1) +
-  scale_colour_viridis(guide = guide_legend(nrow = 1), discrete = TRUE) +
-  scale_x_continuous(breaks = yrBreaks) +
-  expand_limits(x = yrRange) +
-  labs(y = NULL) +
-  facet_wrap(Measure ~ .,
-             scales = "free_y", strip.position = "left",
-             labeller = as_labeller(c(
-               Weight = "Weight-at-age (g)",
-               Length = "Length-at-age (mm)"
-             )), nrow = 2
+    geom_point(
+      data = filter(.data = muWtLenAge, Age == ageShow), mapping = aes(y = Value),
+      shape = 1, size = 1
+    ) +
+    geom_line(mapping = aes(group = Age, colour = Age), size = 1) +
+    scale_colour_viridis(guide = guide_legend(nrow = 1), discrete = TRUE) +
+    scale_x_continuous(breaks = yrBreaks) +
+    expand_limits(x = yrRange) +
+    labs(y = NULL) +
+    facet_wrap(Measure ~ .,
+               scales = "free_y", strip.position = "left",
+               labeller = as_labeller(c(
+                 Weight = "Weight-at-age (g)",
+                 Length = "Length-at-age (mm)"
+               )), nrow = 2
+    ) +
+    myTheme +
+    theme(
+      legend.position = "top", strip.background = element_blank(),
+      strip.placement = "outside"
+    )
+} else {
+  # Plot weight- and length-at-age by year
+  wtLenAgePlot <- ggplot(
+    data = wtLenAge, mapping = aes(x = Year, y = Value)
   ) +
-  myTheme +
-  theme(
-    legend.position = "top", strip.background = element_blank(),
-    strip.placement = "outside"
-  ) 
-  ggsave(
-    wtLenAgePlot, filename = file.path(regName, "WtLenAge.png"),
-    width = figWidth, height = figWidth, dpi = figRes
-  )
+    geom_point(
+      data = filter(.data = wtLenAge, Age == ageShow), mapping = aes(y = Value),
+      shape = 1, size = 1
+    ) +
+    geom_line(mapping = aes(group = Age, colour = Age), size = 1) +
+    scale_colour_viridis(guide = guide_legend(nrow = 1), discrete = TRUE) +
+    scale_x_continuous(breaks = yrBreaks) +
+    expand_limits(x = yrRange) +
+    labs(y = NULL) +
+    facet_wrap(Measure ~ .,
+               scales = "free_y", strip.position = "left",
+               labeller = as_labeller(c(
+                 Weight = "Weight-at-age (g)",
+                 Length = "Length-at-age (mm)"
+               )), nrow = 2
+    ) +
+    myTheme +
+    theme(
+      legend.position = "top", strip.background = element_blank(),
+      strip.placement = "outside"
+    )
+}
+ggsave(
+  wtLenAgePlot, filename = file.path(regName, "WtLenAge.png"),
+  width = figWidth, height = figWidth, dpi = figRes
+)
 
 # Plot percent change in weight- and length-at-age by year
 wtLenAgeChangePlot <- ggplot(
