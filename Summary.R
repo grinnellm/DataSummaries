@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-# rm(list = ls()) # Clear the workspace
+rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "A10"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1721,14 +1721,19 @@ spawnYrSA <- CalcSpawnSummary(dat = spawnRaw, g = c("Year", "StatArea")) %>%
 # Calculate the proportion of spawn by group or statistical area
 CalcPropSpawn <- function(dat, g, yrs = yrRange) {
   # Error if grouping variable not specified
-  if (!g %in% c("StatArea", "Group")) stop("Grouping variable not specified")
+  if (!g %in% c("Section", "StatArea", "Group"))
+    stop("Grouping variable not specified")
+  # Get the full year range and stat areas
+  if (g == "Section") {
+    yrsFull <- expand.grid(Year = yrs, Section = unique(areas$Section))
+  }
   # Get the full year range and stat areas
   if (g == "StatArea") {
-    yrsFull <- expand.grid(Year = yrs, StatArea = unique(dat$StatArea))
+    yrsFull <- expand.grid(Year = yrs, StatArea = unique(areas$StatArea))
   }
   # Get the full year range and groups
   if (g == "Group") {
-    yrsFull <- expand.grid(Year = yrs, Group = unique(dat$Group)) %>%
+    yrsFull <- expand.grid(Year = yrs, Group = unique(areas$Group)) %>%
       mutate(Group = as.character(Group))
   }
   # Determin spawn proportions
@@ -1751,6 +1756,12 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
     group_by(Year) %>%
     summarise(TotalSI = SumNA(TotalSI)) %>%
     ungroup()
+  # If sections
+  if (g == "Section") {
+    # Update stat area names (1)
+    pSpawn <- pSpawn %>%
+      mutate(Section = formatC(Section, width = 3, format = "d", flag = "0"))
+  } # End if sections
   # If stat areas
   if (g == "StatArea") {
     # Update stat area names (1)
@@ -2228,7 +2239,7 @@ if (region == "A27") {
   # Plot spawn timing by Stat Area
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
-  propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "StatArea")
+  propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "Section")
   # Dummy variable
   yrsNearshore <- 0
 } # End if region is Area 27
@@ -2241,7 +2252,7 @@ if (region == "A2W") {
   # Plot spawn timing by Stat Area
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
-  propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "StatArea")
+  propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "Section")
   # Dummy variable
   yrsNearshore <- 0
 } # End if region is Area 2 West
@@ -2267,7 +2278,7 @@ if (region == "A10") {
   # Plot spawn timing by Stat Area
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
-  propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "StatArea")
+  propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "Section")
   # Dummy variable
   yrsNearshore <- 0
 } # End if region is A10
