@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "A27"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -4252,6 +4252,10 @@ nYrs <- length(yrRange)
 # Current season code
 thisSeason <- paste(yrRange[nYrs - 1], yrRange[nYrs], sep = "/")
 
+# Toggle for major vs not major SAR
+tfMajor <- ifelse(
+  regionType == "major", "\\toggletrue{major}", "\\togglefalse{major}"
+)
 # Turn the toggle to true: biosamples
 tfBiosamples <- "\\toggletrue{biosamples}"
 # Turn the toggle to false: spawn depth
