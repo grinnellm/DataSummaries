@@ -3138,6 +3138,46 @@ if(regionType == "major"){
       legend.position = "top", strip.background = element_blank(),
       strip.placement = "outside"
     )
+  ggsave(
+    wtLenAgePlot, filename = file.path(regName, "WtLenAge.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
+  # Plot percent change in weight- and length-at-age by year
+  wtLenAgeChangePlot <- ggplot(
+    data = filter(muWtLenAge, Age == ageShow),
+    mapping = aes(x = Year, y = PctChange)
+  ) +
+    geom_bar(mapping = aes(fill = PctChange >= 0), stat = "identity") +
+    labs(y = paste("Percent change for age-", ageShow, " fish (%)", sep = "")) +
+    scale_x_continuous(breaks = yrBreaks) +
+    scale_fill_viridis(discrete = TRUE) +
+    expand_limits(x = yrRange) +
+    guides(fill = FALSE) +
+    facet_grid(Measure ~ ., scales = "free_y") +
+    myTheme +
+    theme(legend.position = "top") 
+  ggsave(
+    wtLenAgeChangePlot, filename = file.path(regName, "WtLenAgeChange.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
+  # Plot percent change in weight- and length-at-age by year
+  wtLenAgeChangePlot2 <- ggplot(
+    data = filter(muWtLenAge, Age == ageShow2),
+    mapping = aes(x = Year, y = PctChange)
+  ) +
+    geom_bar(aes(fill = PctChange >= 0), stat = "identity") +
+    labs(y = paste("Percent change for age-", ageShow2, " fish (%)", sep = "")) +
+    scale_x_continuous(breaks = yrBreaks) +
+    scale_fill_viridis(discrete = TRUE) +
+    expand_limits(x = yrRange) +
+    guides(fill = FALSE) +
+    facet_grid(Measure ~ ., scales = "free_y") +
+    myTheme +
+    theme(legend.position = "top") 
+  ggsave(
+    wtLenAgeChangePlot2, filename = file.path(regName, "WtLenAgeChange2.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
 } else {
   # Plot weight- and length-at-age by year
   wtLenAgePlot <- ggplot(
@@ -3164,49 +3204,11 @@ if(regionType == "major"){
       legend.position = "top", strip.background = element_blank(),
       strip.placement = "outside"
     )
+  ggsave(
+    wtLenAgePlot, filename = file.path(regName, "WtLenAge.png"),
+    width = figWidth, height = figWidth, dpi = figRes
+  )
 }
-ggsave(
-  wtLenAgePlot, filename = file.path(regName, "WtLenAge.png"),
-  width = figWidth, height = figWidth, dpi = figRes
-)
-
-# Plot percent change in weight- and length-at-age by year
-wtLenAgeChangePlot <- ggplot(
-  data = filter(muWtLenAge, Age == ageShow),
-  mapping = aes(x = Year, y = PctChange)
-) +
-  geom_bar(mapping = aes(fill = PctChange >= 0), stat = "identity") +
-  labs(y = paste("Percent change for age-", ageShow, " fish (%)", sep = "")) +
-  scale_x_continuous(breaks = yrBreaks) +
-  scale_fill_viridis(discrete = TRUE) +
-  expand_limits(x = yrRange) +
-  guides(fill = FALSE) +
-  facet_grid(Measure ~ ., scales = "free_y") +
-  myTheme +
-  theme(legend.position = "top") 
-ggsave(
-  wtLenAgeChangePlot, filename = file.path(regName, "WtLenAgeChange.png"),
-  width = figWidth, height = figWidth, dpi = figRes
-)
-
-# Plot percent change in weight- and length-at-age by year
-wtLenAgeChangePlot2 <- ggplot(
-  data = filter(muWtLenAge, Age == ageShow2),
-  mapping = aes(x = Year, y = PctChange)
-) +
-  geom_bar(aes(fill = PctChange >= 0), stat = "identity") +
-  labs(y = paste("Percent change for age-", ageShow2, " fish (%)", sep = "")) +
-  scale_x_continuous(breaks = yrBreaks) +
-  scale_fill_viridis(discrete = TRUE) +
-  expand_limits(x = yrRange) +
-  guides(fill = FALSE) +
-  facet_grid(Measure ~ ., scales = "free_y") +
-  myTheme +
-  theme(legend.position = "top") 
-ggsave(
-  wtLenAgeChangePlot2, filename = file.path(regName, "WtLenAgeChange2.png"),
-  width = figWidth, height = figWidth, dpi = figRes
-)
 
 # If weight by age and group
 if (exists("weightAgeGroup")) {
@@ -4567,7 +4569,7 @@ write_csv(
 )
 
 # Write spawn by year and section to a csv if requested
-if(regName == "CC") {
+if(regName %in% c("CC", "A27")) {
   write_csv(
     x = spawnYrSec %>%
       select(Year, StatArea, Section, Survey, TotalSI) %>%
