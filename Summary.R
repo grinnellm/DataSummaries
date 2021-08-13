@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm(list = ls()) # Clear the workspace
+# rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -362,6 +362,13 @@ allLoc <- list(
 privLoc <- list(
   loc = file.path(dirPriv),
   fn = list(Region = "PrivacyRegion.csv", StatArea = "PrivacyStatArea.csv")
+)
+
+# Location and name of incidental catch data
+icLoc <- list(
+  loc = dirDBs,
+  fn = "Herring Data Request.xlsx",
+  sheets = list(ic = "Pacific Herring-IC", wm = "Pacific Herring-WM")
 )
 
 ##### Functions #####
@@ -883,6 +890,60 @@ spawnRaw <- LoadSpawnData(
   whereSurf = surfLoc, whereMacro = macroLoc, whereUnder = underLoc,
   XY = transectXY
 )
+
+# Load incidental catch
+LoadIncidentalCatch <- function(file, a = areas) {
+  # Months that get included in the next year
+  next_yr <- c("Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+  # Subset area data
+  a_sm <- a %>%
+    select(Region, StatArea) %>%
+    unique()
+  # Grab incidental catch and wrangle
+  ic <- read_excel(file.path(file$loc, file$fn), sheet = file$sheets$ic) %>%
+    mutate(Source = "IC") %>%
+    select(
+      Source, PMFA, `Calendar Year`, `Calendar Month`, `Released Count`,
+      `Mortalities Count`,
+    ) %>%
+    rename(
+      PFMA = PMFA, Year = `Calendar Year`, Month = `Calendar Month`,
+      Released = `Released Count`, Dead = `Mortalities Count`
+    ) %>%
+    mutate(Month = str_to_sentence(Month))
+  # Grab wild mortalities and wrangle
+  wm <- read_excel(file.path(file$loc, file$fn), sheet = file$sheet$wm) %>%
+    mutate(Source = "WM") %>%
+    select(
+      Source, PFMA, `Catch Year`, `Catch Month`, `Released Count`,
+      `Mortalities Count`,
+    ) %>%
+    rename(
+      Year = `Catch Year`, Month = `Catch Month`,
+      Released = `Released Count`, Dead = `Mortalities Count`
+    ) %>%
+    mutate(Month = str_trunc(Month, width = 3, ellipsis = ""))
+  # Combine the two data sets and wrangle
+  res <- bind_rows(ic, wm) %>%
+    mutate(
+      Year = ifelse(Month %in% next_yr, Year + 1, Year),
+      StatArea = formatC(PFMA, width = 2, flag = "0")
+    ) %>%
+    filter(StatArea %in% a_sm$StatArea) %>%
+    left_join(y = a, by="StatArea") %>%
+    replace_na(replace = list(Released = 0, Dead = 0)) %>%
+    group_by(Region, Year) %>%
+    summarise(Released = sum(Released), Dead = sum(Dead)) %>%
+    ungroup() %>%
+    pivot_longer(
+      cols = c(Released, Dead), names_to = "Type", values_to = "Number"
+    )
+  # Return the data
+  res
+} # End LoadIncidentalCatch function
+
+# Load incidental catch
+incidental <- LoadIncidentalCatch(file = icLoc)
 
 # # For Lynn Lee (HG and A2W)
 # spawnRaw %>%
@@ -4472,9 +4533,9 @@ if (region == "All") {
     arrange(
       Region, Year, StatisticalArea, Section, LocationCode, SpawnNumber
     ) %>%
-    write_csv(path = file.path(regName, "FIND.csv")) %>%
+    write_csv(file = file.path(regName, "FIND.csv")) %>%
     select(-Eastings, -Northings, -Survey) %>%
-    write_csv(path = file.path(regName, "OpenDataEng.csv")) %>%
+    write_csv(file = file.path(regName, "OpenDataEng.csv")) %>%
     mutate(Method = ifelse(Method=="Dive", "Plongée", Method),
            Method = ifelse(Method=="Incomplete ", "Incomplet", Method)) %>%
     rename('Région' = Region, 'Année' = Year, ZoneStatistique = StatisticalArea,
@@ -4482,12 +4543,12 @@ if (region == "All") {
            'NuméroFrai' = SpawnNumber, 'DateDébut' = StartDate,
            DateFin = EndDate, Longeur = Length, Largeur = Width, 
            'Méthode' = Method, 'Sous-étage' = Understory) %>%
-    write_csv(path = file.path(regName, "OpenDataFra.csv"))
+    write_csv(file = file.path(regName, "OpenDataFra.csv"))
   # Write the locations with spatial inconsistencies
   spatialInconsistent <- bind_rows(overAreas, overSpawn, overBio) %>%
     distinct() %>%
     arrange(StatAreaLoc, SectionLoc, LocationCode) %>%
-    write_csv(path = file.path(regName, "SpatialInconsistent.csv"))
+    write_csv(file = file.path(regName, "SpatialInconsistent.csv"))
 } # End if all regions
 
 # # Write catch data to a csv (same as ADMB input data file)
@@ -4553,13 +4614,13 @@ if (region == "All") {
 # Write the number of biosamples to a csv
 write_csv(
   x = numBiosamples,
-  path = file.path(regName, paste("NumBiosamples", regName, ".csv", sep = ""))
+  file = file.path(regName, paste("NumBiosamples", regName, ".csv", sep = ""))
 )
 
 # Write the spawn distribution to a csv
 write_csv(
   x = propSpawn,
-  path = file.path(regName, paste("prop-spawn-", tolower(regName), ".csv",
+  file = file.path(regName, paste("prop-spawn-", tolower(regName), ".csv",
                                   sep = ""
   ))
 )
@@ -4567,7 +4628,7 @@ write_csv(
 # Write the SOK harvest to a csv
 write_csv(
   x = allHarvSOK,
-  path = file.path(regName, paste("harvest-sok-", tolower(regName), ".csv",
+  file = file.path(regName, paste("harvest-sok-", tolower(regName), ".csv",
                                   sep = ""
   ))
 )
@@ -4580,9 +4641,16 @@ if(regName %in% c("CC", "A27")) {
       rename(Index = TotalSI) %>%
       filter(!is.na(Year)) %>%
       arrange(Year, StatArea, Section),
-    path = file.path(regName, paste("spawn-yr-sec-", tolower(regName), ".csv",
+    file = file.path(regName, paste("spawn-yr-sec-", tolower(regName), ".csv",
                                     sep = "")))
 }
+
+# write incidental catch to a csv
+write_csv(
+  x = incidental,
+  file = file.path(regName, paste("incidental-", tolower(regName), ".csv",
+                   sep = ""))
+)
 
 ## Format the spawn summary
 # spawnYrF <- spawnYr %>%
