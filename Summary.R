@@ -69,7 +69,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-# rm(list = ls()) # Clear the workspace
+rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
