@@ -177,6 +177,10 @@ geoProj <- "Projection: BC Albers (NAD 1983)"
 # Make French figures
 makeFrench <- FALSE
 
+# Location of the "data" folder in the herringsr repository
+srLoc <- file.path("..", "herringsr", "data")
+
+
 ##### Parameters #####
 
 # Load parameter values (for spawn index)
@@ -4618,20 +4622,24 @@ write_csv(
 )
 
 # Write the spawn distribution to a csv
-write_csv(
-  x = propSpawn,
-  file = file.path(regName, paste("prop-spawn-", tolower(regName), ".csv",
+if(regName %in% c("HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W", "A10")){
+  write_csv(
+    x = propSpawn,
+    file = file.path(srLoc, paste("prop-spawn-", tolower(regName), ".csv",
                                   sep = ""
-  ))
-)
+    ))
+  )
+}
 
 # Write the SOK harvest to a csv
-write_csv(
-  x = allHarvSOK,
-  file = file.path(regName, paste("harvest-sok-", tolower(regName), ".csv",
+if(regName %in% c("HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W", "A10")){
+  write_csv(
+    x = allHarvSOK,
+    file = file.path(srLoc, paste("harvest-sok-", tolower(regName), ".csv",
                                   sep = ""
-  ))
-)
+    ))
+  )
+}
 
 # Write spawn by year and section to a csv if requested
 if(regName %in% c("CC", "A27")) {
@@ -4641,16 +4649,18 @@ if(regName %in% c("CC", "A27")) {
       rename(Index = TotalSI) %>%
       filter(!is.na(Year)) %>%
       arrange(Year, StatArea, Section),
-    file = file.path(regName, paste("spawn-yr-sec-", tolower(regName), ".csv",
-                                    sep = "")))
+    file = file.path(srLoc, paste("spawn-yr-sec-", tolower(regName), ".csv",
+                                  sep = "")))
 }
 
 # write incidental catch to a csv
-write_csv(
-  x = incidental,
-  file = file.path(regName, paste("incidental-", tolower(regName), ".csv",
-                   sep = ""))
-)
+if(regName %in% c("HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W", "A10")){
+  write_csv(
+    x = incidental,
+    file = file.path(srLoc, paste("incidental-", tolower(regName), ".csv",
+                                  sep = ""))
+  )
+}
 
 ## Format the spawn summary
 # spawnYrF <- spawnYr %>%
