@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -934,7 +934,7 @@ LoadIncidentalCatch <- function(file, a = areas) {
       StatArea = formatC(PFMA, width = 2, flag = "0")
     ) %>%
     filter(StatArea %in% a_sm$StatArea) %>%
-    left_join(y = a, by="StatArea") %>%
+    left_join(y = a_sm, by="StatArea") %>%
     replace_na(replace = list(Released = 0, Dead = 0)) %>%
     group_by(Region, Year) %>%
     summarise(Released = sum(Released), Dead = sum(Dead)) %>%
