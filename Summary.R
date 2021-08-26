@@ -372,7 +372,7 @@ privLoc <- list(
 icLoc <- list(
   loc = dirDBs,
   fn = "Herring Data Request.xlsx",
-  sheets = list(ic = "Pacific Herring-IC", wm = "Pacific Herring-WM")
+  sheets = list(ic = "IC Pacific Herring", wm = "WM Pacific Herring")
 )
 
 ##### Functions #####
@@ -907,11 +907,11 @@ LoadIncidentalCatch <- function(file, a = areas) {
   ic <- read_excel(file.path(file$loc, file$fn), sheet = file$sheets$ic) %>%
     mutate(Source = "IC") %>%
     select(
-      Source, PMFA, `Calendar Year`, `Calendar Month`, `Released Count`,
+      Source, PFMA, `Calendar Year`, `Calendar Month`, `Released Count`,
       `Mortalities Count`,
     ) %>%
     rename(
-      PFMA = PMFA, Year = `Calendar Year`, Month = `Calendar Month`,
+      Year = `Calendar Year`, Month = `Calendar Month`,
       Released = `Released Count`, Dead = `Mortalities Count`
     ) %>%
     mutate(Month = str_to_sentence(Month))
