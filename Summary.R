@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "WCVI"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -2142,7 +2142,9 @@ if (region == "SoG") {
   # Weight by catch type
   weightCatch <- bio %>%
     filter(GearCode == 29, StatArea %in% c(14, 17)) %>%
-    left_join(y = tSource, by = "SourceCode")
+    # filter(GearCode %in% c(19, 29), StatArea %in% c(14, 17)) %>%
+    left_join(y = tSource, by = "SourceCode") #%>%
+    # mutate(SampleSource2 = ifelse(GearCode == 19, "Gillnet", SampleSource2))
   # Smaller subset for figures: biosamples big
   weightCatchFig <- weightCatch %>%
     filter(Year >= firstYrTab)
@@ -2965,6 +2967,23 @@ if (exists("weightCatchFig")) {
   ggsave(
     weightCatchPlot, filename = file.path(regName, "WeightCatch.png"),
     width = figWidth, height = 3.5, dpi = figRes
+  )
+  # Plot distribution of ages by gear and source, by year
+  ageDistGearPlot <- ggplot(
+    data = weightCatchFig %>% filter(SampleSource2 != "Seine test"), 
+    mapping = aes(x=Age, fill = SampleSource2)
+  ) +
+    scale_fill_viridis(discrete = TRUE) +
+    geom_bar(position = "dodge") + 
+    labs(y = "Number of fish", fill = "Sample type") +
+    scale_x_continuous(breaks = pretty_breaks()) +
+    scale_y_continuous(labels = comma) +
+    facet_wrap(~ Year, nrow = 4, scales = "free_y") +
+    myTheme + 
+    theme(legend.position = "top")
+  ggsave(
+    ageDistGearPlot, filename = file.path(regName, "AgeDistGear.png"),
+    width = figWidth, height = figWidth, dpi = figRes
   )
 } # End if weight by catch type
 
