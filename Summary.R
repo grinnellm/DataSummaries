@@ -2150,10 +2150,10 @@ if (region == "SoG") {
     filter(Year >= firstYrTab)
   # Average weight by age
   weightCatchFigMu <- weightCatchFig %>%
-    select(Age, Weight) %>%
+    select(Age, Weight, Length) %>%
     na.omit() %>%
     group_by(Age) %>%
-    summarise(MuWeight = MeanNA(Weight)) %>%
+    summarise(MuWeight = MeanNA(Weight), MuLength = MeanNA(Length)) %>%
     ungroup()
   # Plot spawn timing by Group
   spawnTimingGroup <- TRUE
@@ -2953,7 +2953,10 @@ if (exists("weightCatchFig")) {
       group = interaction(Year, SampleSource2)
     )
   ) +
-    geom_boxplot(outlier.colour = "black", size = 0.25) +
+    geom_boxplot(
+      outlier.colour = "black", size = 0.25,
+      position = position_dodge(preserve = "single")
+      ) +
     labs(y = "Weight (g)", fill = "Sample type") +
     scale_x_continuous(breaks = pretty_breaks()) +
     scale_fill_viridis(discrete = TRUE) +
@@ -2961,30 +2964,63 @@ if (exists("weightCatchFig")) {
       data = weightCatchFigMu, mapping = aes(yintercept = MuWeight),
       size = 0.25, linetype = "dashed"
     ) +
-    expand_limits(x = c(firstYrTab, max(yrRange)), y = 0) +
+    expand_limits(x = c(firstYrTab, max(yrRange))) +
     myTheme +
     theme(legend.position = "top") 
   ggsave(
     weightCatchPlot, filename = file.path(regName, "WeightCatch.png"),
     width = figWidth, height = 3.5, dpi = figRes
   )
-  # Plot distribution of ages by gear and source, by year
-  ageDistGearPlot <- ggplot(
-    data = weightCatchFig %>% filter(SampleSource2 != "Seine test"), 
-    mapping = aes(x=Age, fill = SampleSource2)
-  ) +
-    scale_fill_viridis(discrete = TRUE) +
-    geom_bar(position = "dodge") + 
-    labs(y = "Number of fish", fill = "Sample type") +
-    scale_x_continuous(breaks = pretty_breaks()) +
-    scale_y_continuous(labels = comma) +
-    facet_wrap(~ Year, nrow = 4, scales = "free_y") +
-    myTheme + 
-    theme(legend.position = "top")
-  ggsave(
-    ageDistGearPlot, filename = file.path(regName, "AgeDistGear.png"),
-    width = figWidth, height = figWidth, dpi = figRes
-  )
+  # # Plot length by year and catch type
+  # lengthCatchPlot <- ggplot(
+  #   data = weightCatchFig,
+  #   mapping = aes(
+  #     x = Year, y = Length, fill = SampleSource2,
+  #     group = interaction(Year, SampleSource2)
+  #   )
+  # ) +
+  #   geom_boxplot(
+  #     outlier.colour = "black", size = 0.25,
+  #     position = position_dodge(preserve = "single")
+  #   ) +
+  #   labs(y = "Length (mm)", fill = "Sample type") +
+  #   scale_x_continuous(breaks = pretty_breaks()) +
+  #   scale_fill_viridis(discrete = TRUE) +
+  #   geom_hline(
+  #     data = weightCatchFigMu, mapping = aes(yintercept = MuLength),
+  #     size = 0.25, linetype = "dashed"
+  #   ) +
+  #   expand_limits(x = c(firstYrTab, max(yrRange))) +
+  #   myTheme +
+  #   theme(legend.position = "top") 
+  # ggsave(
+  #   lengthCatchPlot, filename = file.path(regName, "LengthCatch.png"),
+  #   width = figWidth, height = 3.5, dpi = figRes
+  # )
+  # # Plot distribution of ages by gear and source, by year
+  # ageDistGearPlot <- ggplot(
+  #   data = weightCatchFig %>% filter(SampleSource2 != "Seine test"), 
+  #   mapping = aes(x=Age, fill = SampleSource2)
+  # ) +
+  #   scale_fill_viridis(discrete = TRUE) +
+  #   geom_bar(position = position_dodge(preserve = "single")) + 
+  #   labs(y = "Density", fill = "Sample type") +
+  #   scale_x_continuous(breaks = pretty_breaks()) +
+  #   scale_y_continuous(labels = comma) +
+  #   facet_wrap(~ Year, nrow = 4, scales = "free") +
+  #   myTheme + 
+  #   theme(legend.position = "top")
+  # ggsave(
+  #   ageDistGearPlot, filename = file.path(regName, "AgeDistGear.png"),
+  #   width = figWidth, height = figWidth, dpi = figRes
+  # )
+  # weightCatchFig %>%
+  #   filter(SampleSource2 != "Seine test") %>%
+  #   group_by(Year, SampleSource2) %>%
+  #   summarise(MeanAge = mean(Age), N=n()) %>%
+  #   ungroup() %>%
+  #   rename("SampleType" = SampleSource2) %>%
+  #   write_csv(file = "MeanAge.csv")
 } # End if weight by catch type
 
 # If catch by stat area
