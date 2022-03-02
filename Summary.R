@@ -62,7 +62,7 @@
 #     the mean of the surrounding values, not just the preceding values. Maybe
 #     go with six (three on either side).
 # 19. Add option to analyses more than one SAR at a time (in addition to 'All').
-# 20. Go through and fix all the warnings (i.e., so it runs without warnings)
+# 20. Go through and fix all the warnings (i.e., so it runs without warnings).
 
 ##### Housekeeping #####
 
@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "A10"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -179,7 +179,6 @@ makeFrench <- FALSE
 
 # Location of the "data" folder in the herringsr repository
 srLoc <- file.path("..", "herringsr", "data")
-
 
 ##### Parameters #####
 
@@ -956,7 +955,7 @@ incidental <- LoadIncidentalCatch(file = icLoc)
 #           SpawnNumber, Longitude, Latitude, Length, Width, Start, End, Method,
 #           Survey, SurfSI, MacroSI, UnderSI ) %>%
 #   arrange( Region, Year, StatArea, Section, LocationCode, SpawnNumber ) %>%
-#   write_csv( path = paste(regName, "csv", sep=".") )
+#   write_csv( file = paste(regName, "csv", sep=".") )
 
 # # For Kristen, CC spawn
 # spawnRaw %>%
@@ -965,7 +964,7 @@ incidental <- LoadIncidentalCatch(file = icLoc)
 #     UnderSI ) %>%
 #   filter( Year>=2014 ) %>%
 #   arrange(Year, Region, StatArea, Section, LocationCode ) %>%
-#   write_csv( path="SpawnCC.csv" )
+#   write_csv( file="SpawnCC.csv" )
 
 # HG 1972-2006 (D,G): roe seine (7,29), roe gillnet (7,19), test seine (8,29),
 # and test gillnet (8,19)
@@ -983,7 +982,7 @@ incidental <- LoadIncidentalCatch(file = icLoc)
 #   expand( Year=1972:2006 ) %>%
 #   pivot_wider(names_from = c(Disposal, Gear), values_from = Catch,
 #               values_fill=list(Catch=0)) %>%
-#   write_csv(path="DisposalGear.csv")
+#   write_csv(file="DisposalGear.csv")
 
 ##### Update #####
 
@@ -1225,7 +1224,7 @@ spawnSummary <- spawnRaw %>%
   arrange(Year) %>%
   select(Year, Surf, Macro, Under) %>%
   write_csv(
-    path = file.path("Summaries", paste("Spawn", region, ".csv", sep = ""))
+    file = file.path("Summaries", paste("Spawn", region, ".csv", sep = ""))
   )
 
 # Catch summary
@@ -1248,9 +1247,10 @@ catchSummary <- catch %>%
     ) %>%
   arrange(Year) %>%
   select(Year, Other, RoeSN, RoeGN, SOK) %>%
+  mutate(SOK = as.numeric(SOK)) %>%
   replace_na(replace = list(SOK = 0)) %>%
   write_csv(
-    path = file.path("Summaries", paste("Catch", region, ".csv", sep = ""))
+    file = file.path("Summaries", paste("Catch", region, ".csv", sep = ""))
   )
 
 # Biosample summary
@@ -1269,7 +1269,7 @@ bioSummary <- bio %>%
   arrange(Year) %>%
   select(Year, Sample, Length, Weight, Age) %>%
   write_csv(
-    path = file.path("Summaries", paste("Bio", region, ".csv", sep = ""))
+    file = file.path("Summaries", paste("Bio", region, ".csv", sep = ""))
   )
 
 ##### Overlay #####
@@ -4155,7 +4155,7 @@ print(
 )
 
 ###### This stuff is for the stock assessment research document #####
-# write_csv( x=allHarvSOK, path=paste("allHarvSOK", regName, ".csv", sep="") )
+# write_csv( x=allHarvSOK, file=paste("allHarvSOK", regName, ".csv", sep="") )
 # pSOK1 <- ggplot( data=allHarvSOK, aes(x=Year, y=Harvest) ) +
 #    geom_bar( stat="identity", aes(fill=Year==max(yrRange)) ) +
 #    scale_fill_grey( start=0.5, end=0 ) +
@@ -4354,7 +4354,7 @@ if (nrow(spawnByLoc) >= 1) {
   WriteLongTable(dat = xSpawnByLoc, fn = file.path(regName, "SpawnByLoc.tex"))
 } else { # End if there was spawn, otherwise
   # Make an empty file (required for latex)
-  write_csv(x = spawnByLoc, path = file.path(regName, "SpawnByLoc.tex"))
+  write_csv(x = spawnByLoc, file = file.path(regName, "SpawnByLoc.tex"))
 } # End if there was no spawn
 
 # Format the spatial table
@@ -4566,13 +4566,13 @@ ageTableAlign <- paste(c("{l", rep("r", times = length(ageRange)), "}"),
 cat("Writing tables... ")
 
 ## Write areas to a csv
-# write_csv( x=areas, path=file.path(regName, "Areas.csv") )
+# write_csv( x=areas, file=file.path(regName, "Areas.csv") )
 #
 ## Write raw catch data to a csv
-# write_csv( x=catchRaw, path=file.path(regName, "CatchRaw.csv") )
+# write_csv( x=catchRaw, file=file.path(regName, "CatchRaw.csv") )
 #
 ## Write raw biological data to a csv
-# write_csv( x=bioRaw, path=file.path(regName, "BioRaw.csv") )
+# write_csv( x=bioRaw, file=file.path(regName, "BioRaw.csv") )
 #
 # If looking at all regions
 if (region == "All") {
@@ -4616,7 +4616,7 @@ if (region == "All") {
 #   summarise( Catch=sum(Catch)/1000 ) %>%
 #   ungroup( ) %>%
 #   complete( Year=yrRange, fill=list(Catch=0) ) %>%
-#   write_csv( path=file.path(regName, "Catch.csv") )
+#   write_csv( file=file.path(regName, "Catch.csv") )
 
 # # Write spawn index data to a csv (same as ADMB input data file)
 # spawnYr %>%
@@ -4624,14 +4624,14 @@ if (region == "All") {
 #   rename( Spawn=TotalSI ) %>%
 #   mutate( Spawn=Spawn/1000, Gear=ifelse(Year<pars$years$dive, 4, 5),
 #           Weight=ifelse(Year<pars$years$dive, 1, 1.1666)) %>%
-#   write_csv( path=file.path(regName, "Spawn.csv") )
+#   write_csv( file=file.path(regName, "Spawn.csv") )
 
 # # Write number-at-age data to a csv (same as ADMB input data file)
 # numAgedADMB %>%
 #   select( -Area, -Group, -Sex ) %>%
 #   complete( Year=yrRange, Gear=1:3 ) %>%
 #   arrange( Gear, Year ) %>%
-#   write_csv( path=file.path(regName, "NumAge.csv") )
+#   write_csv( file=file.path(regName, "NumAge.csv") )
 
 # # Write weight-at-age data to a csv (same as ADMB input data file)
 # bio %>%
@@ -4645,29 +4645,29 @@ if (region == "All") {
 #   spread( key=Age, value=MeanWeight ) %>%
 #   complete( Year=yrRange ) %>%
 #   arrange( Year ) %>%
-#   write_csv( path=file.path(regName, "WeightAge.csv") )
+#   write_csv( file=file.path(regName, "WeightAge.csv") )
 
 ## Write catch data to a csv
-# write_csv( x=catch, path=file.path(regName, "Catch.csv") )
+# write_csv( x=catch, file=file.path(regName, "Catch.csv") )
 #
 ## Write biological data to a csv
-# write_csv( x=bio, path=file.path(regName, "Bio.csv") )
+# write_csv( x=bio, file=file.path(regName, "Bio.csv") )
 #
 ## Write ADMB catch to a csv
-# write_csv( x=catchADMB, path=file.path(regName, "CatchADMB.csv") )
+# write_csv( x=catchADMB, file=file.path(regName, "CatchADMB.csv") )
 #
 ## Write ADMB spawn to a csv
-# write_csv( x=spawnADMB, path=paste(regName, "SpawnADMB.csv", sep="") )
+# write_csv( x=spawnADMB, file=paste(regName, "SpawnADMB.csv", sep="") )
 #
 ## Write ADMB number aged to a csv
-# write_csv( x=numAgedADMB, path=file.path(regName, "NumAgedADMB.csv") )
+# write_csv( x=numAgedADMB, file=file.path(regName, "NumAgedADMB.csv") )
 #
 ## Write ADMB weight-at-age to a csv
-# write_csv( x=weightAgeADMB, path=file.path(regName, "WeightAgeADMB.csv") )
+# write_csv( x=weightAgeADMB, file=file.path(regName, "WeightAgeADMB.csv") )
 #
 ## If exists, write weight-at-age by group to a csv
 # if( exists("weightAgeGroupN") )
-#  write_csv( x=weightAgeGroupN, path=file.path(regName,
+#  write_csv( x=weightAgeGroupN, file=file.path(regName,
 #          "WeightAgeGroupN.csv") )
 
 # Write the number of biosamples to a csv
@@ -4727,7 +4727,7 @@ if(regName %in% c("HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W", "A10")){
 #    select( Region, Year, TotalLength, MeanWidth, MeanLayers, TotalSI )
 #
 ## Write the spawn summary
-# write_csv( x=spawnYrF, path=paste("RawIndex", regName, ".csv", sep="") )
+# write_csv( x=spawnYrF, file=paste("RawIndex", regName, ".csv", sep="") )
 
 # Update progress
 cat("done\n")
@@ -4746,7 +4746,7 @@ save.image(file = file.path(
 #    filter( is.na(Group) ) %>%
 #    select( Region, StatArea, Section ) %>%
 #    distinct( ) %>%
-#    write_csv( path="AreasNoGroup.csv", append=ifelse(r==1, FALSE, TRUE) )
+#    write_csv( file="AreasNoGroup.csv", append=ifelse(r==1, FALSE, TRUE) )
 
 ## Missing spatial groups: spawn
 # spawnNoGroup <- spawnRaw %>%
@@ -4755,7 +4755,7 @@ save.image(file = file.path(
 #    summarise( Spawn=SumNA(c(SurfSI, MacroSI, UnderSI)) ) %>%
 #    ungroup( ) %>%
 #    mutate( Spawn=round(Spawn, digits=1) ) %>%
-#    write_csv( path="SpawnNoGroup.csv", append=ifelse(r==1, FALSE, TRUE) )
+#    write_csv( file="SpawnNoGroup.csv", append=ifelse(r==1, FALSE, TRUE) )
 
 ## Missing spatial groups: bio
 # bioNoGroup <- bio %>%
@@ -4763,7 +4763,7 @@ save.image(file = file.path(
 #    group_by( Region, Year, StatArea, Section, LocationCode, Sample ) %>%
 #    summarise( NFish=n() ) %>%
 #    ungroup( ) %>%
-#    write_csv( path="BioNoGroup.csv", append=ifelse(r==1, FALSE, TRUE) )
+#    write_csv( file="BioNoGroup.csv", append=ifelse(r==1, FALSE, TRUE) )
 
 ## Missing spatial groups: catch
 # catchNoGroup <- catch %>%
@@ -4772,7 +4772,7 @@ save.image(file = file.path(
 #    summarise( Catch=SumNA(Catch) ) %>%
 #    ungroup( ) %>%
 #    mutate( Catch=round(Catch, digits=1) ) %>%
-#    write_csv( path="CatchNoGroup.csv", append=ifelse(r==1, FALSE, TRUE) )
+#    write_csv( file="CatchNoGroup.csv", append=ifelse(r==1, FALSE, TRUE) )
 
 ##### End #####
 
