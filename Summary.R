@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -186,7 +186,7 @@ srLoc <- file.path("..", "herringsr", "data")
 data(pars)
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- pars$year$assess:2021
+yrRange <- pars$year$assess:2022
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -436,8 +436,7 @@ data(under_width_facs)
 
 # Message re region
 cat("Region(s): ", paste(region, collapse = ", "), " (",
-    paste(range(yrRange), collapse = ":"), ")\n",
-    sep = ""
+    paste(range(yrRange), collapse = " to "), ")\n", sep = ""
 )
 
 # Breaks for years
