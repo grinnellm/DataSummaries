@@ -4321,8 +4321,8 @@ xSpawnYrTab <- spawnYrTab %>%
     TotalSI = format(TotalSI, big.mark = ",", digits = 0, scientific = FALSE)
   ) %>%
   rename(
-    "Total length (m)" = TotalLength, "Mean width (m)" = MeanWidth,
-    "Mean number of egg layers" = MeanLayers, "Spawn index (t)" = TotalSI
+    "Total length" = TotalLength, "Mean width" = MeanWidth,
+    "Mean number of" = MeanLayers, "Spawn index" = TotalSI
   ) %>%
   xtable()
 
@@ -4332,6 +4332,17 @@ print(
   include.rownames = FALSE, booktabs = TRUE, only.contents = TRUE,
   NA.string = NA
 )
+
+# Wrangle headings
+xTemp <- readLines(con = file.path(regName, "SpawnYrTab.tex"))
+hRow <- grep(
+  pattern = "Year & Total length & Mean width & Mean number of & Spawn index",
+  x = xTemp)
+xTemp[3] <- paste0(
+  "& Total length & Mean width & Mean number of & Spawn index \\\\ ",
+  "Year & (m) & (m) & egg layers & (t) \\\\"
+)
+writeLines(text = xTemp, con = file.path(regName, "SpawnYrTab.tex"))
 
 # If there is spawn reported
 if (nrow(spawnByLoc) >= 1) {
