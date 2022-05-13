@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -435,8 +435,8 @@ data(algae_coefs)
 data(under_width_facs)
 
 # Message re region
-cat("Region(s): ", paste(region, collapse = ", "), " (",
-    paste(range(yrRange), collapse = " to "), ")\n", sep = ""
+cat("Region(s): ", paste(region, collapse = ", "), " from ",
+    paste(range(yrRange), collapse = " to "), "\n", sep = ""
 )
 
 # Breaks for years
