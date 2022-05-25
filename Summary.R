@@ -129,13 +129,13 @@ Area13 <- c(131:136)
 JS <- c(111, 112, 121:127, 131:136)
 Area10 <- c(101:103)
 Area06 <- c(67)
-Area07 <- c(71, 72, 73, 74, 75, 76, 77, 78)
+Area07 <- c(70:79)
 Area08 <- c(85, 86)
 
 # Select a subset of sections (or NULL for all)
 sectionSub <- NULL
-# secSubNum <- 0
-# secSubName <- "CC"
+# secSubNum <- 3
+# secSubName <- "Area08"
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
@@ -1792,12 +1792,6 @@ spawnYrTypeProp <- spawnYrType %>%
     Survey = factor(Survey, levels = c("Surface", "Dive"))
   )
 
-# # Data for landmark
-# spawnYrTypeProp %>%
-#   select(Year, Type, SI) %>%
-#   pivot_wider(names_from = Type, values_from = SI) %>%
-#   write_csv(file = paste(secSubName, "csv", sep="."))
-
 # Smaller subset for table: spawn by year
 spawnYrTab <- spawnYr %>%
   filter(Year >= firstYrTab) %>%
@@ -2480,6 +2474,11 @@ weightAgeADMB <- weightAge %>%
 #   write_csv(
 #     file = "AgeData.csv", append = ifelse(secSubNum == 1, FALSE, TRUE)
 #   )
+# spawnYrTypeProp %>%
+#   select(Year, Type, SI) %>%
+#   mutate(SI = SI / 1000) %>%
+#   pivot_wider(names_from = Type, values_from = SI) %>%
+#   write_csv(file = paste(secSubName, "csv", sep="."))
   
 # Write ADMB input file
 WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
