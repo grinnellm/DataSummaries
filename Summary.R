@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "WCVI"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -128,9 +128,14 @@ Broughton <- c(111, 112, 121:127)
 Area13 <- c(131:136)
 JS <- c(111, 112, 121:127, 131:136)
 Area10 <- c(101:103)
+Area06 <- c(67)
+Area07 <- c(71, 72, 73, 74, 75, 76, 77, 78)
+Area08 <- c(85, 86)
 
 # Select a subset of sections (or NULL for all)
 sectionSub <- NULL
+# secSubNum <- 0
+# secSubName <- "CC"
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
@@ -1790,9 +1795,8 @@ spawnYrTypeProp <- spawnYrType %>%
 # # Data for landmark
 # spawnYrTypeProp %>%
 #   select(Year, Type, SI) %>%
-#   filter(Year >= pars$years$dive) %>%
 #   pivot_wider(names_from = Type, values_from = SI) %>%
-#   write_csv(path=paste(regName, sectionSub, "csv", sep="."))
+#   write_csv(file = paste(secSubName, "csv", sep="."))
 
 # Smaller subset for table: spawn by year
 spawnYrTab <- spawnYr %>%
@@ -2454,6 +2458,29 @@ weightAgeADMB <- weightAge %>%
   spread(key = Age, value = Weight) %>%
   arrange(Gear, Year)
 
+# # Data for sub-stock analyses (Landmark; ISCAM data with some tweaks)
+# catchADMB %>%
+#   mutate(Area = secSubNum, Stock = secSubName) %>%
+#   select(Year, Gear, Area, Type, Value, Stock) %>%
+#   write_csv(
+#     file = "CatchData.csv", append = ifelse(secSubNum == 1, FALSE, TRUE)
+#   )
+# spawnADMB %>%
+#   mutate(Area = secSubNum, Stock = secSubName) %>%
+#   select(Year, Spawn, Gear, Area, Weight, Timing, Stock) %>%
+#   write_csv(
+#     file = "IdxData.csv", append = ifelse(secSubNum == 1, FALSE, TRUE)
+#   )
+# numAgedADMB %>%
+#   mutate(Area = secSubNum, A1 = 0) %>%
+#   rename(
+#     A2 = `2`, A3 = `3`, A4 = `4`, A5 = `5`, A6 = `6`, A7 = `7`, A8 = `8`,
+#     A9 = `9`, A10 = `10`) %>%
+#   select(Year, Gear, Area, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) %>%
+#   write_csv(
+#     file = "AgeData.csv", append = ifelse(secSubNum == 1, FALSE, TRUE)
+#   )
+  
 # Write ADMB input file
 WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
   # Note that some values are printed with extra decimals (i.e., CC value 0.1078
