@@ -2479,6 +2479,15 @@ weightAgeADMB <- weightAge %>%
 #   mutate(SI = SI / 1000) %>%
 #   pivot_wider(names_from = Type, values_from = SI) %>%
 #   write_csv(file = paste(secSubName, "csv", sep="."))
+# weightAgeADMB %>%
+#   mutate(Area = secSubNum, Stock = secSubName) %>%
+#   rename(
+#     A2 = `2`, A3 = `3`, A4 = `4`, A5 = `5`, A6 = `6`, A7 = `7`, A8 = `8`,
+#     A9 = `9`, A10 = `10`) %>%
+#   select(Year, Area, Stock, A2, A3, A4, A5, A6, A7, A8, A9, A10) %>%
+#   write_csv(
+#     file = "WeightData.csv", append = ifelse(secSubNum == 1, FALSE, TRUE)
+#   )
   
 # Write ADMB input file
 WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
