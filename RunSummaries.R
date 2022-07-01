@@ -33,7 +33,7 @@ graphics.off() # Turn graphics off
 ##### Controls #####
 
 # Region names: major, minor, special
-regionNames <- c("HG", "PRD", "CC", "SoG", "WCVI", 
+regionNames <- c("HG", "HG", "PRD", "CC", "SoG", "WCVI", 
                  "A27", "A2W", 
                  "A10", "JS", "All")
 

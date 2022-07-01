@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -2165,8 +2165,7 @@ if (region == "WCVI") {
   # Compare differences by group: number, proportion, weight, and length-at-age
   npwAgeGrp <- bioRaw %>%
     filter(
-      Year == max(yrRange), SourceCode %in% c(2, 5),
-      Representative == 1
+      Year == max(yrRange), SourceCode %in% c(2, 5), Representative == 1
     ) %>%
     left_join(y = tSource, by = "SourceCode") %>%
     group_by(Age, SampleSource2) %>%
@@ -2189,7 +2188,7 @@ if (region == "WCVI") {
   # Combine the grouped statistics with the total statistics
   npwAge <- bind_rows(npwAgeGrp, npwAgeTot) %>%
     complete(
-      SampleSource2 = unique(SampleSource2), Age = all_of(ageRange),
+      Age = all_of(ageRange), # SampleSource2 = unique(SampleSource2), 
       fill = list(Number = 0, Proportion = 0)
     ) %>%
     arrange(SampleSource2, Age)
@@ -3399,12 +3398,18 @@ spawnByLocPlot <- BaseMap +
   geom_point(
     data = spawnByLocXY, mapping = aes(colour = TotalSI), alpha = 0.75, size = 4
   ) +
-  scale_colour_viridis(labels = comma) +
   labs(colour = "Spawn\nindex (t)") +
   theme(
     legend.justification = c(0, 0),
     legend.position = if (region == "PRD") "right" else c(0.01, 0.01)
-  ) 
+  )
+if(!all(is.na(spawnByLocXY$TotalSI))){ 
+  spawnByLocPlot <- spawnByLocPlot + 
+    scale_colour_viridis_c(labels = comma, na.value = "darkgrey")
+} else {
+  spawnByLocPlot <- spawnByLocPlot + 
+    scale_colour_viridis_d(labels = comma, na.value = "darkgrey")
+}
 ggsave(
   spawnByLocPlot, filename = file.path(regName, "SpawnByLoc.png"),
   width = figWidth, height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
