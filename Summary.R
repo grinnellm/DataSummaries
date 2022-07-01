@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "WCVI"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -2125,8 +2125,167 @@ if (region == "CC") {
   spawnTimingGroup <- FALSE
   # Determine the spatial distribution of spawn
   propSpawn <- CalcPropSpawn(dat = spawnRaw, g = "StatArea")
-  # Dummy variable
-  yrsNearshore <- 0
+  # Compare differences by group: number, proportion, weight, and length-at-age
+  npwAgeGrp <- bioRaw %>%
+    filter(
+      Year == max(yrRange), SourceCode %in% c(2, 5), Representative == 1
+    ) %>%
+    left_join(y = tSource, by = "SourceCode") %>%
+    group_by(Age, SampleSource2) %>%
+    summarise(Number = n(), Weight = MeanNA(Weight), Length = MeanNA(Length)) %>%
+    group_by(SampleSource2) %>%
+    mutate(Proportion = Number / SumNA(Number)) %>%
+    select(SampleSource2, Age, Number, Proportion, Weight, Length)
+  # Calculate total: number, proportion, and weight-at-age
+  npwAgeTot <- bioRaw %>%
+    filter(
+      Year == max(yrRange), SourceCode %in% c(2, 5),
+      Representative == 1
+    ) %>%
+    mutate(SampleSource2 = "Total") %>%
+    group_by(Age, SampleSource2) %>%
+    summarise(Number = n(), Weight = MeanNA(Weight), Length = MeanNA(Length)) %>%
+    ungroup() %>%
+    mutate(Proportion = Number / SumNA(Number)) %>%
+    select(SampleSource2, Age, Number, Proportion, Weight, Length)
+  # Combine the grouped statistics with the total statistics
+  npwAge <- bind_rows(npwAgeGrp, npwAgeTot) %>%
+    complete(
+      Age = all_of(ageRange), # SampleSource2 = unique(SampleSource2), 
+      fill = list(Number = 0, Proportion = 0)
+    ) %>%
+    arrange(SampleSource2, Age)
+  # Get differences in number-at-age
+  deltaNumAgeYr <- npwAge %>%
+    select( Age, SampleSource2, Number ) %>%
+    spread( key=Age, value=Number ) %>%
+    rename( 'Sample type'=SampleSource2 )
+  # Get differences in proportion-at-age
+  deltaPropAgeYr <- npwAge %>%
+    select(Age, SampleSource2, Proportion) %>%
+    spread(key = Age, value = Proportion) %>%
+    rename("Sample type" = SampleSource2)
+  # Get differences in weight-at-age
+  deltaWtAgeYr <- npwAge %>%
+    select(Age, SampleSource2, Weight) %>%
+    spread(key = Age, value = Weight) %>%
+    rename("Sample type" = SampleSource2)
+  # Get differences in length-at-age
+  deltaLenAgeYr <- npwAge %>%
+    select(Age, SampleSource2, Length) %>%
+    spread(key = Age, value = Length) %>%
+    rename("Sample type" = SampleSource2)
+  # Determine years for the FN nearshore pilot study
+  yrsNearshore <- bioRaw %>%
+    filter(SourceCode == 2, GearCode == 1) %>%
+    select(Year) %>%
+    distinct() %>%
+    pull(Year)
+  # Get nearshore data by year and age
+  nearYearAge <- bioRaw %>%
+    filter(SourceCode == 2, GearCode == 1, Representative == 1) %>%
+    group_by(Year, Age) %>%
+    summarise(
+      Number = n(), Weight = MeanNA(Weight), Length = MeanNA(Length)
+    ) %>%
+    mutate(Proportion = Number / SumNA(Number)) %>%
+    ungroup() %>%
+    mutate(Year = as.character(Year)) %>%
+    select(Year, Age, Number, Proportion, Weight, Length)
+  # Get nearshore data: total
+  nearAge <- bioRaw %>%
+    filter(SourceCode == 2, GearCode == 1, Representative == 1) %>%
+    group_by(Age) %>%
+    summarise(
+      Number = n(), Weight = MeanNA(Weight), Length = MeanNA(Length)
+    ) %>%
+    mutate(Proportion = Number / SumNA(Number)) %>%
+    ungroup() %>%
+    mutate(Year = "Total") %>%
+    select(Year, Age, Number, Proportion, Weight, Length)
+  # Combine totals with annual stats
+  nearAll <- bind_rows(nearYearAge, nearAge) %>%
+    complete(Age = all_of(ageRange)) %>%
+    # filter( !is.na(Year) ) %>%
+    arrange(Year, Age)
+  # Nearshore number-at-age
+  nearNum <- nearAll %>%
+    select(Year, Age, Number) %>%
+    spread(key = Age, value = Number, drop = FALSE, fill = 0) %>%
+    filter(!is.na(Year), Year != "Total")
+  # Nearshore proportion-at-age
+  nearProp <- nearAll %>%
+    select(Year, Age, Proportion) %>%
+    spread(key = Age, value = Proportion, drop = FALSE, fill = 0) %>%
+    filter(!is.na(Year), Year != "Total")
+  # Nearshore weight-at-age
+  nearWt <- nearAll %>%
+    select(Year, Age, Weight) %>%
+    spread(key = Age, value = Weight) %>%
+    filter(!is.na(Year), Year != "Total")
+  # Nearshore length-at-age
+  nearLen <- nearAll %>%
+    select(Year, Age, Length) %>%
+    spread(key = Age, value = Length) %>%
+    filter(!is.na(Year), Year != "Total")
+  # Get length at age for the two sampling protocols
+  lenAgeSample <- bioRaw %>%
+    filter(
+      Year %in% yrsNearshore, SourceCode %in% c(2, 5),
+      Representative == 1
+    ) %>%
+    left_join(y = tSource, by = "SourceCode") %>%
+    select(Year, SampleSource2, StatArea, Age, Length) %>%
+    rename(SA = StatArea)
+  # Get nearshore samples
+  nearYearAge2 <- bioRaw %>%
+    filter(SourceCode == 2, GearCode == 1, Representative == 1) %>%
+    group_by(Year, Age) %>%
+    summarise(
+      Number = n(), Weight = MeanNA(Weight), Length = MeanNA(Length)
+    ) %>%
+    mutate(Proportion = Number / SumNA(Number)) %>%
+    ungroup() %>%
+    select(Year, Age, Number, Proportion) %>%
+    mutate(Sample = "Nearshore")
+  # Get seine test samples
+  seineYearAge2 <- bio %>%
+    filter(GearCode == 29, Year %in% yrsNearshore) %>%
+    group_by(Year, Age) %>%
+    summarise(Number = SumNA(SampWt)) %>%
+    mutate(Proportion = Number / SumNA(Number)) %>%
+    ungroup() %>%
+    select(Year, Age, Number, Proportion) %>%
+    mutate(Sample = "Seine test")
+  # Combine nearshore and seine test samples: parts A and B
+  compNear <- bind_rows(nearYearAge2, seineYearAge2)
+  # Get nearshore samples by stat area
+  nearYearAgeSA <- bioRaw %>%
+    filter(SourceCode == 2, GearCode == 1, Representative == 1) %>%
+    group_by(Year, StatArea, Age) %>%
+    summarise(
+      Number = n(), Weight = MeanNA(Weight), Length = MeanNA(Length)
+    ) %>%
+    mutate(Proportion = Number / SumNA(Number)) %>%
+    ungroup() %>%
+    select(Year, Age, StatArea, Number, Proportion) %>%
+    mutate(Sample = "Nearshore")
+  # Get seine test samples by stat area
+  seineYearAgeSA <- bio %>%
+    filter(GearCode == 29, Year %in% yrsNearshore) %>%
+    group_by(Year, StatArea, Age) %>%
+    summarise(Number = SumNA(SampWt)) %>%
+    mutate(Proportion = Number / SumNA(Number)) %>%
+    ungroup() %>%
+    select(Year, Age, StatArea, Number, Proportion) %>%
+    mutate(Sample = "Seine test")
+  # Combine nearshore and seine test samples by stat area
+  compNearSA <- bind_rows(nearYearAgeSA, seineYearAgeSA)
+  # Determine number by year and sample type
+  nSampleSA <- compNearSA %>%
+    group_by(Year, StatArea, Sample) %>%
+    summarise(Number = SumNA(Number)) %>%
+    ungroup()
 } # End if region is Central Coast
 
 # If region is Strait of Georgia
