@@ -4685,7 +4685,7 @@ if (region == "CC") {
   histYrs <- paste(range(yrsRatioHist), collapse = " and ")
   # Get print friendly values: historic ratio
   histRat <- propNumBioHist %>%
-    filter(Group == "08") %>%
+    filter(Group == "8") %>%
     select(SampWt) %>%
     mutate(SampWt = SampWt * 100) %>%
     round(digits = 1)
