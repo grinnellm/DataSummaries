@@ -1330,17 +1330,26 @@ CountBiosamplesYear <- function(dat) {
     ungroup()
   # Count the number of samples by year and gear: test and research
   numTest <- dat %>%
-    filter(Year >= firstYrTab, SourceCode %in% c(2, 3, 5)) %>%
+    filter(Year >= firstYrTab, SourceCode %in% c(3, 5)) %>%
     select(Year, Sample) %>%
     group_by(Year) %>%
     summarise(Test = n_distinct(Sample)) %>%
     ungroup()
+  # Count the number of samples by year and gear: nearshore
+  numNear <- dat %>%
+    filter(Year >= firstYrTab, SourceCode %in% c(2)) %>%
+    select(Year, Sample) %>%
+    group_by(Year) %>%
+    summarise(Nearshore = n_distinct(Sample)) %>%
+    ungroup()
   # Merge the two tables and wrangle
   res <- full_join(x = numComm, y = numTest, by = "Year") %>%
+    full_join(y = numNear, by = "Year") %>%
     complete(
-      Year = firstYrTab:max(yrRange), fill = list(Commercial = 0, Test = 0)
+      Year = firstYrTab:max(yrRange),
+      fill = list(Commercial = 0, Test = 0, Nearshore = 0)
     ) %>%
-    mutate(Total = as.integer(Commercial + Test)) %>%
+    mutate(Total = as.integer(Commercial + Test + Nearshore)) %>%
     arrange(Year)
   # If there are no rows
   if (nrow(res) == 0) {
@@ -4377,7 +4386,8 @@ print(
 xBioNum <- bioNum %>%
   mutate(
     Year = as.integer(Year), Commercial = as.integer(Commercial),
-    Test = as.integer(Test)
+    Test = as.integer(Test), Nearshore = as.integer(Nearshore),
+    Total = as.integer(Total)
   ) %>%
   xtable()
 
@@ -4686,9 +4696,8 @@ if (region == "CC") {
   # Get print friendly values: historic ratio
   histRat <- propNumBioHist %>%
     filter(Group == "8") %>%
-    select(SampWt) %>%
-    mutate(SampWt = SampWt * 100) %>%
-    round(digits = 1)
+    mutate(SampWt = round(SampWt * 100, digits = 1)) %>%
+    pull(SampWt)
   # Get print friendly values: years to fix
   fixYrs <- PasteNicely(yrsRatioFix)
 } else { # End if Central Coast, otherwise
