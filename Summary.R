@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1884,7 +1884,8 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
     full_join(y = tSpawn, by = "Year") %>%
     arrange(Year) %>%
     mutate(
-      TotalSI = formatC(TotalSI, digits = 0, format = "f", big.mark = ",")
+      TotalSI = formatC(TotalSI, digits = 0, format = "f", big.mark = ","),
+      TotalSI = ifelse(TotalSI == 0, NA, TotalSI)
     ) %>%
     select(Year, TotalSI, everything()) %>%
     rename(`Spawn index` = TotalSI)
