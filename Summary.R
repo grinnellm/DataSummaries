@@ -142,7 +142,7 @@ sectionSub <- NULL
 # secSubName <- "Area08"
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
-makeAnimation <- FALSE
+makeAnimation <- TRUE
 
 # Include test fishery catch
 inclTestCatch <- TRUE
@@ -491,20 +491,20 @@ transectXY <- LoadTransectXY(loc = diveLoc)
 regName <- paste(region, collapse = ".")
 
 # Make required folders
-if (!"Summaries" %in% list.files()) dir.create("Summaries")
-if (!"Animations" %in% list.files()) dir.create("Animations")
+if (!"Summaries" %in% list.files()) dir.create(path = "Summaries")
+if (!"Animations" %in% list.files()) dir.create(path = "Animations")
 
 # If old directory exists
 if (regName %in% list.files()) {
   # Remove the old directory
-  unlink(regName, recursive = TRUE)
+  unlink(x = regName, recursive = TRUE)
   # Warning: remove previous summary output
   warning("Removed existing directory '", regName, "'", call. = FALSE)
   # Create the main directory for output
-  dir.create(regName)
+  dir.create(path = regName)
 } else { # End if directory exists, otherwise
   # Create the main directory for output
-  dir.create(regName)
+  dir.create(path = regName)
 } # End if directory doesn't exists
 
 # Load disposal codes
@@ -4307,7 +4307,9 @@ PlotLocationsYear <- function(dat) {
 } # End PlotLocationsYear
 
 # Make the animation
-if (makeAnimation) {
+if (makeAnimation || 
+    !paste("SpawnIndexAnimation", regName, "pdf", sep = ".") %in% 
+    list.files(path = "Animations")) {
   # Show spawn locations (this takes a few minutes!)
   PlotLocationsYear(dat = siYearLoc)
 } else { # End if making the animation, otherwise
