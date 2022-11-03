@@ -64,6 +64,10 @@
 # 19. Add option to analyses more than one SAR at a time (in addition to 'All').
 # 20. Go through and fix all the warnings (i.e., so it runs without warnings).
 
+# TODO: Make folders if they don't exist: Summaries, Animations
+# Also in Reports: [Year] folder for PDFs
+# Make the animation if it doesn't exist
+
 ##### Housekeeping #####
 
 # General options
@@ -485,6 +489,10 @@ transectXY <- LoadTransectXY(loc = diveLoc)
 
 # If region is a vector, collapse region names for output; otherwise region
 regName <- paste(region, collapse = ".")
+
+# Make required folders
+if (!"Summaries" %in% list.files()) dir.create("Summaries")
+if (!"Animations" %in% list.files()) dir.create("Animations")
 
 # If old directory exists
 if (regName %in% list.files()) {
