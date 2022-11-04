@@ -64,10 +64,6 @@
 # 19. Add option to analyses more than one SAR at a time (in addition to 'All').
 # 20. Go through and fix all the warnings (i.e., so it runs without warnings).
 
-# TODO: Make folders if they don't exist: Summaries, Animations
-# Also in Reports: [Year] folder for PDFs
-# Make the animation if it doesn't exist
-
 ##### Housekeeping #####
 
 # General options
@@ -142,7 +138,7 @@ sectionSub <- NULL
 # secSubName <- "Area08"
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
-makeAnimation <- TRUE
+makeAnimation <- FALSE
 
 # Include test fishery catch
 inclTestCatch <- TRUE
