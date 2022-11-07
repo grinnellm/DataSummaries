@@ -247,7 +247,7 @@ lastRedYr <- 1970
 # Figure width
 figWidth <- 6
 
-# Figure resolution (dpi)
+# Figure resolution (DPI; use 90 for herringsr maps)
 figRes <- 320
 
 # Type of smoothing line
@@ -2983,7 +2983,7 @@ ggsave(
 # Make a french version if requested
 if (makeFrench) {
   # Make a png map in the main folder (english)
-  BCMap + ggsave(
+  ggsave( BCMap,
     filename = file.path("BC.png"), width = figWidth,
     height = min(7, 5.75 / shapes$xyAllRatio), dpi = figRes
   )
@@ -3020,8 +3020,12 @@ if (makeFrench) {
     ) +
     coord_equal() +
     labs(x = "Abcsisses (km)", y = "Ordonnées (km)", caption = geoProj) +
-    scale_x_continuous(labels = function(x) comma(x / 1000), expand = c(0, 0)) +
-    scale_y_continuous(labels = function(x) comma(x / 1000), expand = c(0, 0)) +
+    scale_x_continuous(
+      labels = function(x) comma(x / 1000, big.mark = " "), expand = c(0, 0)
+    ) +
+    scale_y_continuous(
+      labels = function(x) comma(x / 1000, big.mark = " "), expand = c(0, 0)
+    ) +
     myTheme
   ggsave(
     BCMapFR, filename = file.path("BC-FR.png"), width = figWidth,
