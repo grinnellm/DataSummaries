@@ -3130,7 +3130,9 @@ catchGearPlot <- ggplot(
 if(showCatchZoom){
   # Zoom into recent time
   catchGearPlotZoom <- catchGearPlot + 
-    scale_x_continuous(breaks = yrBreaks, limits = c(firstYrFig, max(yrRange))) +
+    scale_x_continuous(
+      breaks = yrBreaks, limits = c(firstYrFig, max(yrRange) + 1)
+    ) +
     guides(fill = "none", shape = "none")
   # Add zoom to plot
   catchGearPlot <- plot_grid(
