@@ -134,8 +134,8 @@ Area08 <- c(85, 86)
 
 # Select a subset of sections (or NULL for all)
 sectionSub <- NULL
-# secSubNum <- 3
-# secSubName <- "Area08"
+#secSubNum <- 3
+#secSubName <- "Lou"
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
