@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -137,6 +137,11 @@ sectionSub <- NULL
 #secSubNum <- 3
 #secSubName <- "Lou"
 
+if(is.null(sectionSub)){
+  secSubNum <- 1
+  secSubName <- toupper(region)
+}
+
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
 
@@ -147,7 +152,7 @@ inclTestCatch <- TRUE
 inclTestSNBio <- TRUE
 
 # Include test gillnet biological data
-inclTestGNBio <- FALSE
+inclTestGNBio <- TRUE
 
 # Include spawn on kelp biological data
 inclSOKBio <- TRUE
@@ -1564,6 +1569,89 @@ CalcWeightAtAge <- function(dat) {
   return(wtAgeL)
 } # End CalcWeightAtAge function
 
+CalcWeightAtAgeBySiscaGear <- function(dat, Gear = 2) {
+  # For SISCA
+  # This function calculates mean weight-at-age by year, and fills in missing
+  # data (i.e., NAs) using a suitable technique. Calculate the weighted mean
+  # using the 'SampWt' column to fix unrepresentative sampling if identified
+  # Calculate mean weight-at-age
+  # Uses Gear_Code: (19 = Gillnet, 29 = Seine)
+  # and Source_Code: (0 = Roe, 1 = Bait, 5 = Test, 6 = Food)
+  # For food and bait use Gear =1 then (Gear_Code = 29, Source_Code = c(1,6))
+  # For Seine test& roe use Gear =2, then Gear_Code = 29, Source_Code = c(0,5)
+  # For Gillnet use Gear =3 then Gear_Code = 19, Source_Code = c(0,5)
+  # For Gear = 19 -This is all gears that use gear 19 in the Database, 
+  # which is equivalent to Gear =3
+  # For Gear = 29 -This is all gears that use gear 29 in the Database, 
+  # which is equivalent to Gear = 1 & 2
+  
+  #for Testing
+  #dat <- bio
+  
+  Gear_Code <- case_when(Gear == 2 | Gear == 1 ~ 29,
+    Gear ==  3 ~ 19,
+    Gear == 19 ~ 19,
+    Gear == 29 ~ 29)
+  Source_Code <- case_when(Gear ==  1 ~ c(1,6,6,6,7) , #Note repeat numbers are because case_when
+                           Gear ==  2 ~ c(0,5,5,5,5),  #requires vectors be of same length
+                           Gear ==  3 ~ c(0,5,5,5,5),
+                           Gear == 19 ~ c(0,5,5,5,5),
+                           Gear == 29 ~ c(0,1,5,6,7))
+  wtAge <- dat %>% 
+    filter(GearCode == Gear_Code,
+           SourceCode %in% Source_Code) %>% 
+    select(Year, Age, Weight, SampWt) %>%
+    na.omit() %>%
+    group_by(Year, Age) %>%
+    summarise(MeanWeight = WtMeanNA(x = Weight, w = SampWt)) %>%
+    ungroup() %>%
+    complete(Year = yrRange, Age = ageRange) %>%
+    arrange(Year, Age)
+  # Reshape from long to wide and merge with complete year sequence
+  wtAgeW <- wtAge %>%
+    spread(key = Age, value = MeanWeight) %>%
+    arrange(Year)
+  # Reshape from wide to long, and fill in NAs
+  wtAgeL <- wtAgeW %>%
+    gather(key = Age, value = "Weight", all_of(ageRange), convert = TRUE) %>%
+    group_by(Age) %>%
+    # Replace NAs: mean of (up to) previous n years
+    mutate(Weight = RollMeanNA(Weight, n = nRoll)) %>%
+    # Replace persistent NAs (i.e., at the beginning of the time series)
+    mutate(Weight = na.fill(Weight, fill = c("extend", NA, NA))) %>%
+    ungroup() %>%
+    filter(Year %in% yrRange) %>%
+    mutate(Weight = round(Weight/1000, digits = 4)) # do we want to round the digits?
+           #Do we only have 4 significant digits when we multiply it by numbers to calculate biomass?
+  wtAgeW <- wtAgeL %>%
+    spread(key = Age, value = Weight) %>%
+    rename("a2" = 2, "a3" = 3, "a4" = 4, "a5" = 5, "a6" = 6, "a7" = 7, "a8" = 8, "a9" = 9, "a10" = 10) %>%
+    mutate(Gear = Gear) %>%
+    select(Year, Gear, a2:a10)
+  # Return weight-at-age by year
+  return(wtAgeW)
+} # End CalcWeightAtAgeBySiscaGear function
+
+#For sisca
+weightAgeByGear1 <- CalcWeightAtAgeBySiscaGear(bio, Gear = 1) 
+weightAgeByGear2 <- CalcWeightAtAgeBySiscaGear(bio, Gear = 2)
+weightAgeByGear3 <- CalcWeightAtAgeBySiscaGear(bio, Gear = 3)
+weightAgeByGear <- rbind(weightAgeByGear1, weightAgeByGear2)
+weightAgeByGear <- rbind(weightAgeByGear, weightAgeByGear3)
+weightAgeByGear <- weightAgeByGear %>% 
+  mutate(Area = secSubNum, 
+         Stock = secSubName) %>%
+  select(Year, Area, Gear, a2:a10, Stock)
+
+### Output for SISCA ###
+write_csv(weightAgeByGear,
+          file = file.path("Summaries", paste("fleetWtAge", secSubName, ".csv", sep = "")),
+          append = FALSE)
+write_csv(weightAgeByGear,
+          file = file.path(paste0("../SISCAH/Data/", region), paste("fleetWtAge2", secSubName, ".csv", sep = "")),
+          append = FALSE)
+
+# Do we need this for SISCA?
 # Different for major vs others
 if(regionType == "major") {
   # Calculate mean weight-at-age by year
@@ -4841,6 +4929,8 @@ if (region == "All") {
     write_csv(file = file.path(regName, "SpatialInconsistent.csv"))
 } # End if all regions
 
+
+
 # # Write catch data to a csv (same as ADMB input data file)
 # catch %>%
 #   group_by( Year ) %>%
@@ -4962,6 +5052,8 @@ if(regName %in% c("HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W", "A10")){
 
 # Update progress
 cat("done\n")
+
+
 
 ##### Output #####
 
