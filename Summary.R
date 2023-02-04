@@ -142,6 +142,9 @@ if(is.null(sectionSub)){
   secSubName <- toupper(region)
 }
 
+# Send to SISCA folder otherwise SISCA data only outputs to Summaries folder
+send2sisca <- FALSE
+
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
 
@@ -152,7 +155,7 @@ inclTestCatch <- TRUE
 inclTestSNBio <- TRUE
 
 # Include test gillnet biological data
-inclTestGNBio <- TRUE
+inclTestGNBio <- FALSE
 
 # Include spawn on kelp biological data
 inclSOKBio <- TRUE
@@ -2712,28 +2715,57 @@ weightAgeADMB <- weightAge %>%
   spread(key = Age, value = Weight) %>%
   arrange(Gear, Year)
 
-# # Data for sub-stock analyses (Landmark; ISCAM data with some tweaks)
-# catchADMB %>%
-#   mutate(Area = secSubNum, Stock = secSubName) %>%
-#   select(Year, Gear, Area, Type, Value, Stock) %>%
-#   write_csv(
-#     file = "CatchData.csv", append = ifelse(secSubNum == 1, FALSE, TRUE)
-#   )
-# spawnADMB %>%
-#   mutate(Area = secSubNum, Stock = secSubName) %>%
-#   select(Year, Spawn, Gear, Area, Weight, Timing, Stock) %>%
-#   write_csv(
-#     file = "IdxData.csv", append = ifelse(secSubNum == 1, FALSE, TRUE)
-#   )
-# numAgedADMB %>%
-#   mutate(Area = secSubNum, A1 = 0) %>%
-#   rename(
-#     A2 = `2`, A3 = `3`, A4 = `4`, A5 = `5`, A6 = `6`, A7 = `7`, A8 = `8`,
-#     A9 = `9`, A10 = `10`) %>%
-#   select(Year, Gear, Area, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) %>%
-#   write_csv(
-#     file = "AgeData.csv", append = ifelse(secSubNum == 1, FALSE, TRUE)
-#   )
+##### For SISCA (TMB)#####
+
+# # Data for sub-stock analyses (Landmark;SISCA/ISCAM data with some tweaks)
+catchTMB <- catchADMB %>%
+   mutate(Area = secSubNum, Stock = secSubName) %>%
+   select(Year, Gear, Area, Type, Value, Stock) 
+
+write_csv(catchTMB,
+   file = file.path("Summaries", paste("catchData", secSubName, ".csv", sep = "")), 
+   append = ifelse(secSubNum == 1, FALSE, TRUE))
+
+if(send2sisca == TRUE){
+  write_csv(catchTMB,
+            file = file.path(paste0("../SISCAH/Data/", region), 
+                             paste("catchData2", secSubName, ".csv", sep = "")),
+            append = ifelse(secSubNum == 1, FALSE, TRUE))
+}
+
+spawnTMB <- spawnADMB %>%
+  mutate(Area = secSubNum, Stock = secSubName) %>%
+  select(Year, Spawn, Gear, Area, Group, Sex, Weight, Timing, Stock)
+
+write_csv(spawnTMB,
+ file = file.path("Summaries", paste("IdxData", secSubName, ".csv", sep = "")), 
+ append = ifelse(secSubNum == 1, FALSE, TRUE))
+
+if(send2sisca == TRUE){   
+write_csv(spawnTMB,
+  file   = file.path(paste0("../SISCAH/Data/", region), 
+           paste("IdxData2", secSubName, ".csv", sep = "")),
+  append = ifelse(secSubNum == 1, FALSE, TRUE))
+}
+
+numAgedTMB <- numAgedADMB %>%
+   mutate(Area = secSubNum, a1 = 0, Group = 1) %>%
+   rename(
+     a2 = `2`, a3 = `3`, a4 = `4`, a5 = `5`, a6 = `6`, a7 = `7`, a8 = `8`,
+     a9 = `9`, a10 = `10`) %>%
+   select(Year, Gear, Area, Group, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) 
+
+write_csv(numAgedTMB,
+          file = file.path("Summaries", paste("ageData", secSubName, ".csv", sep = "")), 
+          append = ifelse(secSubNum == 1, FALSE, TRUE))
+
+if(send2sisca == TRUE){   
+  write_csv(numAgedTMB,
+            file   = file.path(paste0("../SISCAH/Data/", region), 
+                               paste("ageData2", secSubName, ".csv", sep = "")),
+            append = ifelse(secSubNum == 1, FALSE, TRUE))
+}
+
 # spawnYrTypeProp %>%
 #   select(Year, Type, SI) %>%
 #   mutate(SI = SI / 1000) %>%
@@ -3035,6 +3067,9 @@ WriteInputFile(
   pADMB = parsADMB, cADMB = catchADMB, sADMB = spawnADMB, nADMB = numAgedADMB,
   wADMB = weightAgeADMB
 )
+
+
+
 
 ##### Figures #####
 
