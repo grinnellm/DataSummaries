@@ -2766,20 +2766,46 @@ if(send2sisca == TRUE){
             append = ifelse(secSubNum == 1, FALSE, TRUE))
 }
 
+weightAgeTMB <- weightAgeADMB %>%
+   mutate(Area = secSubNum, Stock = secSubName) %>%
+   rename(
+     a2 = `2`, a3 = `3`, a4 = `4`, a5 = `5`, a6 = `6`, a7 = `7`, a8 = `8`,
+     a9 = `9`, a10 = `10`) %>%
+   select(Year, Area, a2, a3, a4, a5, a6, a7, a8, a9, a10, Stock)
+
+write_csv(weightAgeTMB,
+   file = file.path("Summaries", paste("wtAgeMixed", secSubName, ".csv", sep = "")), 
+   append = ifelse(secSubNum == 1, FALSE, TRUE))
+
+if(send2sisca == TRUE){   
+  write_csv(weightAgeTMB,
+            file   = file.path(paste0("../SISCAH/Data/", region), 
+                               paste("wtAgeMixed2", secSubName, ".csv", sep = "")),
+            append = ifelse(secSubNum == 1, FALSE, TRUE))
+}
+
+BlendedIdx <- spawnSummary %>%
+  mutate(Surf = as.numeric(Surf), Macro = as.numeric(Macro), Under = as.numeric(Under)) %>%
+  replace(is.na(.), 0) %>%
+  mutate(Dive    = (Macro + Under)/1000,
+         Surface = Surf/1000) %>%
+  select(Year, Dive, Surface) 
+  
+write_csv(BlendedIdx, file = paste0("Summaries/", secSubName, "BlendedIdx.csv"))
+
+if(send2sisca == TRUE){   
+  write_csv(BlendedIdx,
+            file   = file.path(paste0("../SISCAH/Data/", region, "/SplitIdx"), 
+                               paste(region, "_BlendedIdx.csv", sep = "")),
+            append = FALSE)
+}
+
 # spawnYrTypeProp %>%
 #   select(Year, Type, SI) %>%
 #   mutate(SI = SI / 1000) %>%
 #   pivot_wider(names_from = Type, values_from = SI) %>%
 #   write_csv(file = paste(secSubName, "csv", sep="."))
-# weightAgeADMB %>%
-#   mutate(Area = secSubNum, Stock = secSubName) %>%
-#   rename(
-#     A2 = `2`, A3 = `3`, A4 = `4`, A5 = `5`, A6 = `6`, A7 = `7`, A8 = `8`,
-#     A9 = `9`, A10 = `10`) %>%
-#   select(Year, Area, Stock, A2, A3, A4, A5, A6, A7, A8, A9, A10) %>%
-#   write_csv(
-#     file = "WeightData.csv", append = ifelse(secSubNum == 1, FALSE, TRUE)
-#   )
+
   
 # Write ADMB input file
 WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
