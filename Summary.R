@@ -1,5 +1,5 @@
 ##### Header #####
-# Author:       Matthew H. Grinnell
+# Author:       Matthew H. Grinnell & Sarah J. H. Power
 # Affiliation:  Pacific Biological Station, Fisheries and Oceans Canada (DFO)
 # Group:        Quantitative Assessment Methods Section, Science
 # Address:      3190 Hammond Bay Road, Nanaimo, BC, Canada, V9T 6N7
@@ -8,7 +8,7 @@
 # Code name:    Summary.R
 # Version:      2.0
 # Date started: Jun 03, 2016
-# Date edited:  Oct 22, 2018
+# Date edited:  Oct 22, 2018, 2023-Feb
 #
 # Overview:
 # Generate tables and figures for annual Pacific Herring preliminary data
@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "WCVI"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1650,10 +1650,11 @@ weightAgeByGear <- weightAgeByGear %>%
 write_csv(weightAgeByGear,
           file = file.path("Summaries", paste("fleetWtAge", secSubName, ".csv", sep = "")),
           append = FALSE)
+if(send2sisca == TRUE){
 write_csv(weightAgeByGear,
-          file = file.path(paste0("../SISCAH/Data/", region), paste("fleetWtAge2", secSubName, ".csv", sep = "")),
+          file = file.path(paste0("../SISCAH/Data/", region), paste0("fleetWtAge.csv")),
           append = FALSE)
-
+}
 # Do we need this for SISCA?
 # Different for major vs others
 if(regionType == "major") {
@@ -2729,7 +2730,7 @@ write_csv(catchTMB,
 if(send2sisca == TRUE){
   write_csv(catchTMB,
             file = file.path(paste0("../SISCAH/Data/", region), 
-                             paste("catchData2", secSubName, ".csv", sep = "")),
+                             paste("catchData.csv")), #", secSubName, ".csv", sep = "")),
             append = ifelse(secSubNum == 1, FALSE, TRUE))
 }
 
@@ -2738,13 +2739,13 @@ spawnTMB <- spawnADMB %>%
   select(Year, Spawn, Gear, Area, Group, Sex, Weight, Timing, Stock)
 
 write_csv(spawnTMB,
- file = file.path("Summaries", paste("IdxData", secSubName, ".csv", sep = "")), 
+ file = file.path("Summaries", paste0("IdxData", secSubName, ".csv")), 
  append = ifelse(secSubNum == 1, FALSE, TRUE))
 
 if(send2sisca == TRUE){   
 write_csv(spawnTMB,
   file   = file.path(paste0("../SISCAH/Data/", region), 
-           paste("IdxData2", secSubName, ".csv", sep = "")),
+           paste0("IdxData.csv")), #2", secSubName, ".csv")),
   append = ifelse(secSubNum == 1, FALSE, TRUE))
 }
 
@@ -2756,13 +2757,13 @@ numAgedTMB <- numAgedADMB %>%
    select(Year, Gear, Area, Group, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) 
 
 write_csv(numAgedTMB,
-          file = file.path("Summaries", paste("ageData", secSubName, ".csv", sep = "")), 
+          file = file.path("Summaries", paste0("ageData", secSubName, ".csv")), 
           append = ifelse(secSubNum == 1, FALSE, TRUE))
 
 if(send2sisca == TRUE){   
   write_csv(numAgedTMB,
             file   = file.path(paste0("../SISCAH/Data/", region), 
-                               paste("ageData2", secSubName, ".csv", sep = "")),
+                               paste0("ageData.csv")), #2", secSubName, ".csv")),
             append = ifelse(secSubNum == 1, FALSE, TRUE))
 }
 
@@ -2774,13 +2775,13 @@ weightAgeTMB <- weightAgeADMB %>%
    select(Year, Area, a2, a3, a4, a5, a6, a7, a8, a9, a10, Stock)
 
 write_csv(weightAgeTMB,
-   file = file.path("Summaries", paste("wtAgeMixed", secSubName, ".csv", sep = "")), 
+   file = file.path("Summaries", paste0("wtAgeMixed.csv")), #", secSubName, ".csv")), 
    append = ifelse(secSubNum == 1, FALSE, TRUE))
 
 if(send2sisca == TRUE){   
   write_csv(weightAgeTMB,
             file   = file.path(paste0("../SISCAH/Data/", region), 
-                               paste("wtAgeMixed2", secSubName, ".csv", sep = "")),
+                               paste0("wtAgeMixed.csv")), #2", secSubName, ".csv",)),
             append = ifelse(secSubNum == 1, FALSE, TRUE))
 }
 
@@ -2796,7 +2797,7 @@ write_csv(BlendedIdx, file = paste0("Summaries/", secSubName, "BlendedIdx.csv"))
 if(send2sisca == TRUE){   
   write_csv(BlendedIdx,
             file   = file.path(paste0("../SISCAH/Data/", region, "/SplitIdx"), 
-                               paste(region, "_BlendedIdx.csv", sep = "")),
+                               paste0(region, "_BlendedIdx.csv")),
             append = FALSE)
 }
 
