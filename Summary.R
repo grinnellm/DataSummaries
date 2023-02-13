@@ -143,7 +143,7 @@ if(is.null(sectionSub)){
 }
 
 # Send to SISCA folder otherwise SISCA data only outputs to Summaries folder
-send2sisca <- TRUE
+send2sisca <- FALSE
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
@@ -2722,11 +2722,16 @@ weightAgeADMB <- weightAge %>%
 catchTMB <- catchADMB %>%
    mutate(Area = secSubNum, Stock = secSubName) %>%
    select(Year, Gear, Area, Type, Value, Stock) 
-catchTMBSOK <- catchSummary %>% 
-  filter(Year > 1974) %>% 
-  mutate(Gear = 6, Area = secSubNum, Type = 2, Value = SOK/1000, Stock = secSubName) %>%
-  select(Year, Gear, Area, Type, Value, Stock)
-catchTMB <- bind_rows(catchTMB, catchTMBSOK)
+
+#No SOK for SOG (any SOK data was experimental and not included in analysis)
+if(toupper(region) != "SOK"){
+  catchTMBSOK <- catchSummary %>% 
+    filter(Year > 1974) %>% 
+    mutate(Gear = 6, Area = secSubNum, Type = 2, Value = SOK/1000, Stock = secSubName) %>%
+    select(Year, Gear, Area, Type, Value, Stock)
+  catchTMB <- bind_rows(catchTMB, catchTMBSOK)
+}
+
 
 write_csv(catchTMB,
    file = file.path("Summaries", paste("catchData", secSubName, ".csv", sep = "")), 
