@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -143,7 +143,7 @@ if(is.null(sectionSub)){
 }
 
 # Send to SISCA folder otherwise SISCA data only outputs to Summaries folder
-send2sisca <- FALSE
+send2sisca <- TRUE
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
@@ -2722,6 +2722,11 @@ weightAgeADMB <- weightAge %>%
 catchTMB <- catchADMB %>%
    mutate(Area = secSubNum, Stock = secSubName) %>%
    select(Year, Gear, Area, Type, Value, Stock) 
+catchTMBSOK <- catchSummary %>% 
+  filter(Year > 1974) %>% 
+  mutate(Gear = 6, Area = secSubNum, Type = 2, Value = SOK/1000, Stock = secSubName) %>%
+  select(Year, Gear, Area, Type, Value, Stock)
+catchTMB <- bind_rows(catchTMB, catchTMBSOK)
 
 write_csv(catchTMB,
    file = file.path("Summaries", paste("catchData", secSubName, ".csv", sep = "")), 
