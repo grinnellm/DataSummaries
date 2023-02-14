@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "WCVI"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -143,7 +143,7 @@ if(is.null(sectionSub)){
 }
 
 # Send to SISCA folder otherwise SISCA data only outputs to Summaries folder
-send2sisca <- FALSE
+send2sisca <- TRUE
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
@@ -2724,7 +2724,7 @@ catchTMB <- catchADMB %>%
    select(Year, Gear, Area, Type, Value, Stock) 
 
 #No SOK for SOG (any SOK data was experimental and not included in analysis)
-if(toupper(region) != "SOK"){
+if(toupper(region) != "SOG"){
   catchTMBSOK <- catchSummary %>% 
     filter(Year > 1974) %>% 
     mutate(Gear = 6, Area = secSubNum, Type = 2, Value = SOK/1000, Stock = secSubName) %>%
