@@ -106,7 +106,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -143,7 +143,7 @@ if(is.null(sectionSub)){
 }
 
 # Send to SISCA folder otherwise SISCA data only outputs to Summaries folder
-send2sisca <- TRUE
+send2sisca <- FALSE
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
@@ -249,7 +249,8 @@ parsADMB <- list(
   )
 )
 
-# Last year of the reduction fishery
+# Last year of the reduction fishery #To do JC SP is this year
+
 lastRedYr <- 1970
 
 # Figure width
@@ -540,7 +541,7 @@ tGroup <- read_csv(
   file = file.path(codesLoc$loc, codesLoc$fns$tGroup), col_types = cols()
 )
 
-# Load herring areas
+# Load herring areas #TODO: R crshes right here (note region = HG)
 areas <- load_area_data(where = areaLoc, reg = region, sec_sub = sectionSub,
                       groups = tGroup)
 
