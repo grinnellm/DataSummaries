@@ -541,7 +541,7 @@ tGroup <- read_csv(
   file = file.path(codesLoc$loc, codesLoc$fns$tGroup), col_types = cols()
 )
 
-# Load herring areas #TODO: R crshes right here (note region = HG)
+# Load herring areas #TODO: R crashes right here (note region = HG)
 areas <- load_area_data(where = areaLoc, reg = region, sec_sub = sectionSub,
                       groups = tGroup)
 
