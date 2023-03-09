@@ -10,15 +10,16 @@ library("librarian")
 shelf("tidyverse")
 
 df <- read_csv("Summaries/SpawnOnKelpHG.csv") %>%
-  select(Season, SpawnOnKelp) %>%
+  filter(Section %in% c("006", "020","021", "022","023","024", "025")) %>% #Certain sections to include as per JC
+  select(Season, ProductLanded) %>% #Product Landed column not SpawnOnKelp column
   group_by(Season) %>%
-  summarise(Value = sum(SpawnOnKelp))%>%
+  summarise(Value = sum(ProductLanded))%>%
   mutate(Year = as.character(Season),
-        Year = paste0(substr(Year, 1,3), substr(Year,5,5)),
+        Year = as.numeric(substr(Year, 1, 4)) + 1,
         Gear = 6, 
         Area = 1, 
         Type = 2, 
-        Value = Value*0.00000045359237, #converts form short tonnes to kilotonnes
+        Value = Value*0.00000045359237, #converts from short tonnes to kilotons
         Stock = "HG") %>%
   select(-Season)
 
@@ -27,5 +28,4 @@ df2 <- read_csv("Summaries/catchDataHG.csv") %>%
   rbind(df)
 
 write_csv(df2, "Summaries/catchDataHG.csv")
-
-write_csv(df2, "../SISCAH/Data/HG/catchDataHG.csv")
+write_csv(df2, "../SISCAH/Data/HG/catchData.csv")
