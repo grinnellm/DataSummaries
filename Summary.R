@@ -11,6 +11,7 @@
 # Date edited:  Oct 22, 2018, 2023-Feb
 #
 # Overview:
+
 # Generate tables and figures for annual Pacific Herring preliminary data
 # summaries by region(s), and generate the input file for the Pacific herring
 # stock assessment, which uses ADMB.
@@ -69,7 +70,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm(list = ls()) # Clear the workspace
+rm(list = ls()) # Cleacr the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -106,7 +107,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "PRD"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -202,7 +203,7 @@ data(pars)
 yrRange <- pars$year$assess:2022
 
 # Age range: omit below, plus group above
-ageRange <- 2:10
+ageRange <- 1:10
 
 # Age to highlight in figure
 ageShow <- 3
@@ -544,6 +545,9 @@ tGroup <- read_csv(
 # Load herring areas #TODO: R crashes right here (note region = HG)
 areas <- load_area_data(where = areaLoc, reg = region, sec_sub = sectionSub,
                       groups = tGroup)
+#When region == PRD section 49 and 59 have incomplete group info
+areas4959 <- areas %>%
+	filter(Section == 49, Section == 5)
 
 # Get BC land data etc (for plots)
 shapes <- LoadShapefiles(where = shapesLoc, a = areas)
@@ -2761,9 +2765,9 @@ write_csv(spawnTMB,
 }
 
 numAgedTMB <- numAgedADMB %>%
-   mutate(Area = secSubNum, a1 = 0, Group = 1) %>%
+   mutate(Area = secSubNum, Group = 1) %>%
    rename(
-     a2 = `2`, a3 = `3`, a4 = `4`, a5 = `5`, a6 = `6`, a7 = `7`, a8 = `8`,
+     a1 = `1`, a2 = `2`, a3 = `3`, a4 = `4`, a5 = `5`, a6 = `6`, a7 = `7`, a8 = `8`,
      a9 = `9`, a10 = `10`) %>%
    select(Year, Gear, Area, Group, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) 
 

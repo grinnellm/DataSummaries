@@ -12,7 +12,8 @@ librarian::shelf(tidyverse, magrittr)
 bio_sample_sizes <- function(region = "CC"){
   df <- read.csv(paste0("Summaries/AgeData", region, ".csv")) %>%
     mutate(total = a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10,
-           gear = case_when(Gear == 1 ~ 'reduction & food-bait',
+           gear = case_when(Gear == 1 & Year < 1969 ~ 'reduction',
+                            Gear == 1 & Year > 1968 ~ 'food-bait',
                             Gear == 2 ~ 'seine',
                             Gear == 3 ~ 'gillnet',
                             TRUE ~ 'unknown')) %>%
