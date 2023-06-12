@@ -70,7 +70,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm(list = ls()) # Cleacr the workspace
+rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -1525,7 +1525,7 @@ FormatPropAtAge <- function(dat) {
   return(res)
 } # End FormatPropAtAge function
 
-# Format proportion-at-age
+# Format proportion-at-aget dc
 propAgedYearTab <- FormatPropAtAge(dat = numAgedYear)
 
 # Determine weighted mean and approximate CI age by year
@@ -1561,11 +1561,12 @@ CalcWeightAtAge <- function(dat) {
     arrange(Year, Age)
   # Reshape from long to wide and merge with complete year sequence
   wtAgeW <- wtAge %>%
-    spread(key = Age, value = MeanWeight) %>%
+    pivot_wider(names_from = Age, values_from = MeanWeight) %>%
     arrange(Year)
   # Reshape from wide to long, and fill in NAs
   wtAgeL <- wtAgeW %>%
-    gather(key = Age, value = "Weight", all_of(ageRange), convert = TRUE) %>%
+    pivot_longer(cols = !Year, names_to = "Age", values_to = "Weight",
+                 names_transform = as.integer) %>%
     group_by(Age) %>%
     # Replace NAs: mean of (up to) previous n years
     mutate(Weight = RollMeanNA(Weight, n = nRoll)) %>%
@@ -1577,7 +1578,7 @@ CalcWeightAtAge <- function(dat) {
   return(wtAgeL)
 } # End CalcWeightAtAge function
 
-CalcWeightAtAgeBySiscaGear <- function(dat, Gear = 2) {
+CalcWeightAtAgeBySiscaGear <- function(dat, Gear = 2, yearRange = yrRange) {
   # For SISCA
   # This function calculates mean weight-at-age by year, and fills in missing
   # data (i.e., NAs) using a suitable technique. Calculate the weighted mean
@@ -1613,29 +1614,31 @@ CalcWeightAtAgeBySiscaGear <- function(dat, Gear = 2) {
     group_by(Year, Age) %>%
     summarise(MeanWeight = WtMeanNA(x = Weight, w = SampWt)) %>%
     ungroup() %>%
-    complete(Year = yrRange, Age = ageRange) %>%
+    complete(Year = yearRange, Age = ageRange) %>%
     arrange(Year, Age)
   # Reshape from long to wide and merge with complete year sequence
   wtAgeW <- wtAge %>%
-    spread(key = Age, value = MeanWeight) %>%
+    pivot_wider(names_from = Age, values_from = MeanWeight) %>%
     arrange(Year)
   # Reshape from wide to long, and fill in NAs
   wtAgeL <- wtAgeW %>%
-    gather(key = Age, value = "Weight", all_of(ageRange), convert = TRUE) %>%
+    pivot_longer(cols = !Year, names_to = "Age", values_to = "Weight",
+                 names_transform = as.integer) %>%
     group_by(Age) %>%
     # Replace NAs: mean of (up to) previous n years
     mutate(Weight = RollMeanNA(Weight, n = nRoll)) %>%
     # Replace persistent NAs (i.e., at the beginning of the time series)
     mutate(Weight = na.fill(Weight, fill = c("extend", NA, NA))) %>%
     ungroup() %>%
-    filter(Year %in% yrRange) %>%
+    filter(Year %in% yearRange) %>%
     mutate(Weight = round(Weight/1000, digits = 4)) # do we want to round the digits?
            #Do we only have 4 significant digits when we multiply it by numbers to calculate biomass?
   wtAgeW <- wtAgeL %>%
-    spread(key = Age, value = Weight) %>%
-    rename("a2" = 2, "a3" = 3, "a4" = 4, "a5" = 5, "a6" = 6, "a7" = 7, "a8" = 8, "a9" = 9, "a10" = 10) %>%
+    pivot_wider(names_from = Age, values_from = Weight, values_fill = 0) %>%
+    rename("Year" = 1, "a1" = 2, "a2" = 3, "a3" = 4, "a4" = 5, "a5" = 6, 
+           "a6" = 7, "a7" = 8, "a8" = 9, "a9" = 10, "a10" = 11) %>%
     mutate(Gear = Gear) %>%
-    select(Year, Gear, a2:a10)
+    select(Year, Gear, a1:a10)
   # Return weight-at-age by year
   return(wtAgeW)
 } # End CalcWeightAtAgeBySiscaGear function
@@ -1690,7 +1693,7 @@ if(regionType == "major") {
 }
 
 # Calculate mean length-at-age by year
-CalcLengthAtAge <- function(dat) {
+CalcLengthAtAge <- function(dat, yearRange = yrRange) {
   # This function calculates mean length-at-age by year, and fills in missing
   # data (i.e., NAs) using a suitable technique. Calculate the weighted mean
   # using the 'SampWt' column to fix unrepresentative sampling if identified
@@ -1702,22 +1705,24 @@ CalcLengthAtAge <- function(dat) {
     group_by(Year, Age) %>%
     summarise(MeanLength = WtMeanNA(x = Length, w = SampWt)) %>%
     ungroup() %>%
-    complete(Year = yrRange, Age = ageRange) %>%
+    complete(Year = yearRange, Age = ageRange) %>%
     arrange(Year, Age)
   # Reshape from long to wide and merge with complete year sequence
   lenAgeW <- lenAge %>%
-    spread(key = Age, value = MeanLength) %>%
+    pivot_wider(names_from = Age, values_from = MeanLength) %>%
     arrange(Year)
   # Reshape from wide to long, and fill in NAs
   lenAgeL <- lenAgeW %>%
-    gather(key = Age, value = "Length", all_of(ageRange), convert = TRUE) %>%
+    pivot_longer(cols = !Year, names_to = "Age", values_to = "Length",
+                 names_transform = as.integer) %>%
+    #gather(key = Age, value = "Length", all_of(ageRange), convert = TRUE) %>%
     group_by(Age) %>%
     # Replace NAs: mean of (up to) previous n years
     mutate(Length = RollMeanNA(Length, n = nRoll)) %>%
     # Replace persistent NAs (i.e., at the beginning of the time series)
     mutate(Length = na.fill(Length, fill = c("extend", NA, NA))) %>%
     ungroup() %>%
-    filter(Year %in% yrRange)
+    filter(Year %in% yearRange)
   # Return length-at-age by year
   return(lenAgeL)
 } # End CalcLengthAtAge function
@@ -2187,7 +2192,7 @@ if (region == "PRD") {
   yrsNearshore <- 0
 } # End if region is Prince Rupert District
 
-# If region is Cental Coast
+# If region is Central Coast
 if (region == "CC") {
   # Calculate spawn statistics by year and statistical area
   spawnStatsYrSA <- spawnRaw %>%
