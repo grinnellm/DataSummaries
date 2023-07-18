@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "PRD"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -138,16 +138,19 @@ sectionSub <- NULL
 #secSubNum <- 3
 #secSubName <- "Lou"
 
-if(is.null(sectionSub)){
-  secSubNum <- 1
-  secSubName <- toupper(region)
-}
+# if(is.null(sectionSub)){
+#   secSubNum <- 1
+#   secSubName <- toupper(region)
+# }
 
 # Send to SISCA folder otherwise SISCA data only outputs to Summaries folder
 send2sisca <- FALSE
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
+
+# Open 64-bit R in a separate window (to make the animation)
+system64 <- TRUE
 
 # Include test fishery catch
 inclTestCatch <- TRUE
@@ -203,7 +206,7 @@ data(pars)
 yrRange <- pars$year$assess:2023
 
 # Age range: omit below, plus group above
-ageRange <- 1:10
+ageRange <- 2:10
 
 # Age to highlight in figure
 ageShow <- 3
@@ -251,7 +254,6 @@ parsADMB <- list(
 )
 
 # Last year of the reduction fishery #To do JC SP is this year
-
 lastRedYr <- 1970
 
 # Figure width
@@ -542,12 +544,9 @@ tGroup <- read_csv(
   file = file.path(codesLoc$loc, codesLoc$fns$tGroup), col_types = cols()
 )
 
-# Load herring areas #TODO: R crashes right here (note region = HG)
+# Load herring areas
 areas <- load_area_data(where = areaLoc, reg = region, sec_sub = sectionSub,
                       groups = tGroup)
-#When region == PRD section 49 and 59 have incomplete group info
-areas4959 <- areas %>%
-	filter(Section == 49, Section == 5)
 
 # Get BC land data etc (for plots)
 shapes <- LoadShapefiles(where = shapesLoc, a = areas)
@@ -1644,25 +1643,25 @@ CalcWeightAtAgeBySiscaGear <- function(dat, Gear = 2, yearRange = yrRange) {
 } # End CalcWeightAtAgeBySiscaGear function
 
 #For sisca
-weightAgeByGear1 <- CalcWeightAtAgeBySiscaGear(bio, Gear = 1) 
-weightAgeByGear2 <- CalcWeightAtAgeBySiscaGear(bio, Gear = 2)
-weightAgeByGear3 <- CalcWeightAtAgeBySiscaGear(bio, Gear = 3)
-weightAgeByGear <- rbind(weightAgeByGear1, weightAgeByGear2)
-weightAgeByGear <- rbind(weightAgeByGear, weightAgeByGear3)
-weightAgeByGear <- weightAgeByGear %>% 
-  mutate(Area = secSubNum, 
-         Stock = secSubName) %>%
-  select(Year, Area, Gear, a2:a10, Stock)
+# weightAgeByGear1 <- CalcWeightAtAgeBySiscaGear(bio, Gear = 1) 
+# weightAgeByGear2 <- CalcWeightAtAgeBySiscaGear(bio, Gear = 2)
+# weightAgeByGear3 <- CalcWeightAtAgeBySiscaGear(bio, Gear = 3)
+# weightAgeByGear <- rbind(weightAgeByGear1, weightAgeByGear2)
+# weightAgeByGear <- rbind(weightAgeByGear, weightAgeByGear3)
+# weightAgeByGear <- weightAgeByGear %>% 
+#   mutate(Area = secSubNum, 
+#          Stock = secSubName) %>%
+#   select(Year, Area, Gear, a2:a10, Stock)
 
 ### Output for SISCA ###
-write_csv(weightAgeByGear,
-          file = file.path("Summaries", paste("fleetWtAge", secSubName, ".csv", sep = "")),
-          append = FALSE)
-if(send2sisca == TRUE){
-write_csv(weightAgeByGear,
-          file = file.path(paste0("../SISCAH/Data/", region), paste0("fleetWtAge.csv")),
-          append = FALSE)
-}
+# write_csv(weightAgeByGear,
+#           file = file.path("Summaries", paste("fleetWtAge", secSubName, ".csv", sep = "")),
+#           append = FALSE)
+# if(send2sisca == TRUE){
+# write_csv(weightAgeByGear,
+#           file = file.path(paste0("../SISCAH/Data/", region), paste0("fleetWtAge.csv")),
+#           append = FALSE)
+# }
 # Do we need this for SISCA?
 # Different for major vs others
 if(regionType == "major") {
@@ -2728,98 +2727,97 @@ weightAgeADMB <- weightAge %>%
 
 ##### For SISCA (TMB)#####
 
-# # Data for sub-stock analyses (Landmark;SISCA/ISCAM data with some tweaks)
-catchTMB <- catchADMB %>%
-   mutate(Area = secSubNum, Stock = secSubName) %>%
-   select(Year, Gear, Area, Type, Value, Stock) 
+# # # Data for sub-stock analyses (Landmark;SISCA/ISCAM data with some tweaks)
+# catchTMB <- catchADMB %>%
+#    mutate(Area = secSubNum, Stock = secSubName) %>%
+#    select(Year, Gear, Area, Type, Value, Stock) 
 
-#No SOK for SOG (any SOK data was experimental and not included in analysis)
-if(toupper(region) != "SOG"){
-  catchTMBSOK <- catchSummary %>% 
-    filter(Year > 1974) %>% 
-    mutate(Gear = 6, Area = secSubNum, Type = 2, Value = SOK/1000, Stock = secSubName) %>%
-    select(Year, Gear, Area, Type, Value, Stock)
-  catchTMB <- bind_rows(catchTMB, catchTMBSOK)
-}
-
-
-write_csv(catchTMB,
-   file = file.path("Summaries", paste("catchData", secSubName, ".csv", sep = "")), 
-   append = ifelse(secSubNum == 1, FALSE, TRUE))
-
-if(send2sisca == TRUE){
-  write_csv(catchTMB,
-            file = file.path(paste0("../SISCAH/Data/", region), 
-                             paste("catchData.csv")), #", secSubName, ".csv", sep = "")),
-            append = ifelse(secSubNum == 1, FALSE, TRUE))
-}
-
-spawnTMB <- spawnADMB %>%
-  mutate(Area = secSubNum, Stock = secSubName) %>%
-  select(Year, Spawn, Gear, Area, Group, Sex, Weight, Timing, Stock)
-
-write_csv(spawnTMB,
- file = file.path("Summaries", paste0("IdxData", secSubName, ".csv")), 
- append = ifelse(secSubNum == 1, FALSE, TRUE))
-
-if(send2sisca == TRUE){   
-write_csv(spawnTMB,
-  file   = file.path(paste0("../SISCAH/Data/", region), 
-           paste0("IdxData.csv")), #2", secSubName, ".csv")),
-  append = ifelse(secSubNum == 1, FALSE, TRUE))
-}
-
-numAgedTMB <- numAgedADMB %>%
-   mutate(Area = secSubNum, Group = 1) %>%
-   rename(
-     a1 = `1`, a2 = `2`, a3 = `3`, a4 = `4`, a5 = `5`, a6 = `6`, a7 = `7`, a8 = `8`,
-     a9 = `9`, a10 = `10`) %>%
-   select(Year, Gear, Area, Group, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) 
-
-write_csv(numAgedTMB,
-          file = file.path("Summaries", paste0("ageData", secSubName, ".csv")), 
-          append = ifelse(secSubNum == 1, FALSE, TRUE))
-
-if(send2sisca == TRUE){   
-  write_csv(numAgedTMB,
-            file   = file.path(paste0("../SISCAH/Data/", region), 
-                               paste0("ageData.csv")), #2", secSubName, ".csv")),
-            append = ifelse(secSubNum == 1, FALSE, TRUE))
-}
-
-weightAgeTMB <- weightAgeADMB %>%
-   mutate(Area = secSubNum, Stock = secSubName) %>%
-   rename(
-     a2 = `2`, a3 = `3`, a4 = `4`, a5 = `5`, a6 = `6`, a7 = `7`, a8 = `8`,
-     a9 = `9`, a10 = `10`) %>%
-   select(Year, Area, a2, a3, a4, a5, a6, a7, a8, a9, a10, Stock)
-
-write_csv(weightAgeTMB,
-   file = file.path("Summaries", paste0("wtAgeMixed.csv")), #", secSubName, ".csv")), 
-   append = ifelse(secSubNum == 1, FALSE, TRUE))
-
-if(send2sisca == TRUE){   
-  write_csv(weightAgeTMB,
-            file   = file.path(paste0("../SISCAH/Data/", region), 
-                               paste0("wtAgeMixed.csv")), #2", secSubName, ".csv",)),
-            append = ifelse(secSubNum == 1, FALSE, TRUE))
-}
-
-BlendedIdx <- spawnSummary %>%
-  mutate(Surf = as.numeric(Surf), Macro = as.numeric(Macro), Under = as.numeric(Under)) %>%
-  replace(is.na(.), 0) %>%
-  mutate(Dive    = (Macro + Under)/1000,
-         Surface = Surf/1000) %>%
-  select(Year, Dive, Surface) 
-  
-write_csv(BlendedIdx, file = paste0("Summaries/", secSubName, "BlendedIdx.csv"))
-
-if(send2sisca == TRUE){   
-  write_csv(BlendedIdx,
-            file   = file.path(paste0("../SISCAH/Data/", region, "/SplitIdx"), 
-                               paste0(region, "_BlendedIdx.csv")),
-            append = FALSE)
-}
+# #No SOK for SOG (any SOK data was experimental and not included in analysis)
+# if(toupper(region) != "SOG"){
+#   catchTMBSOK <- catchSummary %>% 
+#     filter(Year > 1974) %>% 
+#     mutate(Gear = 6, Area = secSubNum, Type = 2, Value = SOK/1000, Stock = secSubName) %>%
+#     select(Year, Gear, Area, Type, Value, Stock)
+#   catchTMB <- bind_rows(catchTMB, catchTMBSOK)
+# }
+# 
+# write_csv(catchTMB,
+#    file = file.path("Summaries", paste("catchData", secSubName, ".csv", sep = "")), 
+#    append = ifelse(secSubNum == 1, FALSE, TRUE))
+# 
+# if(send2sisca == TRUE){
+#   write_csv(catchTMB,
+#             file = file.path(paste0("../SISCAH/Data/", region), 
+#                              paste("catchData.csv")), #", secSubName, ".csv", sep = "")),
+#             append = ifelse(secSubNum == 1, FALSE, TRUE))
+# }
+# 
+# spawnTMB <- spawnADMB %>%
+#   mutate(Area = secSubNum, Stock = secSubName) %>%
+#   select(Year, Spawn, Gear, Area, Group, Sex, Weight, Timing, Stock)
+# 
+# write_csv(spawnTMB,
+#  file = file.path("Summaries", paste0("IdxData", secSubName, ".csv")), 
+#  append = ifelse(secSubNum == 1, FALSE, TRUE))
+# 
+# if(send2sisca == TRUE){   
+# write_csv(spawnTMB,
+#   file   = file.path(paste0("../SISCAH/Data/", region), 
+#            paste0("IdxData.csv")), #2", secSubName, ".csv")),
+#   append = ifelse(secSubNum == 1, FALSE, TRUE))
+# }
+# 
+# numAgedTMB <- numAgedADMB %>%
+#    mutate(Area = secSubNum, Group = 1) %>%
+#    rename(
+#      a1 = `1`, a2 = `2`, a3 = `3`, a4 = `4`, a5 = `5`, a6 = `6`, a7 = `7`, a8 = `8`,
+#      a9 = `9`, a10 = `10`) %>%
+#    select(Year, Gear, Area, Group, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) 
+# 
+# write_csv(numAgedTMB,
+#           file = file.path("Summaries", paste0("ageData", secSubName, ".csv")), 
+#           append = ifelse(secSubNum == 1, FALSE, TRUE))
+# 
+# if(send2sisca == TRUE){   
+#   write_csv(numAgedTMB,
+#             file   = file.path(paste0("../SISCAH/Data/", region), 
+#                                paste0("ageData.csv")), #2", secSubName, ".csv")),
+#             append = ifelse(secSubNum == 1, FALSE, TRUE))
+# }
+# 
+# weightAgeTMB <- weightAgeADMB %>%
+#    mutate(Area = secSubNum, Stock = secSubName) %>%
+#    rename(
+#      a2 = `2`, a3 = `3`, a4 = `4`, a5 = `5`, a6 = `6`, a7 = `7`, a8 = `8`,
+#      a9 = `9`, a10 = `10`) %>%
+#    select(Year, Area, a2, a3, a4, a5, a6, a7, a8, a9, a10, Stock)
+# 
+# write_csv(weightAgeTMB,
+#    file = file.path("Summaries", paste0("wtAgeMixed.csv")), #", secSubName, ".csv")), 
+#    append = ifelse(secSubNum == 1, FALSE, TRUE))
+# 
+# if(send2sisca == TRUE){   
+#   write_csv(weightAgeTMB,
+#             file   = file.path(paste0("../SISCAH/Data/", region), 
+#                                paste0("wtAgeMixed.csv")), #2", secSubName, ".csv",)),
+#             append = ifelse(secSubNum == 1, FALSE, TRUE))
+# }
+# 
+# BlendedIdx <- spawnSummary %>%
+#   mutate(Surf = as.numeric(Surf), Macro = as.numeric(Macro), Under = as.numeric(Under)) %>%
+#   replace(is.na(.), 0) %>%
+#   mutate(Dive    = (Macro + Under)/1000,
+#          Surface = Surf/1000) %>%
+#   select(Year, Dive, Surface) 
+#   
+# write_csv(BlendedIdx, file = paste0("Summaries/", secSubName, "BlendedIdx.csv"))
+# 
+# if(send2sisca == TRUE){   
+#   write_csv(BlendedIdx,
+#             file   = file.path(paste0("../SISCAH/Data/", region, "/SplitIdx"), 
+#                                paste0(region, "_BlendedIdx.csv")),
+#             append = FALSE)
+# }
 
 # spawnYrTypeProp %>%
 #   select(Year, Type, SI) %>%
@@ -2827,7 +2825,6 @@ if(send2sisca == TRUE){
 #   pivot_wider(names_from = Type, values_from = SI) %>%
 #   write_csv(file = paste(secSubName, "csv", sep="."))
 
-  
 # Write ADMB input file
 WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
   # Note that some values are printed with extra decimals (i.e., CC value 0.1078
@@ -3114,9 +3111,6 @@ WriteInputFile(
   pADMB = parsADMB, cADMB = catchADMB, sADMB = spawnADMB, nADMB = numAgedADMB,
   wADMB = weightAgeADMB
 )
-
-
-
 
 ##### Figures #####
 
@@ -4482,8 +4476,21 @@ PlotLocationsYear <- function(dat) {
 if (makeAnimation || 
     !paste("SpawnIndexAnimation", regName, "pdf", sep = ".") %in% 
     list.files(path = "Animations")) {
-  # Show spawn locations (this takes a few minutes!)
-  PlotLocationsYear(dat = siYearLoc)
+  # Use 64-bit R if you encounter memory issues
+  if(system64) {
+    # Location of script
+    scriptLoc <- "C:/Grinnell/Git/DataSummaries/MakeAnimation.R"
+    # Save the workspace image
+    save.image(file = "Temp.RData")
+    # Call R via system: takes a few mins
+    system(paste0(Sys.getenv("R_HOME"), "/bin/x64/Rscript.exe ", scriptLoc), 
+           wait = TRUE, invisible = FALSE, intern = TRUE)
+    # Remove the image
+    file.remove(file = "Temp.RData")
+  } else { # End if 64-bit, otherwise
+    # Show spawn locations (this takes a few minutes!)
+    PlotLocationsYear(dat = siYearLoc)
+  } # End if 32-bit
 } else { # End if making the animation, otherwise
   # Copy the saved version
   file.copy(
@@ -5011,8 +5018,6 @@ if (region == "All") {
     write_csv(file = file.path(regName, "SpatialInconsistent.csv"))
 } # End if all regions
 
-
-
 # # Write catch data to a csv (same as ADMB input data file)
 # catch %>%
 #   group_by( Year ) %>%
@@ -5134,8 +5139,6 @@ if(regName %in% c("HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W", "A10")){
 
 # Update progress
 cat("done\n")
-
-
 
 ##### Output #####
 
