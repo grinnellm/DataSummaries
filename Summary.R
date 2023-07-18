@@ -200,7 +200,7 @@ srLoc <- file.path("..", "herringsr", "data")
 data(pars)
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- pars$year$assess:2022
+yrRange <- pars$year$assess:2023
 
 # Age range: omit below, plus group above
 ageRange <- 1:10
