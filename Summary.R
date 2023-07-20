@@ -4464,9 +4464,7 @@ PlotLocationsYear <- function(dat) {
     from = file.path(regName, "SpawnIndexAnimation.pdf"),
     to = file.path(
       "Animations",
-      paste("SpawnIndexAnimation", regName, "pdf",
-            sep = "."
-      )
+      paste("SpawnIndexAnimation", regName, "pdf", sep = ".")
     ),
     overwrite = TRUE
   )

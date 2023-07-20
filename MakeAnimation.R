@@ -8,5 +8,5 @@ UsePackages(pkgs = c(
   "SpawnIndex", "tidyselect", "ggrepel"
 ))
 # Make the animation (twice to remove empty first page)
-PlotLocationsYear(dat = siYearLoc)
+PlotLocationsYear(dat = filter(siYearLoc, Year %in% yrRange[1:2]))
 PlotLocationsYear(dat = siYearLoc)
