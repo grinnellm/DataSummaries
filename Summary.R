@@ -4037,7 +4037,7 @@ ipPlots <- plot_grid(spawnIndexPlot, spawnPercentSAStackPlot,
 ) 
 ggsave(
   ipPlots, filename = file.path(regName, "SpawnIndexPercent.png"),
-  width = figWidth, height = 6.9, dpi = figRes
+  width = figWidth, height = 6.8, dpi = figRes
 )
 
 # Arrange and save the spawn index and percent change plots
