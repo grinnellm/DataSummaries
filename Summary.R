@@ -3728,6 +3728,32 @@ if (exists("weightAgeGroup")) {
   )
 } # End if weight by age and group
 
+# Wrangle data for spawn index by year
+datYr <- siYearLoc %>%
+  group_by(Year) %>%
+  summarise(SITotal = SumNA(SITotal)) %>%
+  ungroup() %>%
+  mutate(
+    Survey = ifelse(Year < pars$years$dive, "Surface", "Dive"),
+    Survey = factor(Survey, levels = c("Surface", "Dive"))
+  )
+
+# Inset for spawnByLocPlot: spawn index vs year
+subPlot <- ggplot(data = datYr, mapping = aes(x = Year, y = SITotal)) +
+  geom_point(size = 0.25, aes(shape = Survey)) +
+  geom_path(size = 0.2, aes(group = Survey)) +
+  scale_y_continuous(labels = comma) +
+  labs(x = NULL, y = NULL) +
+  guides(shape = FALSE) +
+  theme_tufte() +
+  theme(
+    plot.background = element_rect(fill = alpha("white", 0.5),
+                                   size = 0.1),
+    plot.margin = unit(c(0.3, 0.6, 0.1, 0.1), "lines")
+  ) 
+# Convert to a grob
+subGrob <- ggplotGrob(x = subPlot)
+
 # Plot the spawn index locations
 spawnByLocPlot <- BaseMap +
   geom_path(
@@ -3745,7 +3771,17 @@ spawnByLocPlot <- BaseMap +
   theme(
     legend.justification = c(0, 0),
     legend.position = if (region == "PRD") "right" else c(0.01, 0.01)
+  ) +
+  annotation_custom(
+    grob = subGrob,
+    xmin = max(shapes$landCropDF$Eastings) -
+      diff(range(shapes$landCropDF$Northings)) / 2.5,
+    xmax = Inf,
+    ymin = max(shapes$landCropDF$Northings) -
+      diff(range(shapes$landCropDF$Northings)) / 5,
+    ymax = Inf
   )
+
 if(!all(is.na(spawnByLocXY$TotalSI))){ 
   spawnByLocPlot <- spawnByLocPlot + 
     scale_colour_viridis_c(labels = comma, na.value = "darkgrey")
@@ -3755,7 +3791,8 @@ if(!all(is.na(spawnByLocXY$TotalSI))){
 }
 ggsave(
   spawnByLocPlot, filename = file.path(regName, "SpawnByLoc.png"),
-  width = figWidth, height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
+  width = figWidth, height = min(7.5, 6.5 / shapes$xyRatio),
+  dpi = figRes
 )
 
 # Plot the spawn index locations
