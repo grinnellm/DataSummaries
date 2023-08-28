@@ -388,7 +388,7 @@ privLoc <- list(
 icLoc <- list(
   loc = dirDBs,
   fn = "Herring Data Request.xlsx",
-  sheets = list(ic = "IC Pacific Herring", wm = "WM Pacific Herring")
+  sheets = list(ic = "IC", wm = "WM")
 )
 
 ##### Functions #####
