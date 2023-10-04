@@ -927,7 +927,7 @@ LoadIncidentalCatch <- function(file, a = areas) {
     mutate(Source = "IC") %>%
     select(
       Source, PFMA, `Calendar Year`, `Calendar Month`, `Released Count`,
-      `Mortalities Count`,
+      `Mortalities Count`
     ) %>%
     rename(
       Year = `Calendar Year`, Month = `Calendar Month`,
@@ -939,7 +939,7 @@ LoadIncidentalCatch <- function(file, a = areas) {
     mutate(Source = "WM") %>%
     select(
       Source, PFMA, `Catch Year`, `Catch Month`, `Released Count`,
-      `Mortalities Count`,
+      `Mortalities Count`
     ) %>%
     rename(
       Year = `Catch Year`, Month = `Catch Month`,
