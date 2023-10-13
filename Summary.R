@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -1789,9 +1789,12 @@ GetBioLocations <- function(dat, spObj) {
   # Wrangle data
   samp <- dat %>%
     filter(Year == max(yrRange), !is.na(Eastings), !is.na(Northings)) %>%
-    mutate(Type = ifelse(SourceCode == 2, "Nearshore",
-                         ifelse(SourceCode %in% c(3, 5), "Seine test", "Commercial")
-    )) %>%
+    mutate(
+      Type = ifelse(SourceCode == 2, "Nearshore",
+                    ifelse(SourceCode %in% c(3, 5), "Seine test", 
+                           ifelse(SourceCode %in% c(1, 6), "Food and bait",
+                                  "Commercial")))
+    ) %>%
     group_by(Type, Eastings, Northings) %>%
     summarise(Number = n_distinct(Sample)) %>%
     ungroup()
@@ -3440,6 +3443,7 @@ if (nrow(bioLocations) > 0) {
       alpha = 0.6
     ) +
     scale_size(guide = guide_legend(order = 2), range = c(3, 6)) +
+    scale_shape_manual(values = 15:18) +
     labs(shape = "Sample type") +
     guides(
       size = guide_legend(order = 1),
