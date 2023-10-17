@@ -1117,6 +1117,15 @@ UpdateCatchData <- function(dat, a) {
 # Update catch data
 catch <- UpdateCatchData(dat = catchRaw, a = areas)
 
+# Summarise food and bait
+catchFB <- catchRaw %>%
+  filter(DisposalCode %in% c(3, 6)) %>%
+  group_by(Year, Section) %>%
+  summarise(Catch = sum(Catch, na.rm = TRUE)) %>%
+  ungroup() %>%
+  complete(Year = yrRange, fill = list(Section = NA, Catch = NA)) %>%
+  arrange(Year, Section)
+
 # Calculate commercial SoK harvest and biomass
 harvestSOK <- catchRaw %>%
   filter(DisposalCode == 2, Source == "SOK") %>%
@@ -4540,6 +4549,74 @@ if (makeAnimation ||
     to = file.path(regName, "SpawnIndexAnimation.pdf")
   )
 } # End if not making the animation
+
+# Plot food and bait animation
+PlotFoodBait <- function(dat) {
+  # Get range for catch values
+  catRange <- range(dat$Catch)
+  # Get the number of plots
+  uPages <- unique(dat$Year)
+  # Set up the map
+  MapGIF <- BaseMap +
+    geom_path(
+      data = shapes$secDF, mapping = aes(group = Section), size = 0.25,
+      colour = "black"
+    )
+  # Start the PDF
+  pdf(
+    file = file.path(regName, "FoodBaitAnimation.pdf"), width = figWidth,
+    height = min(6.75, 6.5 / shapes$xyRatio)
+  )
+  # Loop over pages/years
+  for (i in 1:length(uPages)) {
+    # Get data for ith year
+    iDat <- dat %>%
+      filter(Year == uPages[i]) %>%
+      mutate(Section = as.character(Section)) %>%
+      rename(id = Section)
+    # Colour sections
+    iSection <- shapes$secDF %>%
+      left_join(y = iDat, by = "id") %>%
+      complete(Year = yrRange)
+    # The plot
+    layersPlot <- MapGIF +
+      facet_wrap_paginate(
+        ~Year, ncol = 1, nrow = 1, page = i, labeller = label_both
+      ) +
+      geom_polygon(
+        data = iSection, mapping = aes(group = Section, fill = Catch),
+        linewidth = 0.25, colour = "black", alpha = 0.75
+      ) +
+      scale_fill_viridis(labels = comma, limits = catRange) +
+      labs(fill = "Catch (t)") +
+      geom_text(
+        data = shapes$secCentDF, alpha = 0.6, size = 2,
+        mapping = aes(label = paste("Sec", Section, sep = " "))
+      ) +
+      theme(
+        legend.justification = c(0, 0),
+        legend.position = if (region == "PRD") "right" else c(0.01, 0.01)
+      )
+    # Result
+    finalPlot <- layersPlot
+    # Print the main plot
+    print(finalPlot)
+  } # End i loop over years
+  # Turn the device off
+  dev.off()
+  # Save a copy (for later, if desired)
+  file.copy(
+    from = file.path(regName, "FoodBaitAnimation.pdf"),
+    to = file.path(
+      "Animations",
+      paste("FoodBaitAnimation", regName, "pdf", sep = ".")
+    ),
+    overwrite = TRUE
+  )
+}
+
+# Plot food and bait
+# PlotFoodBait(dat = catchFB)
 
 # Update progress
 cat("done\n")
