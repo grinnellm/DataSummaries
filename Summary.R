@@ -1119,6 +1119,7 @@ catch <- UpdateCatchData(dat = catchRaw, a = areas)
 
 # Summarise food and bait
 catchFB <- catchRaw %>%
+  # Disposal code 3 is food and bait; 6 is special use
   filter(DisposalCode %in% c(3, 6)) %>%
   group_by(Year, Section) %>%
   summarise(Catch = sum(Catch, na.rm = TRUE)) %>%
