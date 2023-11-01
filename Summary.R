@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -2738,7 +2738,7 @@ weightAgeADMB <- weightAge %>%
   spread(key = Age, value = Weight) %>%
   arrange(Gear, Year)
 
-##### For SISCA (TMB)#####
+##### For SISCA (TMB) #####
 
 # # # Data for sub-stock analyses (Landmark;SISCA/ISCAM data with some tweaks)
 # catchTMB <- catchADMB %>%
@@ -5117,11 +5117,15 @@ if (region == "All") {
     arrange(
       Region, Year, StatisticalArea, Section, LocationCode, SpawnNumber
     ) %>%
+    # Omit data in Stat Area 10 and 28 (change to NA)
+    mutate(Surface = ifelse(StatisticalArea %in% c(10, 28), NA, Surface),
+           Macrocystis = ifelse(StatisticalArea %in% c(10, 28), NA, Macrocystis),
+           Understory = ifelse(StatisticalArea %in% c(10, 28), NA, Understory)) %>%
     write_csv(file = file.path(regName, "FIND.csv")) %>%
     select(-Eastings, -Northings, -Survey) %>%
     write_csv(file = file.path(regName, "OpenDataEng.csv")) %>%
     mutate(Method = ifelse(Method=="Dive", "Plongée", Method),
-           Method = ifelse(Method=="Incomplete ", "Incomplet", Method)) %>%
+           Method = ifelse(Method=="Incomplete", "Incomplet", Method)) %>%
     rename('Région' = Region, 'Année' = Year, ZoneStatistique = StatisticalArea,
            CodeLieu = LocationCode, NomLieu = LocationName,
            'NuméroFrai' = SpawnNumber, 'DateDébut' = StartDate,
