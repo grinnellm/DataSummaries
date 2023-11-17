@@ -107,11 +107,15 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
 SoGN <- c(132, 135, 140:143, 171, 172, 151, 152, 161:165, 280, 291, 292)
+Lazo <- c(132, 135, 141)
+ESoG <- c(150:152, 160:165, 280, 291, 292)
+SDodd <- c(173, 180:182, 190:193 )
+SA1417 <- c(140, 142, 143, 170:172)
 Area23 <- c(230:233, 239)
 Area24 <- c(240:245, 249)
 Area25 <- c(250:253, 259)
@@ -124,6 +128,8 @@ Sec023024 <- c(23, 24)
 Sec002 <- c(2)
 Sec003 <- c(3)
 Sec002003 <- c(2, 3)
+Sec172 <- c(172)
+Sec173 <- c(173)
 OutHG <- c(11, 12, 22)
 Broughton <- c(111, 112, 121:127)
 Area13 <- c(131:136)
@@ -288,6 +294,22 @@ maxBuff <- 5000
 
 # Start year for catch validation program (not currently used)
 validCatch <- list(RoeGN = 1998, RoeSN = 1999)
+
+# Spawn index scaling parameter
+q <- tribble(
+  ~Region, ~Survey, ~Median,
+  "HG",       "Surface", 0.428,
+  "HG",       "Dive",    0.999,
+  "PRD",      "Surface", 0.537,
+  "PRD",      "Dive",    1.000,
+  "CC",       "Surface", 0.321,
+  "CC",       "Dive",    0.999,
+  "SoG",      "Surface", 1.037,
+  "SoG",      "Dive",    0.999,
+  "WCVI",     "Surface", 0.844,
+  "WCVI",     "Dive",    0.999
+  ) %>%
+  filter(Region == region)
 
 #### Sources #####
 
@@ -1884,6 +1906,16 @@ spawnYr <- CalcSpawnSummary(dat = spawnRaw, g = c("Year")) %>%
     PctChange = ifelse(Year == pars$years$dive, NA, PctChange),
     PctDiff = ifelse(Year == pars$years$dive, NA, PctDiff)
   )
+
+# # Calculate relative abundance
+# relAbund <- spawnYr %>%
+#   mutate(Survey = as.character(Survey)) %>%
+#   left_join(y = q, by = "Survey") %>%
+#   rename(q = Median) %>%
+#   mutate(
+#     Survey = factor(Survey, levels = c("Surface", "Dive")),
+#     Abund = TotalSI / q) %>%
+#   select(Year, TotalSI, Survey, Region, q, Abund)
 
 # sYr <- spawnYr %>%
 #   filter( !is.na(TotalSI) ) %>%
@@ -3978,6 +4010,25 @@ spawnIndexPlot <- ggplot(data = spawnYr, mapping = aes(x = Year, y = TotalSI)) +
   ) +
   myTheme +
   theme(axis.text.x = element_blank(), legend.position = "top")
+
+# # Plot relative abundance by year
+# ScaledAbundPlot <- ggplot(data = relAbund, mapping = aes(x = Year, y = Abund)) +
+#   geom_point(mapping = aes(shape = Survey)) +
+#   geom_line(mapping = aes(group = Survey)) +
+#   labs(
+#     x = "Year",
+#     y = expression(paste("Scaled abundance (t" %*% 10^3, ")", sep = ""))
+#   ) +
+#   scale_x_continuous(breaks = yrBreaks) +
+#   scale_y_continuous(labels = function(x) comma(x / 1000)) +
+#   expand_limits(x = c(min(yrRange) - 0.5, max(yrRange) + 0.5), y = 0) +
+#   myTheme +
+#   theme(legend.position = "top")
+# 
+# ggsave(
+#   plot = ScaledAbundPlot, filename = file.path(regName, "ScaledAbundance.png"),
+#   width = figWidth, height = 4, dpi = figRes
+# )
 
 # If using groups
 if (exists("spawnYrGrp")) {
