@@ -2450,6 +2450,17 @@ if (region == "CC") {
 
 # If region is Strait of Georgia
 if (region == "SoG") {
+  # # Spawn by decade and group for Andy/RDG
+  # spawnDecGrp <- spawnRaw %>%
+  #   group_by(Decade, Group) %>%
+  #   summarise(Surface = SumNA(SurfSI),
+  #             Macro = SumNA(MacroSI), 
+  #             Under = SumNA(UnderSI),
+  #             Total = SumNA(c(Surface, Under, Macro))) %>%
+  #   group_by(Decade) %>%
+  #   mutate(Percent = 100 * Total / SumNA(Total)) %>%
+  #   ungroup() %>%
+  #   select(Decade, Group, Total, Percent)
   # Calculate spawn summary by year and group
   spawnYrGrp <- CalcSpawnSummary(dat = spawnRaw, g = c("Year", "Group")) %>%
     group_by(Year) %>%
