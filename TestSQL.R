@@ -11,7 +11,7 @@ cnn <- dbConnect(odbc::odbc(),
                  Trusted_Connection = "Yes")
 
 # Select gear lookup table
-sql <- "SELECT * FROM Biosample.Lookup.Gear"
+sql <- "SELECT * FROM Biosample.Lookup_Gear"
 
 # Execute the query
 df <- dbGetQuery(cnn, sql) %>%
