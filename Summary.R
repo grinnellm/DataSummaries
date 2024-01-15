@@ -138,11 +138,17 @@ Area10 <- c(101:103)
 Area06 <- c(67)
 Area07 <- c(70:79)
 Area08 <- c(85, 86)
+Atlegay <- c(
+  132, 135, 140:143, 150:152, 160:165, 170:173, 180:182, 190:193, 280, 291, 292,
+  230:233, 239, 240:245, 249, 250:253, 259,
+  111, 112, 121:127, 131, 133, 134, 136,
+  270:274
+  )
 
 # Select a subset of sections (or NULL for all)
 sectionSub <- NULL
-#secSubNum <- 3
-#secSubName <- "Lou"
+# secSubNum <- 1
+# secSubName <- "Atlegay"
 
 # if(is.null(sectionSub)){
 #   secSubNum <- 1
