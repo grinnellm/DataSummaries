@@ -10,15 +10,20 @@ cnn <- dbConnect(odbc::odbc(),
                  Database = "Herring",
                  Trusted_Connection = "Yes")
 
-# Select gear lookup table
-sql <- "SELECT * FROM Biosample.Lookup_Gear"
-
 # Execute the query
-df <- dbGetQuery(cnn, sql) %>%
+# df <- dbGetQuery(
+#   conn = cnn, statement = "SELECT * FROM Biosample.Lookup_Gear"
+# ) %>%
+#   as_tibble()
+
+# Get the table
+df <- dbReadTable(
+  conn = cnn, name = Id(schema = "Biosample", table = "Lookup_Gear")
+) %>%
   as_tibble()
 
 # Close the connection
-dbDisconnect(cnn)
+dbDisconnect(conn = cnn)
 
 # Print the table
 print(df)
