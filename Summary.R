@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 SoGS <- c(173, 181, 182, 191:193)
@@ -144,11 +144,12 @@ Atlegay <- c(
   111, 112, 121:127, 131, 133, 134, 136,
   270:274
   )
+Swift <- c(201, 202, 211, 220, 230:233, 239)
 
 # Select a subset of sections (or NULL for all)
 sectionSub <- NULL
 # secSubNum <- 1
-# secSubName <- "Atlegay"
+# secSubName <- "Swift"
 
 # if(is.null(sectionSub)){
 #   secSubNum <- 1
