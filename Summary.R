@@ -107,49 +107,49 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
-SoGS <- c(173, 181, 182, 191:193)
-SoGN <- c(132, 135, 140:143, 171, 172, 151, 152, 161:165, 280, 291, 292)
-Lazo <- c(132, 135, 141)
-ESoG <- c(150:152, 160:165, 280, 291, 292)
-SDodd <- c(173, 180:182, 190:193 )
-SA1417 <- c(140, 142, 143, 170:172)
-Area23 <- c(230:233, 239)
-Area24 <- c(240:245, 249)
-Area25 <- c(250:253, 259)
-Tlaamin <- c(135, 141, 151, 152, 161:163)
-Area15 <- c(150:159)
-AllHG <- c(0:6, 11, 12, 21:25)
+Sec002 <- c(2)
+Sec003 <- c(3)
 Sec006 <- c(6)
 Sec021025 <- c(21, 25)
 Sec023024 <- c(23, 24)
-Sec002 <- c(2)
-Sec003 <- c(3)
 Sec002003 <- c(2, 3)
 Sec172 <- c(172)
 Sec173 <- c(173)
-OutHG <- c(11, 12, 22)
-Broughton <- c(111, 112, 121:127)
-Area13 <- c(131:136)
-JS <- c(111, 112, 121:127, 131:136)
-Area10 <- c(101:103)
 Area06 <- c(67)
 Area07 <- c(70:79)
 Area08 <- c(85, 86)
+Area10 <- c(101:103)
+Area13 <- c(131:136)
+Area15 <- c(150:159)
+Area23 <- c(230:233, 239)
+Area24 <- c(240:245, 249)
+Area25 <- c(250:253, 259)
+AllHG <- c(0:6, 11, 12, 21:25)
 Atlegay <- c(
   132, 135, 140:143, 150:152, 160:165, 170:173, 180:182, 190:193, 280, 291, 292,
   230:233, 239, 240:245, 249, 250:253, 259,
   111, 112, 121:127, 131, 133, 134, 136,
   270:274
-  )
+)
+Broughton <- c(111, 112, 121:127)
+ESoG <- c(150:152, 160:165, 280, 291, 292)
+JS <- c(111, 112, 121:127, 131:136)
+Lazo <- c(132, 135, 141)
+OutHG <- c(11, 12, 22)
+SA1417 <- c(140, 142, 143, 170:172)
+SDodd <- c(173, 180:182, 190:193 )
+SoGN <- c(132, 135, 140:143, 171, 172, 151, 152, 161:165, 280, 291, 292)
+SoGS <- c(173, 181, 182, 191:193)
 Swift <- c(201, 202, 211, 220, 230:233, 239)
+Tlaamin <- c(135, 141, 151, 152, 161:163)
 
 # Select a subset of sections (or NULL for all)
 sectionSub <- NULL
-# secSubNum <- 1
-# secSubName <- "Swift"
+secSubNum <- 1
+secSubName <- "Swift"
 
 # if(is.null(sectionSub)){
 #   secSubNum <- 1
@@ -3636,7 +3636,7 @@ if (exists("compNear") & exists("compNearSA") & exists("nSampleSA")) {
     ) +
     # scale_fill_viridis_d( ) +
     myTheme +
-    theme(legend.position = "top") 
+    theme(legend.position = "top")
   ggsave(
     compNearPlot, filename = file.path(regName, "CompNear.png"),
     width = figWidth, height = figWidth, dpi = figRes
@@ -3652,7 +3652,7 @@ if (exists("compNear") & exists("compNearSA") & exists("nSampleSA")) {
     ) +
     # scale_fill_viridis_d( ) +
     myTheme +
-    theme(legend.position = "top") 
+    theme(legend.position = "top")
   ggsave(
     compNearPlotSA, filename = file.path(regName, "CompNearSA.png"),
     width = figWidth, height = figWidth, dpi = figRes
@@ -3664,7 +3664,7 @@ if (exists("compNear") & exists("compNearSA") & exists("nSampleSA")) {
     geom_bar(stat = "identity", position = "dodge") +
     guides(fill = FALSE) +
     facet_grid(Year ~ StatArea) +
-    myTheme 
+    myTheme
   ggsave(
     numNearPlotSA, filename = file.path(regName, "NumNearSA.png"),
     width = figWidth, height = figWidth, dpi = figRes
@@ -4331,7 +4331,7 @@ if (exists("lenAgeSample")) {
     scale_x_continuous(breaks = pretty_breaks()) +
     scale_fill_viridis(discrete = TRUE, alpha = 0.5) +
     myTheme +
-    theme(legend.position = "top") 
+    theme(legend.position = "top")
   ggsave(
     lenAgeSamplePlot, filename = file.path(regName, "LengthAgeSample.png"),
     width = figWidth,height = figWidth * 0.67, dpi = figRes
@@ -4349,9 +4349,9 @@ if (exists("lenAgeSample")) {
     scale_fill_viridis(discrete = TRUE, alpha = 0.5) +
     myTheme +
     theme(legend.position = "top") +
-    facet_grid(SA ~ ., labeller = label_both) 
+    facet_grid(SA ~ ., labeller = label_both)
   ggsave(
-    lenAgeSamplePlotSA, filename = file.path(regName, "LengthAgeSampleSA.png"), 
+    lenAgeSamplePlotSA, filename = file.path(regName, "LengthAgeSampleSA.png"),
     width = figWidth, height = figWidth, dpi = figRes
   )
   # Compare the two sampling protocols by StatArea and year (length)
@@ -4367,7 +4367,7 @@ if (exists("lenAgeSample")) {
     # scale_fill_viridis_d( alpha=0.5 ) +
     myTheme +
     theme(legend.position = "top") +
-    facet_grid(Year ~ SA, labeller = label_both) 
+    facet_grid(Year ~ SA, labeller = label_both)
   ggsave(
     lenAgeSamplePlotSAYr,
     filename = file.path(regName, "LengthAgeSampleSAYr.png"),
