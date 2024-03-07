@@ -1,14 +1,14 @@
 ##### Header #####
-# Author:       Matthew H. Grinnell & Sarah J. H. Power
+# Author:       Matthew H. Grinnell
 # Affiliation:  Pacific Biological Station, Fisheries and Oceans Canada (DFO)
 # Group:        Quantitative Assessment Methods Section, Science
 # Address:      3190 Hammond Bay Road, Nanaimo, BC, Canada, V9T 6N7
-# Contact:      e-mail: matt.grinnell@dfo-mpo.gc.ca | tel: 250.756.7055
+# Contact:      e-mail: matthew.grinnell@dfo-mpo.gc.ca | tel: 778.268.1026
 # Project:      Herring
 # Code name:    Summary.R
 # Version:      2.0
 # Date started: Jun 03, 2016
-# Date edited:  Oct 22, 2018, 2023-Feb
+# Date edited:  Feb 27, 2024
 #
 # Overview:
 
@@ -97,7 +97,8 @@ UsePackages(pkgs = c(
   "tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp", "maptools", "rgdal",
   "rgeos", "raster", "xtable", "cowplot", "grid", "colorRamps", "RColorBrewer",
   "stringr", "lubridate", "readxl", "plyr", "ggforce", "viridis", "ggthemes",
-  "SpawnIndex", "tidyselect", "ggrepel"
+  "SpawnIndex", "tidyselect", "ggrepel", "here", "rnaturalearth",
+  "rnaturalearthhires"
 ))
 
 # Suppress summarise info
@@ -107,7 +108,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -420,6 +421,9 @@ icLoc <- list(
   sheets = list(ic = "IC", wm = "WM")
 )
 
+# TODO: Load and save data from SQL, then re-load and re-save only if desired,
+# to save time (instead of re-loading each time). Save as *.RData objects.
+
 ##### Functions #####
 
 # Load helper functions
@@ -504,25 +508,28 @@ LoadTransectXY <- function(loc) {
     ) %>%
     ungroup() %>%
     filter(!is.na(Longitude), !is.na(Latitude), LocationCode != 0)
-  # Grab the spatial info (X and Y)
-  locSP <- dat %>%
-    transmute(X = Longitude, Y = Latitude)
-  # Put X and Y into a spatial points object
-  locPts <- SpatialPointsDataFrame(
-    coords = locSP,
-    data = data.frame(LocationCode = dat$LocationCode), proj4string = CRS(inCRS)
-  )
-  # Convert X and Y from WGS to Albers
-  locPtsAlb <- spTransform(x = locPts, CRSobj = CRS(outCRS))
-  # Extract spatial info
-  dfAlb <- as_tibble(locPtsAlb) %>%
-    rename(Eastings = X, Northings = Y)
+  res <- dat #%>%
+    # st_as_sf(coords = c("Longitude", "Latitude"))
+  # # Grab the spatial info (X and Y)
+  # locSP <- dat %>%
+  #   transmute(X = Longitude, Y = Latitude)
+  # # Put X and Y into a spatial points object
+  # locPts <- SpatialPointsDataFrame(
+  #   coords = locSP,
+  #   data = data.frame(LocationCode = dat$LocationCode), proj4string = CRS(inCRS)
+  # )
+  # # Convert X and Y from WGS to Albers
+  # locPtsAlb <- spTransform(x = locPts, CRSobj = CRS(outCRS))
+  # # Extract spatial info
+  # dfAlb <- as_tibble(locPtsAlb) %>%
+  #   rename(Eastings = X, Northings = Y)
   # Return the data
-  return(dfAlb)
+  return(res)
 } # End LoadTransectXY function
 
 # Load 'auxiliary' dive transect spatial data
 transectXY <- LoadTransectXY(loc = diveLoc)
+# TODO: Make a function to replace missing Lat/Long values with these
 
 # If region is a vector, collapse region names for output; otherwise region
 regName <- paste(region, collapse = ".")
@@ -576,15 +583,70 @@ tGroup <- read_csv(
 # Load herring areas
 areas <- load_area_data(where = areaLoc, reg = region, sec_sub = sectionSub,
                       groups = tGroup)
+all_areas <- load_area_data(where = areaLoc, reg = "All")
 
-# Get BC land data etc (for plots)
-shapes <- LoadShapefiles(where = shapesLoc, a = areas)
+# Use herring sections from SpawnIndex package
+data(sections)
+
+# Get herring shapefiles (for plots)
+shapes <- load_sections(sections = sections, areas = areas)
+# shapes <- LoadShapefiles(where = shapesLoc, a = areas)
+all_shapes <- load_sections(sections = sections, areas = all_areas)
+all_regions <- all_shapes$regions %>%
+  filter(SAR != -1)
+
+# Bounding box (extent)
+reg_bbox <- shapes$regions %>%
+  st_buffer(dist = 10000) %>%
+  st_bbox() %>%
+  st_as_sfc()
+
+# Smaller bounding box for plots
+reg_bbox_small <- shapes$regions %>%
+  st_buffer(dist = 5000) %>%
+  st_bbox()
+  
+# X:Y ratio for plots
+reg_ratio_small <- (reg_bbox_small$ymax - reg_bbox_small$ymin) /
+  (reg_bbox_small$xmax - reg_bbox_small$xmin)
+
+# Bounding box (extent)
+bc_bbox <- all_regions %>%
+  st_buffer(dist = 50000) %>%
+  st_bbox() %>%
+  st_as_sfc()
+
+# Smaller bounding box for plots
+bc_bbox_small <- all_regions %>%
+  st_buffer(dist = 25000) %>%
+  st_bbox()
+
+# X:Y ratio for plots
+bc_ratio_small <- (bc_bbox_small$ymax - bc_bbox_small$ymin) /
+  (bc_bbox_small$xmax - bc_bbox_small$xmin)
+
+bc_coast <- ne_countries(
+  scale = "large", returnclass = "sf", 
+  country = c("Canada", "United States of America")
+) %>%
+  select(geometry) %>%
+  st_transform(crs = st_crs(bc_bbox)) %>%
+  st_crop(bc_bbox)
+
+# Get land polygons
+reg_coast <- st_read(dsn = file.path("..", "Data", "Polygons"),
+                    layer = "GSHHS_h_L1_Alb", quiet = TRUE) %>%
+  st_transform(crs = st_crs(all_shapes$sections)) %>%
+  st_crop(y = reg_bbox)
+
+# reg_coast <- bc_coast %>%
+#   st_intersection(y = reg_bbox)
 
 # Load median widths to correct surface spawns
 barWidth <- load_width(where = widthLoc, a = areas)
 
 # Load raw catch data, and some light wrangling
-LoadCatchData <- function(where) {
+LoadCatchData <- function(where, area_table) {
   # This function loads the tree types of herring catch data, drops unnecessary
   # rows and columns, and combines the data frames for the region(s) in
   # question.
@@ -598,6 +660,14 @@ LoadCatchData <- function(where) {
   if (class(tCatch) != "data.frame") {
     stop("No data available in MS Access connection")
   }
+  # Wrangle areas
+  areas <- area_table %>%
+    tibble() %>%
+    select(
+      SAR, Region, RegionName, StatArea, Group, Section, LocationCode,
+      LocationName
+    ) %>%
+    distinct()
   # Wrangle catch
   tCatch <- tCatch %>%
     mutate(
@@ -617,6 +687,7 @@ LoadCatchData <- function(where) {
   }
   # Wrangle catch
   hCatch <- hCatch %>%
+    mutate(Section = formatC(Section, width=3, format="d", flag="0")) %>%
     filter(Active == 1, Section %in% areas$Section) %>%
     mutate(
       Year = Season2Year(Season), Catch = CatchTons * convFac$st2t,
@@ -635,7 +706,8 @@ LoadCatchData <- function(where) {
   sokCatch <- sokCatch %>%
     mutate(
       Year = Season2Year(Season), Source = rep("SOK", times = n()), 
-      Date = as.Date(NA)
+      Date = as.Date(NA),
+      Section = formatC(Section, width=3, format="d", flag="0")
     ) %>%
     rename(Catch = ProductLanded) %>%
     filter(Section %in% areas$Section) %>%
@@ -646,7 +718,7 @@ LoadCatchData <- function(where) {
   allCatch <- bind_rows(tCatch, hCatch, sokCatch)
   # Smaller subset of area information
   areasSm <- areas %>%
-    select(Region, RegionName, StatArea, Section, Group) %>%
+    select(SAR, Region, RegionName, StatArea, Group, Section) %>%
     distinct()
   # Merge with area information
   res <- allCatch %>%
@@ -677,7 +749,7 @@ LoadCatchData <- function(where) {
 } # End LoadCatchData function
 
 # Load raw catch data
-catchRaw <- LoadCatchData(where = catchLoc)
+catchRaw <- LoadCatchData(where = catchLoc, area_table = areas)
 
 # Load biological data, and some light wrangling
 LoadBioData <- function(where, XY) {
@@ -695,38 +767,39 @@ LoadBioData <- function(where, XY) {
   if (class(sampleDat) != "data.frame") {
     stop("No data available in MS Access connection")
   }
-  # Grab the spatial info and process
-  sampleSP <- sampleDat %>%
-    transmute(
-      X = ifelse(is.na(Set_Longitude), 0, Set_Longitude),
-      Y = ifelse(is.na(Set_Latitude), 0, Set_Latitude)
-    )
-  # Put X and Y into a spatial points object
-  sPts <- SpatialPoints(coords = sampleSP, proj4string = CRS(inCRS))
-  # Save the original points
-  sPtsOrig <- as_tibble(sPts) %>%
-    rename(Longitude = X, Latitude = Y)
-  # Convert X and Y from WGS to Albers
-  sPtsAlb <- spTransform(x = sPts, CRSobj = CRS(outCRS))
-  # Extract spatial info
-  dfAlb <- as_tibble(sPtsAlb)
+  # # Grab the spatial info and process
+  # sampleSP <- sampleDat %>%
+  #   transmute(
+  #     X = ifelse(is.na(Set_Longitude), 0, Set_Longitude),
+  #     Y = ifelse(is.na(Set_Latitude), 0, Set_Latitude)
+  #   )
+  # # Put X and Y into a spatial points object
+  # sPts <- SpatialPoints(coords = sampleSP, proj4string = CRS(inCRS))
+  # # Save the original points
+  # sPtsOrig <- as_tibble(sPts) %>%
+  #   rename(Longitude = X, Latitude = Y)
+  # # Convert X and Y from WGS to Albers
+  # sPtsAlb <- spTransform(x = sPts, CRSobj = CRS(outCRS))
+  # # Extract spatial info
+  # dfAlb <- as_tibble(sPtsAlb)
   # Extract relevant sample data
   samples <- sampleDat %>%
-    cbind(dfAlb) %>%
-    cbind(sPtsOrig) %>%
+    # cbind(dfAlb) %>%
+    # cbind(sPtsOrig) %>%
     rename(
-      LocationCode = loc_code, Sample = isamp, Month = month,
+      LocationCode = loc_code, Longitude = Set_Longitude,
+      Latitude = Set_Latitude, Sample = isamp, Month = month,
       Representative = Representative_Set, SourceCode = source_code,
       GearCode = gear_code
     ) %>%
     mutate(
-      Year = Season2Year(season),
-      Eastings = ifelse(is.na(Set_Longitude), Set_Longitude, X),
-      Northings = ifelse(is.na(Set_Latitude), Set_Latitude, Y)
+      Year = Season2Year(season)
+      # Eastings = ifelse(is.na(Set_Longitude), Set_Longitude, X),
+      # Northings = ifelse(is.na(Set_Latitude), Set_Latitude, Y)
     ) %>%
     select(
-      Year, Month, Sample, Representative, LocationCode, Eastings,
-      Northings, Longitude, Latitude, SourceCode, GearCode
+      Year, Month, Sample, Representative, LocationCode, Longitude, Latitude,
+      SourceCode, GearCode
     ) %>%
     as_tibble()
   # Access the fish worksheet
@@ -758,42 +831,49 @@ LoadBioData <- function(where, XY) {
   raw <- fishSamples %>%
     filter(LocationCode %in% areas$LocationCode) %>%
     left_join(y = areas, by = "LocationCode") %>%
-    mutate(
-      Eastings = ifelse(is.na(Eastings.x), Eastings.y, Eastings.x),
-      Northings = ifelse(is.na(Northings.x), Northings.y, Northings.x),
-      Longitude = ifelse(Longitude.x == 0, Longitude.y, Longitude.x),
-      Latitude = ifelse(Latitude.x == 0, Latitude.y, Latitude.x)
-    ) %>%
+    # mutate(
+      # Eastings = ifelse(is.na(Eastings.x), Eastings.y, Eastings.x),
+      # Northings = ifelse(is.na(Northings.x), Northings.y, Northings.x),
+      # Longitude = ifelse(Longitude.x == 0, Longitude.y, Longitude.x),
+      # Latitude = ifelse(Latitude.x == 0, Latitude.y, Latitude.x)
+    # ) %>%
     select(
       Year, Month, Region, StatArea, Group, Section, LocationCode,
-      LocationName, Eastings, Northings, Longitude, Latitude, Sample,
-      Representative, SourceCode, GearCode, Fish, Length, Weight, Sex,
-      MaturityCode, Age, DualAge, GonadLength, GonadWeight
+      LocationName, Longitude, Latitude, Sample, Representative, SourceCode,
+      GearCode, Fish, Length, Weight, Sex, MaturityCode, Age, DualAge,
+      GonadLength, GonadWeight
     ) %>%
     arrange(
       Year, Month, Region, StatArea, Group, Section, LocationCode, Sample, Fish
     )
-  # Clip the extent
-  df <- ClipExtent(
-    dat = raw, spObj = shapes$regSPDF, bufDist = maxBuff, silent = TRUE
-  )
-  # Subset data with 'good' X and Y
-  dfNotNA <- df %>%
-    filter(!is.na(Eastings) & !is.na(Northings))
-  # Subset data with 'bad' X or Y, and try to fill in using transect X and Y
-  dfNA <- df %>%
-    filter(is.na(Eastings) | is.na(Northings)) %>%
-    select(-Eastings, -Northings) %>%
-    left_join(y = XY, by = "LocationCode")
-  # Re-combine the two subsets
-  df2 <- bind_rows(dfNotNA, dfNA)
-  # Clip the extent (again)
-  res <- ClipExtent(
-    dat = df2, spObj = shapes$regSPDF, bufDist = maxBuff, silent = TRUE
-  )
+  # # Clip the extent
+  # df <- ClipExtent(
+  #   dat = raw, spObj = shapes$regSPDF, bufDist = maxBuff, silent = TRUE
+  # )
+  # # Subset data with 'good' X and Y
+  # dfNotNA <- df %>%
+  #   filter(!is.na(Eastings) & !is.na(Northings))
+  # # Subset data with 'bad' X or Y, and try to fill in using transect X and Y
+  # dfNA <- df %>%
+  #   filter(is.na(Eastings) | is.na(Northings)) %>%
+  #   select(-Eastings, -Northings) %>%
+  #   left_join(y = XY, by = "LocationCode")
+  # # Re-combine the two subsets
+  # df2 <- bind_rows(dfNotNA, dfNA)
+  # # Clip the extent (again)
+  # res <- ClipExtent(
+  #   dat = df2, spObj = shapes$regSPDF, bufDist = maxBuff, silent = TRUE
+  # )
+  res <- raw %>%
+    left_join(y = XY, by = "LocationCode") %>%
+    mutate(
+      Longitude = ifelse(is.na(Longitude.x), Longitude.y, Longitude.x),
+      Latitude = ifelse(is.na(Latitude.x), Latitude.y, Latitude.x) ) %>%
+    select(-Longitude.x, -Longitude.y, -Latitude.x, -Latitude.y) %>%
+    st_as_sf(coords = c("Longitude", "Latitude"), na.fail = FALSE)
   # Get locations with missing X or Y
   noXY <- res %>%
-    filter(is.na(Eastings) | is.na(Northings)) %>%
+    filter(is.na(geometry)) %>%
     select(Region, StatArea, Group, Section, LocationCode, LocationName) %>%
     distinct()
   # Message re missing X and Y, if any
@@ -874,9 +954,8 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
     )) %>%
     select(
       Year, Region, StatArea, Group, Section, LocationCode, LocationName,
-      SpawnNumber, Eastings, Northings, Longitude, Latitude, Start, End, Length,
-      Width, Depth, Method, SurfLyrs, SurfSI, MacroLyrs, MacroSI, UnderLyrs,
-      UnderSI
+      SpawnNumber, geometry, Start, End, Length, Width, Depth, Method,
+      SurfLyrs, SurfSI, MacroLyrs, MacroSI, UnderLyrs, UnderSI
     ) %>%
     mutate(
       Year = as.integer(Year), StartDOY = yday(Start),
@@ -884,28 +963,44 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
     ) %>%
     arrange(
       Year, Region, StatArea, Section, LocationCode, SpawnNumber, Start, End
-    )
-  # Clip the extent
-  df <- ClipExtent(
-    dat = raw, spObj = shapes$regSPDF, bufDist = maxBuff, silent = TRUE
-  )
-  # Subset data with 'good' X and Y
-  dfNotNA <- df %>%
-    filter(!is.na(Eastings) & !is.na(Northings))
-  # Subset data with 'bad' X or Y, and replace using transect X and Y
-  dfNA <- df %>%
-    filter(is.na(Eastings) | is.na(Northings)) %>%
-    select(-Eastings, -Northings) %>%
-    left_join(y = XY, by = "LocationCode")
-  # Re-combine the two subsets
-  df2 <- bind_rows(dfNotNA, dfNA)
-  # Clip the extent (again)
-  res <- ClipExtent(
-    dat = df2, spObj = shapes$regSPDF, bufDist = maxBuff, silent = TRUE
-  )
+    ) %>%
+    st_as_sf()
+  
+  coords_raw <- st_coordinates(raw) %>%
+    as_tibble() %>%
+    rename(Longitude = X, Latitude = Y) %>%
+    mutate(LocationCode = raw$LocationCode)
+  res <- coords_raw %>%
+    left_join(y = XY, by = "LocationCode") %>%
+    mutate(
+      Longitude = ifelse(is.na(Longitude.x), Longitude.y, Longitude.x),
+      Latitude = ifelse(is.na(Latitude.x), Latitude.y, Latitude.x) ) %>%
+    select(-Longitude.x, -Longitude.y, -Latitude.x, -Latitude.y) %>%
+    st_as_sf(coords = c("Longitude", "Latitude"), na.fail = FALSE)
+  
+  raw$geometry <- res$geometry
+  
+  # # Clip the extent
+  # df <- ClipExtent(
+  #   dat = raw, spObj = shapes$regSPDF, bufDist = maxBuff, silent = TRUE
+  # )
+  # # Subset data with 'good' X and Y
+  # dfNotNA <- df %>%
+  #   filter(!is.na(Eastings) & !is.na(Northings))
+  # # Subset data with 'bad' X or Y, and replace using transect X and Y
+  # dfNA <- df %>%
+  #   filter(is.na(Eastings) | is.na(Northings)) %>%
+  #   select(-Eastings, -Northings) %>%
+  #   left_join(y = XY, by = "LocationCode")
+  # # Re-combine the two subsets
+  # df2 <- bind_rows(dfNotNA, dfNA)
+  # # Clip the extent (again)
+  # res <- ClipExtent(
+  #   dat = df2, spObj = shapes$regSPDF, bufDist = maxBuff, silent = TRUE
+  # )
   # Get locations with missing X or Y
-  noXY <- res %>%
-    filter(is.na(Eastings) | is.na(Northings)) %>%
+  noXY <- raw %>%
+    filter(is.na(geometry)) %>%
     select(Region, StatArea, Group, Section, LocationCode, LocationName) %>%
     distinct()
   # Message re missing X and Y, if any
@@ -925,7 +1020,7 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
     )
   }
   # Add a column to indicate the survey period
-  res <- res %>%
+  raw <- raw %>%
     mutate(
       Survey = ifelse(Year < pars$years$dive, "Surface", "Dive"),
       Survey = factor(Survey, levels = c("Surface", "Dive"))
@@ -934,7 +1029,7 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   # Update the progress message
   cat("done\n")
   # Return the data
-  return(res)
+  return(raw)
 } # End LoadSpawnData function
 
 # Load spawn data
@@ -1041,6 +1136,7 @@ UpdateCatchData <- function(dat, a) {
   # way it was done in Access -- should be cleaned up
   # Get a short list of area information
   areasSm <- a %>%
+    tibble() %>%
     select(Region, StatArea, Group, Section) %>%
     distinct()
   # Wrangle catch data
@@ -1333,20 +1429,20 @@ bioSummary <- bio %>%
 
 ##### Overlay #####
 
-# Check area data for inconsistent spatial overlays
-overAreas <- CheckSpatialOverlay(
-  pts = areas, shape = shapes$secAllSPDF, type = "Location"
-)
-
-# Check spawn data for inconsistent spatial overlays
-overSpawn <- CheckSpatialOverlay(
-  pts = spawnRaw, shape = shapes$secAllSPDF, type = "Spawn"
-)
-
-# Check biosample data for inconsistent spatial overlays
-overBio <- CheckSpatialOverlay(
-  pts = bioRaw, shape = shapes$secAllSPDF, type = "Biosample"
-)
+# # Check area data for inconsistent spatial overlays
+# overAreas <- CheckSpatialOverlay(
+#   pts = areas, shape = shapes$secAllSPDF, type = "Location"
+# )
+# 
+# # Check spawn data for inconsistent spatial overlays
+# overSpawn <- CheckSpatialOverlay(
+#   pts = spawnRaw, shape = shapes$secAllSPDF, type = "Spawn"
+# )
+# 
+# # Check biosample data for inconsistent spatial overlays
+# overBio <- CheckSpatialOverlay(
+#   pts = bioRaw, shape = shapes$secAllSPDF, type = "Biosample"
+# )
 
 ##### Main #####
 
@@ -1380,6 +1476,7 @@ CountBiosamplesYear <- function(dat) {
   numComm <- dat %>%
     filter(Year >= firstYrTab, !SourceCode %in% c(2, 3, 5)) %>%
     select(Year, Sample) %>%
+    as_tibble() %>%
     group_by(Year) %>%
     summarise(Commercial = n_distinct(Sample)) %>%
     ungroup()
@@ -1387,6 +1484,7 @@ CountBiosamplesYear <- function(dat) {
   numTest <- dat %>%
     filter(Year >= firstYrTab, SourceCode %in% c(3, 5)) %>%
     select(Year, Sample) %>%
+    as_tibble() %>%
     group_by(Year) %>%
     summarise(Test = n_distinct(Sample)) %>%
     ungroup()
@@ -1394,6 +1492,7 @@ CountBiosamplesYear <- function(dat) {
   numNear <- dat %>%
     filter(Year >= firstYrTab, SourceCode %in% c(2)) %>%
     select(Year, Sample) %>%
+    as_tibble() %>%
     group_by(Year) %>%
     summarise(Nearshore = n_distinct(Sample)) %>%
     ungroup()
@@ -1480,6 +1579,7 @@ bioTypeNum <- GetSampleNumType(dat = bioRaw)
 if (region == "CC") {
   # Ratio of number of biological samples between groups
   propNumBioHist <- bio %>%
+    tibble() %>%
     filter(GearCode == 29, Year %in% yrsRatioHist) %>%
     group_by(Year, Group) %>%
     summarise(Number = n_distinct(Sample)) %>%
@@ -1490,6 +1590,7 @@ if (region == "CC") {
   # Merge weights in the main bio table (i.e., to fix unbalanced sampling among
   # groups in identified years)
   bio <- bio %>%
+    tibble() %>%
     select(-SampWt) %>%
     left_join(y = propNumBioHist, by = "Group") %>%
     mutate(SampWt = ifelse(Year %in% yrsRatioFix & Period == 2, SampWt, 1))
@@ -1589,6 +1690,7 @@ CalcWeightAtAge <- function(dat) {
   # using the 'SampWt' column to fix unrepresentative sampling if identified
   # Calculate mean weight-at-age
   wtAge <- dat %>%
+    tibble() %>%
     filter(GearCode == 29) %>%
     select(Year, Age, Weight, SampWt) %>%
     na.omit() %>%
@@ -1737,6 +1839,7 @@ CalcLengthAtAge <- function(dat, yearRange = yrRange) {
   # using the 'SampWt' column to fix unrepresentative sampling if identified
   # Calculate mean length-at-age
   lenAge <- dat %>%
+    tibble() %>%
     filter(GearCode == 29) %>%
     select(Year, Age, Length, SampWt) %>%
     na.omit() %>%
@@ -1827,20 +1930,22 @@ propFemale <- bio %>%
 GetBioLocations <- function(dat, spObj) {
   # Wrangle data
   samp <- dat %>%
-    filter(Year == max(yrRange), !is.na(Eastings), !is.na(Northings)) %>%
+    filter(Year == max(yrRange), !is.na(geometry)) %>%
     mutate(
       Type = ifelse(SourceCode == 2, "Nearshore",
                     ifelse(SourceCode %in% c(3, 5), "Seine test", 
                            ifelse(SourceCode %in% c(1, 6), "Food and bait",
                                   "Commercial")))
     ) %>%
-    group_by(Type, Eastings, Northings) %>%
+    group_by(Type, geometry) %>%
     summarise(Number = n_distinct(Sample)) %>%
     ungroup()
   # If there are rows
   if (nrow(samp) > 0) {
     # Clip to the region's extent
-    res <- ClipExtent(dat = samp, spObj = shapes$regSPDF, bufDist = maxBuff)
+    # res <- ClipExtent(dat = samp, spObj = shapes$regSPDF, bufDist = maxBuff)
+    st_crs(samp) <- st_crs(spObj)
+    res <- st_intersection(x = samp, y = spObj)
   } else { # End if there are rows, otherwise
     # Warning
     warning("There are no geo-referenced biosamples", call. = FALSE)
@@ -1856,7 +1961,7 @@ GetBioLocations <- function(dat, spObj) {
 
 # Get biosample locations
 # TODO: Update this to be only 'Representative' samples (i.e., dat=bio?)
-bioLocations <- GetBioLocations(dat = bioRaw, spObj = shapes$regSPDF)
+bioLocations <- GetBioLocations(dat = bioRaw, spObj = shapes$regions)
 
 # Calculate spawn summary by groups (e.g., year and section)
 CalcSpawnSummary <- function(dat, g) {
@@ -1864,6 +1969,7 @@ CalcSpawnSummary <- function(dat, g) {
   # years are complete (i.e., missing years are populated with NA)
   # Some wrangling
   spawnByYear <- dat %>%
+    tibble() %>%
     select(
       Year, StatArea, Section, Group, Length, Width, SurfLyrs, MacroLyrs,
       UnderLyrs, MacroSI, SurfSI, UnderSI
@@ -1881,11 +1987,15 @@ CalcSpawnSummary <- function(dat, g) {
   if (all(g == "Year")) yrsFull <- tibble(Year = yrRange)
   # Get the full year range and stat areas
   if (all(c("Year", "StatArea") %in% g)) {
-    yrsFull <- expand.grid(Year = yrRange, StatArea = unique(dat$StatArea))
+    yrsFull <- expand.grid(Year = yrRange, StatArea = unique(dat$StatArea)) %>%
+      tibble() %>%
+      mutate(StatArea = formatC(StatArea, width=2, format="d", flag="0"))
   }
   # Get the full year range and sections
   if (all(c("Year", "Section") %in% g)) {
-    yrsFull <- expand.grid(Year = yrRange, Section = unique(dat$Section))
+    yrsFull <- expand.grid(Year = yrRange, Section = unique(dat$Section)) %>%
+      tibble() %>%
+      mutate(Section = formatC(Section, width=3, format="d", flag="0"))
   }
   # Get the full year range and groups
   if (all(c("Year", "Group") %in% g)) {
@@ -1896,7 +2006,7 @@ CalcSpawnSummary <- function(dat, g) {
   res <- spawnByYear %>%
     full_join(y = yrsFull, by = g) %>%
     filter(Year %in% yrRange) %>%
-    arrange_(g) %>%
+    # arrange(g) %>%
     mutate(
       Survey = ifelse(Year < pars$years$dive, "Surface", "Dive"),
       Survey = factor(Survey, levels = c("Surface", "Dive"))
@@ -1969,7 +2079,7 @@ spawnYrSec <- CalcSpawnSummary(dat = spawnRaw, g = c("Year", "Section")) %>%
   mutate(PercSI = 100 * TotalSI / SumNA(TotalSI)) %>%
   ungroup() %>%
   full_join(
-    y = areas %>% select(StatArea, Section, Group) %>% distinct(),
+    y = areas %>% tibble() %>% select(StatArea, Section, Group) %>% distinct(),
     by = "Section"
   ) %>%
   mutate(
@@ -2004,6 +2114,7 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
   }
   # Determin spawn proportions
   pSpawn <- dat %>%
+    tibble() %>%
     filter(Year %in% yrs) %>%
     replace_na(replace = list(SurfSI = 0, MacroSI = 0, UnderSI = 0)) %>%
     mutate(TotalSI = SurfSI + MacroSI + UnderSI) %>%
@@ -2056,33 +2167,34 @@ spawnByLocXY <- spawnRaw %>%
   group_by(StatArea, Section, LocationCode, LocationName) %>%
   summarise(
     Start = MinNA(Start), TotalSI = SumNA(c(MacroSI, SurfSI, UnderSI)),
-    Eastings = unique(Eastings), Northings = unique(Northings)
+    geometry = unique(geometry)
   ) %>%
   ungroup() %>%
   arrange(TotalSI)
 
 # Calculate spawn summary in current year by location code
 spawnByLoc <- spawnByLocXY %>%
-  select(-Eastings, -Northings, -LocationCode)
+  select(-geometry, -LocationCode)
 
 # For plotting, remove rows with no spatial info
 spawnByLocXY <- spawnByLocXY %>%
-  filter(!is.na(Eastings), !is.na(Northings))
+  filter(!is.na(geometry))
 
 # Calculate spawn summary for the last decade
 spawnDecade <- spawnRaw %>%
   filter(Year %in% (max(yrRange) - 1):(max(yrRange) - 10)) %>%
   group_by(Year, LocationCode) %>%
   summarise(
-    Eastings = unique(Eastings), Northings = unique(Northings),
+    geometry = unique(geometry),
     TotalSI = SumNA(c(SurfSI, MacroSI, UnderSI))
   ) %>%
   ungroup() %>%
   mutate(Decade = paste(min(Year), max(Year), sep = " to ")) %>%
   group_by(Decade, LocationCode) %>%
   summarise(
-    Eastings = unique(Eastings), Northings = unique(Northings),
-    MeanSI = MeanNA(TotalSI), Frequency = n()
+    geometry = unique(geometry),
+    MeanSI = MeanNA(TotalSI),
+    Frequency = n()
   ) %>%
   ungroup() %>%
   #    filter( Frequency >= 2, MeanSI >=quantile(MeanSI, probs=0.1,
@@ -2103,7 +2215,7 @@ spatialGroup <- areas %>%
 siYearLoc <- spawnRaw %>%
   group_by(Year, LocationCode) %>%
   summarise(
-    Eastings = unique(Eastings), Northings = unique(Northings),
+    geometry = unique(geometry),
     SITotal = SumNA(c(SurfSI, MacroSI, UnderSI))
   ) %>%
   ungroup() %>%
@@ -2756,6 +2868,7 @@ catchADMB <- catch %>%
 
 # Make ADMB input data: spawn (t*10^3)
 spawnADMB <- spawnYr %>%
+  tibble() %>%
   select(Year, TotalSI) %>%
   rename(Spawn = TotalSI) %>%
   na.omit() %>%
@@ -2769,6 +2882,7 @@ spawnADMB <- spawnYr %>%
 
 # Make ADMB input data: number aged
 numAgedADMB <- numAgedYearGear %>%
+  tibble() %>%
   select(Year, Period, Age, Number) %>%
   mutate(
     Period = as.integer(Period), Area = as.integer(1), Group = as.integer(1),
@@ -2787,6 +2901,16 @@ weightAgeADMB <- weightAge %>%
   ) %>%
   spread(key = Age, value = Weight) %>%
   arrange(Gear, Year)
+write_csv(x = weightAgeADMB, file = paste0(region, "WtAge.csv"))
+
+lengthAgeADMB <- lengthAge %>%
+  mutate(
+    Length = round(Length, digits = 4), Gear = as.integer(1),
+    Area = as.integer(1), Group = as.integer(1), Sex = as.integer(0)
+  ) %>%
+  spread(key = Age, value = Length) %>%
+  arrange(Gear, Year)
+write_csv(x = lengthAgeADMB, file = paste0(region, "LenAge.csv"))
 
 ##### For SISCA (TMB) #####
 
@@ -3181,30 +3305,26 @@ WriteInputFile(
 cat("Printing figures... ")
 
 # Plot the BC coast and regions
-BCMap <- ggplot(data = shapes$landAllCropDF, aes(x = Eastings, y = Northings)) +
-  geom_polygon(
-    data = shapes$landAllCropDF, aes(group = group), fill = "lightgrey"
+BCMap <- ggplot(data = bc_coast) +
+  geom_sf(fill = "lightgrey") +
+  geom_sf(
+    data = all_regions, linewidth = 0.5, fill = "transparent", colour = "black"
   ) +
-  geom_point(data = shapes$extAllDF, colour = "transparent") +
-  geom_path(
-    data = shapes$regAllDF, aes(group = Region), size = 0.75, colour = "black"
-  ) +
-  geom_label(data = shapes$regCentDF, alpha = 0.5, aes(label = Region)) +
+  geom_sf_label(data = all_regions, alpha = 0.5, aes(label = Region)) +
   annotate(
-    geom = "text", x = 1100000, y = 800000, label = "British\nColumbia",
-    size = 5
+    geom = "text", x = -125, y = 52, label = "British\nColumbia", size = 5
   ) +
   annotate(
-    geom = "text", x = 650000, y = 550000, label = "Pacific\nOcean", size = 5
+    geom = "text", x = -131, y = 49.5, label = "Pacific\nOcean", size = 5
   ) +
-  coord_equal() +
-  labs(x = "Eastings (km)", y = "Northings (km)", caption = geoProj) +
-  scale_x_continuous(labels = function(x) comma(x / 1000), expand = c(0, 0)) +
-  scale_y_continuous(labels = function(x) comma(x / 1000), expand = c(0, 0)) +
+  labs(x = "Longitude", y = "Latitude") +
+  coord_sf(
+    xlim = c(bc_bbox_small$xmin, bc_bbox_small$xmax),
+    ylim = c(bc_bbox_small$ymin, bc_bbox_small$ymax), expand = FALSE) +
   myTheme 
 ggsave(
   BCMap, filename = file.path(regName, "BC.png"), width = figWidth,
-  height = min(6.9, 5.75 / shapes$xyAllRatio), dpi = figRes
+  height = min(6.9, 5.75 / bc_ratio_small), dpi = figRes
 )
 
 # Make a french version if requested
