@@ -94,11 +94,10 @@ UsePackages <- function(pkgs, locn = "https://cran.rstudio.com/") {
 
 # Make packages available
 UsePackages(pkgs = c(
-  "tidyverse", "RODBC", "zoo", "Hmisc", "scales", "sp", "maptools", "rgdal",
-  "rgeos", "raster", "xtable", "cowplot", "grid", "colorRamps", "RColorBrewer",
-  "stringr", "lubridate", "readxl", "plyr", "ggforce", "viridis", "ggthemes",
-  "SpawnIndex", "tidyselect", "ggrepel", "here", "rnaturalearth",
-  "rnaturalearthhires"
+  "tidyverse", "RODBC", "zoo", "Hmisc", "scales", "xtable", "cowplot", "grid",
+  "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "plyr",
+  "ggforce", "viridis", "ggthemes", "SpawnIndex", "tidyselect", "ggrepel",
+  "here", "rnaturalearth", "rnaturalearthhires", "sf"
 ))
 
 # Suppress summarise info
@@ -161,10 +160,10 @@ secSubName <- "Swift"
 send2sisca <- FALSE
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
-makeAnimation <- FALSE
+makeAnimation <- TRUE
 
 # Open 64-bit R in a separate window (to make the animation)
-system64 <- TRUE
+system64 <- FALSE
 
 # Include test fishery catch
 inclTestCatch <- TRUE
@@ -1026,6 +1025,8 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
       Survey = factor(Survey, levels = c("Surface", "Dive"))
     ) %>%
     filter(Year %in% yrRange)
+  # Spatial
+  st_crs(raw) <- st_crs(areas)
   # Update the progress message
   cat("done\n")
   # Return the data
@@ -2213,13 +2214,13 @@ spatialGroup <- areas %>%
 
 # Calculate spawn index by location and year
 siYearLoc <- spawnRaw %>%
-  group_by(Year, LocationCode) %>%
+  group_by(Year, LocationCode, geometry) %>%
   summarise(
-    geometry = unique(geometry),
     SITotal = SumNA(c(SurfSI, MacroSI, UnderSI))
   ) %>%
   ungroup() %>%
-  complete(Year = yrRange)
+  complete(Year = yrRange) %>%
+  st_as_sf()
 
 # Length at age data
 lenAge <- bio %>%
@@ -3381,73 +3382,53 @@ if (makeFrench) {
 } # End if making french
 
 # Create a base map for the region
-BaseMap <- ggplot(
-  data = shapes$landCropDF, mapping = aes(x = Eastings, y = Northings)
-) +
-  geom_polygon(
-    data = shapes$landCropDF, mapping = aes(group = group), fill = "lightgrey"
-  ) +
-  geom_point(data = shapes$extDF, colour = "transparent") +
-  geom_path(
-    data = shapes$regDF, mapping = aes(group = Region), size = 0.75,
+BaseMap <- ggplot(data = reg_coast) +
+  geom_sf(fill = "lightgrey", colour = "transparent") +
+  geom_sf(
+    data = shapes$regions, fill = "transparent", linewidth = 0.75,
     colour = "black", linetype = "dashed"
   ) +
   coord_equal() +
-  labs(x = "Eastings (km)", y = "Northings (km)", caption = geoProj) +
-  scale_x_continuous(labels = function(x) comma(x / 1000), expand = c(0, 0)) +
-  scale_y_continuous(labels = function(x) comma(x / 1000), expand = c(0, 0)) +
+  labs(x = "Longitude", y = "Latitude") +
   myTheme
 
 # Plot the region, and statistical areas
 RegionMap <- BaseMap +
-  geom_path(
-    data = shapes$saDF, mapping = aes(group = StatArea), size = 0.25,
+  geom_sf(
+    data = shapes$stat_areas, linewidth = 0.25, fill = "transparent", 
     colour = "black"
-  ) +
-  geom_path(
-    data = shapes$secDF, mapping = aes(group = Section), size = 0.25,
+    ) +
+  geom_sf(
+    data = shapes$sections, linewidth = 0.25, fill = "transparent",
     colour = "black", linetype = "dotted"
   ) +
-  {
-    if (!is.null(shapes$grpDF) & region %in% c("CC", "SoG", "All")) {
-      geom_polygon(
-        data = shapes$grpDF, mapping = aes(group = id, fill = id), alpha = 0.25
-      )
-    }
-  } +
-  {
-    if (nrow(shapes$saCentDF) >= 1) {
-      geom_label(
-        data = shapes$saCentDF, alpha = 0.25,
-        mapping = aes(label = paste("SA", StatArea, sep = " "))
-      )
-    }
-  } +
-      # geom_polygon(
-        # data = filter(shapes$grpDF, 
-        #               id %in% c("Prt Louis/Chanal", "Seal/Rennel/Kano",
-        #                         "Englefield", "Juan Perez/Skincuttle",
-        #                         "Cumshewa/Selwyn")),
-        # mapping = aes(group = id, fill = id), alpha = 0.25
-      # ) +
-  # guides(fill = FALSE)+
-  #     geom_path(
-  #       data = shapes$grpDF, mapping = aes(group = id), size = 0.25,
-  #       colour = "black"
-  #     ) +
-  #     geom_label_repel(
-  #       data = shapes$grpCentDF,
-  #       mapping = aes(label = Group), alpha = 0.75, min.segment.length = 0
-  #     ) +
-  # }
-  # } +
   scale_fill_viridis(discrete = TRUE) +
   labs(fill = "Group") +
-  theme(legend.position = c(0.01, 0.01), legend.justification = c(0, 0)) 
-  
+  theme(legend.position = c(0.01, 0.01), legend.justification = c(0, 0))
+
+if (!all(is.na(shapes$groups$Group)) & region %in% c("CC", "SoG", "All")) {
+  RegionMap <- RegionMap +
+    geom_sf(
+      data = shapes$groups, mapping = aes(fill = Group), alpha = 0.25
+    )
+}
+
+if (nrow(shapes$stat_areas) >= 1) {
+  RegionMap <- RegionMap +
+    geom_sf_label(
+      data = shapes$stat_areas, alpha = 0.25,
+      mapping = aes(label = paste("SA", StatArea, sep = " "))
+    )
+}
+
+RegionMap <- RegionMap +
+  coord_sf(
+    xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
+    ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
+
 ggsave(
   RegionMap, filename = file.path(regName, "Region.png"), width = figWidth,
-  height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
+  height = min(7.5, 6.5 / reg_ratio_small), dpi = figRes
 )
 
 # Determine whether or not to show the catch zoom
@@ -3610,15 +3591,15 @@ if (exists("catchStatArea")) {
 # Plot biosample locations
 if (nrow(bioLocations) > 0) {
   bioLocPlot <- BaseMap +
-    geom_path(
-      data = shapes$secDF, mapping = aes(group = Section), size = 0.25,
+    geom_sf(
+      data = shapes$sections, linewidth = 0.25, fill = "transparent",
       colour = "black"
     ) +
-    geom_text(
-      data = shapes$secCentDF, alpha = 0.6, size = 2,
+    geom_sf_text(
+      data = shapes$sections, alpha = 0.6, size = 2,
       mapping = aes(label = paste("Sec", Section, sep = " "))
     ) +
-    geom_point(
+    geom_sf(
       data = bioLocations, mapping = aes(shape = Type, size = Number),
       alpha = 0.6
     ) +
@@ -3629,6 +3610,9 @@ if (nrow(bioLocations) > 0) {
       size = guide_legend(order = 1),
       shape = guide_legend(override.aes = list(size = 3))
     ) +
+    coord_sf(
+      xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
+      ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE) +
     theme(
       legend.justification = c(0, 0),
       legend.box.just = if (region %in% c("WCVI", "JS")) "top" else "left",
@@ -3641,7 +3625,7 @@ if (nrow(bioLocations) > 0) {
     )
   ggsave(
     bioLocPlot, filename = file.path(regName, "BioLocations.png"),
-    width = figWidth, height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
+    width = figWidth, height = min(7.5, 6.5 / reg_ratio_small), dpi = figRes
   )
 }
 
@@ -3729,6 +3713,7 @@ if (exists("numAgedYearGrp")) {
 } # End if proportion-at-age by group
 
 # Proportion female plot
+# TODO: Add this to data summary
 propFemalePlot <- ggplot(
   data=propFemale, mapping = aes(x = Year, y=Proportion)
 ) +
@@ -3801,7 +3786,7 @@ if(regionType == "major"){
       data = filter(.data = muWtLenAge, Age == ageShow), mapping = aes(y = Value),
       shape = 1, size = 1
     ) +
-    geom_line(mapping = aes(group = Age, colour = Age), size = 1) +
+    geom_line(mapping = aes(group = Age, colour = Age), linewidth = 1) +
     scale_colour_viridis(guide = guide_legend(nrow = 1), discrete = TRUE) +
     scale_x_continuous(breaks = yrBreaks) +
     expand_limits(x = yrRange) +
@@ -3867,7 +3852,7 @@ if(regionType == "major"){
       data = filter(.data = wtLenAge, Age == ageShow), mapping = aes(y = Value),
       shape = 1, size = 1
     ) +
-    geom_line(mapping = aes(group = Age, colour = Age), size = 1) +
+    geom_line(mapping = aes(group = Age, colour = Age), linewidth = 1) +
     scale_colour_viridis(guide = guide_legend(nrow = 1), discrete = TRUE) +
     scale_x_continuous(breaks = yrBreaks) +
     expand_limits(x = yrRange) +
@@ -3925,14 +3910,14 @@ datYr <- siYearLoc %>%
 # Inset for spawnByLocPlot: spawn index vs year
 subPlot <- ggplot(data = datYr, mapping = aes(x = Year, y = SITotal)) +
   geom_point(size = 0.25, aes(shape = Survey)) +
-  geom_path(size = 0.2, aes(group = Survey)) +
+  geom_path(linewidth = 0.2, aes(group = Survey)) +
   scale_y_continuous(labels = comma) +
   labs(x = NULL, y = NULL) +
   guides(shape = FALSE) +
   theme_tufte() +
   theme(
     plot.background = element_rect(fill = alpha("white", 0.5),
-                                   size = 0.1),
+                                   linewidth = 0.1),
     plot.margin = unit(c(0.3, 0.6, 0.1, 0.1), "lines")
   ) 
 # Convert to a grob
@@ -3940,16 +3925,17 @@ subGrob <- ggplotGrob(x = subPlot)
 
 # Plot the spawn index locations
 spawnByLocPlot <- BaseMap +
-  geom_path(
-    data = shapes$secDF, mapping = aes(group = Section), size = 0.25,
+  geom_sf(
+    data = shapes$section, linewidth = 0.25, fill = "transparent",
     colour = "black"
   ) +
-  geom_text(
-    data = shapes$secCentDF, alpha = 0.6, size = 2,
+  geom_sf_text(
+    data = shapes$section, alpha = 0.6, size = 2,
     mapping = aes(label = paste("Sec", Section, sep = " "))
   ) +
-  geom_point(
-    data = spawnByLocXY, mapping = aes(colour = TotalSI), alpha = 0.75, size = 4
+  geom_sf(
+    data = spawnByLocXY, mapping = aes(colour = TotalSI),
+    alpha = 0.75, size = 4
   ) +
   labs(colour = "Spawn\nindex (t)") +
   theme(
@@ -3958,20 +3944,26 @@ spawnByLocPlot <- BaseMap +
   ) +
   annotation_custom(
     grob = subGrob,
-    xmin = max(shapes$landCropDF$Eastings) -
-      diff(range(shapes$landCropDF$Northings)) / 2.5,
+    xmin = max(reg_bbox_small$xmax) -
+      (reg_bbox_small$xmax - reg_bbox_small$xmin) / 2.5,
     xmax = Inf,
-    ymin = max(shapes$landCropDF$Northings) -
-      diff(range(shapes$landCropDF$Northings)) / 5,
+    ymin = max(reg_bbox_small$ymax) -
+      (reg_bbox_small$ymax - reg_bbox_small$ymin) / 5,
     ymax = Inf
   )
 
 if(!all(is.na(spawnByLocXY$TotalSI))){ 
   spawnByLocPlot <- spawnByLocPlot + 
-    scale_colour_viridis_c(labels = comma, na.value = "darkgrey")
+    scale_colour_viridis_c(labels = comma, na.value = "darkgrey") +
+    coord_sf(
+      xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
+      ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
 } else {
   spawnByLocPlot <- spawnByLocPlot + 
-    scale_colour_viridis_d(labels = comma, na.value = "darkgrey")
+    scale_colour_viridis_d(labels = comma, na.value = "darkgrey") +
+    coord_sf(
+      xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
+      ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
 }
 ggsave(
   spawnByLocPlot, filename = file.path(regName, "SpawnByLoc.png"),
@@ -3981,21 +3973,24 @@ ggsave(
 
 # Plot the spawn index locations
 spawnDecadePlot <- BaseMap +
-  geom_path(
-    data = shapes$secDF, mapping = aes(group = Section), size = 0.25,
+  geom_sf(
+    data = shapes$section, linewidth = 0.25, fill = "transparent",
     colour = "black"
   ) +
-  geom_text(
-    data = shapes$secCentDF, alpha = 0.6, size = 2,
+  geom_sf_text(
+    data = shapes$section, alpha = 0.6, size = 2,
     mapping = aes(label = paste("Sec", Section, sep = " "))
   ) +
-  geom_point(
+  geom_sf(
     data = spawnDecade, mapping = aes(colour = MeanSI, size = Frequency),
     alpha = 0.75
   ) +
   scale_colour_viridis(labels = comma) +
   scale_size(breaks = pretty_breaks(), guide = guide_legend(order = 2)) +
   labs(colour = "Mean spawn\nindex (t)") +
+  coord_sf(
+    xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
+    ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE) +
   theme(
     legend.justification = c(0, 0),
     legend.box.just = if (region %in% c("WCVI", "JS")) "top" else "left",
@@ -4638,12 +4633,12 @@ PlotLocationsYear <- function(dat) {
   uPages <- unique(dat$Year)
   # Set up the map
   MapGIF <- BaseMap +
-    geom_path(
-      data = shapes$secDF, mapping = aes(group = Section), size = 0.25,
+    geom_sf(
+      data = shapes$sections, linewidth = 0.25, fill = "transparent",
       colour = "black"
     ) +
-    geom_text(
-      data = shapes$secCentDF, alpha = 0.6, size = 2,
+    geom_sf_text(
+      data = shapes$sections, alpha = 0.6, size = 2,
       mapping = aes(label = paste("Sec", Section, sep = " "))
     )
   # Start the PDF
@@ -4660,7 +4655,7 @@ PlotLocationsYear <- function(dat) {
       facet_wrap_paginate(~Year,
                           ncol = 1, nrow = 1, page = i, labeller = label_both
       ) +
-      geom_point(data = dat, aes(colour = SITotal), size = 4, alpha = 0.75) +
+      geom_sf(data = dat, aes(colour = SITotal), size = 4, alpha = 0.75) +
       scale_colour_viridis(labels = comma) +
       labs(colour = "Spawn\nindex (t)") +
       theme(
@@ -4671,13 +4666,14 @@ PlotLocationsYear <- function(dat) {
     subPlot <- ggplot(data = datYr, mapping = aes(x = Year, y = SITotal)) +
       geom_point(size = 0.25, aes(shape = Survey)) +
       geom_point(data = datYr[i, ], aes(shape = Survey), size = 1.5) +
-      geom_path(size = 0.2, aes(group = Survey)) +
+      geom_path(linewidth = 0.2, aes(group = Survey)) +
       scale_y_continuous(labels = comma) +
       labs(x = NULL, y = NULL) +
       guides(shape = FALSE) +
       theme_tufte() +
       theme(
-        plot.background = element_rect(fill = alpha("white", 0.5), size = 0.1),
+        plot.background = element_rect(fill = alpha("white", 0.5),
+                                       linewidth = 0.1),
         plot.margin = unit(c(0.3, 0.6, 0.1, 0.1), "lines")
       )
     # Convert to a grob
@@ -4690,6 +4686,9 @@ PlotLocationsYear <- function(dat) {
       diff(range(shapes$landCropDF$Northings)) / 5
     # Add the inset to the map
     finalPlot <- layersPlot +
+      coord_sf(
+        xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
+        ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE) +
       annotation_custom(
         grob = subGrob, xmin = grobLeft, xmax = Inf,
         ymin = grobBottom, ymax = Inf
@@ -4749,7 +4748,7 @@ PlotFoodBait <- function(dat) {
   # Set up the map
   MapGIF <- BaseMap +
     geom_path(
-      data = shapes$secDF, mapping = aes(group = Section), size = 0.25,
+      data = shapes$secDF, mapping = aes(group = Section), linewidth = 0.25,
       colour = "black"
     )
   # Start the PDF
@@ -4896,6 +4895,8 @@ print(
 
 # Format number of biosamples by type
 xBioTypeNum <- bioTypeNum %>%
+  tibble() %>%
+  select(-geometry) %>%
   mutate(Number = as.integer(Number)) %>%
   rename("Number of samples" = Number) %>%
   xtable()
@@ -4987,6 +4988,8 @@ if (exists("deltaNumAgeYr") & exists("deltaPropAgeYr") &
 
 # Format proportion-at-age
 xPropAgedYearTab <- propAgedYearTab %>%
+  tibble() %>%
+  select(-geometry) %>%
   xtable(digits = c(0, 0, rep(3, times = length(ageRange))))
 
 # Write proportion-at-age to disc
@@ -5053,6 +5056,8 @@ writeLines(text = xTemp, con = file.path(regName, "SpawnYrTab.tex"))
 if (nrow(spawnByLoc) >= 1) {
   # Format spawn summary
   xSpawnByLoc <- spawnByLoc %>%
+    tibble() %>%
+    select(-geometry) %>%
     arrange(StatArea, Section, LocationName, Start) %>%
     mutate(
       StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
@@ -5074,6 +5079,8 @@ if (nrow(spawnByLoc) >= 1) {
 
 # Format the spatial table
 xSpatialGroup <- spatialGroup %>%
+  tibble() %>%
+  select(-geometry) %>%
   rename(Region = RegionName, "Statistical Area" = StatArea) %>%
   xtable()
 # Write the spatial table (longtable) to disc
@@ -5231,6 +5238,8 @@ nSampThisYr <- bioNum %>%
 if (nSampThisYr > 0) {
   # Number aged: this year
   numAgedThisYr <- numAgedYear %>%
+    tibble() %>%
+    select(-geometry) %>%
     filter(Year == max(yrRange)) %>%
     select(Number) %>%
     sum() %>%
