@@ -70,7 +70,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm(list = ls()) # Clear the workspace
+# rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -160,10 +160,10 @@ secSubName <- "Swift"
 send2sisca <- FALSE
 
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
-makeAnimation <- TRUE
+makeAnimation <- FALSE
 
 # Open 64-bit R in a separate window (to make the animation)
-system64 <- FALSE
+system64 <- TRUE
 
 # Include test fishery catch
 inclTestCatch <- TRUE
@@ -1366,6 +1366,7 @@ bio <- UpdateBioData(dat = bioRaw, rYr = 2014)
 
 # Spawn summary
 spawnSummary <- spawnRaw %>%
+  tibble() %>%
   group_by(Year) %>%
   summarise(
     Surf = SumNA(SurfSI), Macro = SumNA(MacroSI), Under = SumNA(UnderSI)
@@ -1534,6 +1535,8 @@ GetSampleNumType <- function(dat) {
   # for the current year, and returns a data frame.
   # Get catch in current year by gear and disposal
   samp <- dat %>%
+    tibble() %>%
+    select(-geometry) %>%
     filter(Year == max(yrRange)) %>%
     group_by(SourceCode, GearCode) %>%
     summarise(Number = n_distinct(Sample)) %>%
@@ -2896,13 +2899,14 @@ numAgedADMB <- numAgedYearGear %>%
 
 # Make ADMB input data: weight-at-age (kg)
 weightAgeADMB <- weightAge %>%
+  select(Year, Age, Weight) %>%
   mutate(
     Weight = round(Weight / 1000, digits = 4), Gear = as.integer(1),
     Area = as.integer(1), Group = as.integer(1), Sex = as.integer(0)
   ) %>%
   spread(key = Age, value = Weight) %>%
   arrange(Gear, Year)
-write_csv(x = weightAgeADMB, file = paste0(region, "WtAge.csv"))
+# write_csv(x = weightAgeADMB, file = paste0(region, "WtAge.csv"))
 
 lengthAgeADMB <- lengthAge %>%
   mutate(
@@ -2911,7 +2915,7 @@ lengthAgeADMB <- lengthAge %>%
   ) %>%
   spread(key = Age, value = Length) %>%
   arrange(Gear, Year)
-write_csv(x = lengthAgeADMB, file = paste0(region, "LenAge.csv"))
+# write_csv(x = lengthAgeADMB, file = paste0(region, "LenAge.csv"))
 
 ##### For SISCA (TMB) #####
 
@@ -3899,6 +3903,7 @@ if (exists("weightAgeGroup")) {
 
 # Wrangle data for spawn index by year
 datYr <- siYearLoc %>%
+  tibble() %>%
   group_by(Year) %>%
   summarise(SITotal = SumNA(SITotal)) %>%
   ungroup() %>%
@@ -3967,7 +3972,7 @@ if(!all(is.na(spawnByLocXY$TotalSI))){
 }
 ggsave(
   spawnByLocPlot, filename = file.path(regName, "SpawnByLoc.png"),
-  width = figWidth, height = min(7.5, 6.5 / shapes$xyRatio),
+  width = figWidth, height = min(7.5, 6.5 / reg_ratio_small),
   dpi = figRes
 )
 
@@ -4003,7 +4008,7 @@ spawnDecadePlot <- BaseMap +
   ) 
 ggsave(
   spawnDecadePlot, filename = file.path(regName, "SpawnDecade.png"),
-  width = figWidth, height = min(7.5, 6.5 / shapes$xyRatio), dpi = figRes
+  width = figWidth, height = min(7.5, 6.5 / reg_ratio_small), dpi = figRes
 )
 
 # Basic spawn timing plot
@@ -4644,7 +4649,7 @@ PlotLocationsYear <- function(dat) {
   # Start the PDF
   pdf(
     file = file.path(regName, "SpawnIndexAnimation.pdf"), width = figWidth,
-    height = min(6.75, 6.5 / shapes$xyRatio)
+    height = min(6.75, 6.5 / reg_ratio_small)
   )
   # Loop over pages/years
   for (i in 1:length(uPages)) {
@@ -4678,20 +4683,19 @@ PlotLocationsYear <- function(dat) {
       )
     # Convert to a grob
     subGrob <- ggplotGrob(x = subPlot)
-    # Determine the x location for the grob
-    grobLeft <- max(shapes$landCropDF$Eastings) -
-      diff(range(shapes$landCropDF$Northings)) / 2.5
-    # Determine the y location for the grob
-    grobBottom <- max(shapes$landCropDF$Northings) -
-      diff(range(shapes$landCropDF$Northings)) / 5
     # Add the inset to the map
     finalPlot <- layersPlot +
       coord_sf(
         xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
         ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE) +
       annotation_custom(
-        grob = subGrob, xmin = grobLeft, xmax = Inf,
-        ymin = grobBottom, ymax = Inf
+        grob = subGrob,
+        xmin = max(reg_bbox_small$xmax) -
+          (reg_bbox_small$xmax - reg_bbox_small$xmin) / 2.5,
+        xmax = Inf,
+        ymin = max(reg_bbox_small$ymax) -
+          (reg_bbox_small$ymax - reg_bbox_small$ymin) / 5,
+        ymax = Inf
       )
     # Print the main plot
     print(finalPlot)
@@ -4754,7 +4758,7 @@ PlotFoodBait <- function(dat) {
   # Start the PDF
   pdf(
     file = file.path(regName, "FoodBaitAnimation.pdf"), width = figWidth,
-    height = min(6.75, 6.5 / shapes$xyRatio)
+    height = min(6.75, 6.5 / reg_ratio_small)
   )
   # Loop over pages/years
   for (i in 1:length(uPages)) {
@@ -4895,8 +4899,8 @@ print(
 
 # Format number of biosamples by type
 xBioTypeNum <- bioTypeNum %>%
-  tibble() %>%
-  select(-geometry) %>%
+  # tibble() %>%
+  # select(-geometry) %>%
   mutate(Number = as.integer(Number)) %>%
   rename("Number of samples" = Number) %>%
   xtable()
@@ -4989,7 +4993,7 @@ if (exists("deltaNumAgeYr") & exists("deltaPropAgeYr") &
 # Format proportion-at-age
 xPropAgedYearTab <- propAgedYearTab %>%
   tibble() %>%
-  select(-geometry) %>%
+  select(Year, all_of(as.character(ageRange))) %>%
   xtable(digits = c(0, 0, rep(3, times = length(ageRange))))
 
 # Write proportion-at-age to disc
@@ -5239,7 +5243,7 @@ if (nSampThisYr > 0) {
   # Number aged: this year
   numAgedThisYr <- numAgedYear %>%
     tibble() %>%
-    select(-geometry) %>%
+    select(Year, Age, Number, Proportion) %>%
     filter(Year == max(yrRange)) %>%
     select(Number) %>%
     sum() %>%
@@ -5299,12 +5303,18 @@ cat("Writing tables... ")
 #
 # If looking at all regions
 if (region == "All") {
+  # Get coordinates
+  # TODO: Make a function that takes in a spatial tibble (points) and outputs a
+  # non-spatial tibble with columns for Longitude and Latitude
+  sr_coords <- st_coordinates(spawnRaw)
   # Write spawn data to a csv for Open Data portal (English and French) and FIND
   spawnRaw %>%
+    tibble() %>%
+    mutate(Longitude = sr_coords[,1], Latitude = sr_coords[,2]) %>%
     select(
       Region, Year, StatArea, Section, LocationCode, LocationName,
-      SpawnNumber, Start, End, Eastings, Northings, Longitude, Latitude,
-      Length, Width, Method, SurfSI, MacroSI, UnderSI, Survey
+      SpawnNumber, Start, End, Longitude, Latitude, Length, Width, Method,
+      SurfSI, MacroSI, UnderSI, Survey
     ) %>%
     mutate(StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
            Section = formatC(Section, width = 3, format = "d", flag = "0"),
@@ -5320,7 +5330,7 @@ if (region == "All") {
            Macrocystis = ifelse(StatisticalArea %in% c(10, 28), NA, Macrocystis),
            Understory = ifelse(StatisticalArea %in% c(10, 28), NA, Understory)) %>%
     write_csv(file = file.path(regName, "FIND.csv")) %>%
-    select(-Eastings, -Northings, -Survey) %>%
+    select(-Survey) %>%
     write_csv(file = file.path(regName, "OpenDataEng.csv")) %>%
     mutate(Method = ifelse(Method=="Dive", "Plongée", Method),
            Method = ifelse(Method=="Incomplete", "Incomplet", Method)) %>%
@@ -5330,11 +5340,11 @@ if (region == "All") {
            DateFin = EndDate, Longeur = Length, Largeur = Width, 
            'Méthode' = Method, 'Sous-étage' = Understory) %>%
     write_csv(file = file.path(regName, "OpenDataFra.csv"))
-  # Write the locations with spatial inconsistencies
-  spatialInconsistent <- bind_rows(overAreas, overSpawn, overBio) %>%
-    distinct() %>%
-    arrange(StatAreaLoc, SectionLoc, LocationCode) %>%
-    write_csv(file = file.path(regName, "SpatialInconsistent.csv"))
+  # # Write the locations with spatial inconsistencies
+  # spatialInconsistent <- bind_rows(overAreas, overSpawn, overBio) %>%
+  #   distinct() %>%
+  #   arrange(StatAreaLoc, SectionLoc, LocationCode) %>%
+  #   write_csv(file = file.path(regName, "SpatialInconsistent.csv"))
 } # End if all regions
 
 # # Write catch data to a csv (same as ADMB input data file)
