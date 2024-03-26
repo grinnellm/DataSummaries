@@ -5314,7 +5314,7 @@ if (region == "All") {
     select(
       Region, Year, StatArea, Section, LocationCode, LocationName,
       SpawnNumber, Start, End, Longitude, Latitude, Length, Width, Method,
-      SurfSI, MacroSI, UnderSI, Survey
+      SurfSI, MacroSI, UnderSI
     ) %>%
     mutate(StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
            Section = formatC(Section, width = 3, format = "d", flag = "0"),
