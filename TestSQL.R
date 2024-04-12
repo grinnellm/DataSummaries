@@ -10,17 +10,19 @@ cnn <- dbConnect(odbc::odbc(),
                  Database = "Herring",
                  Trusted_Connection = "Yes")
 
+db_info <- list(schema = "Program", table = "VegTrans")
+sql <- paste("SELECT", "*",
+             "FROM", paste(db_info$schema, db_info$table, sep = ".") )
+
 # Execute the query
-# df <- dbGetQuery(
-#   conn = cnn, statement = "SELECT * FROM Biosample.Lookup_Gear"
-# ) %>%
-#   as_tibble()
+df <- dbGetQuery(conn = cnn, statement = sql) %>%
+  as_tibble()
 
 # Get the table
-df <- dbReadTable(
-  conn = cnn, name = Id(schema = "Biosample", table = "Lookup_Gear")
-) %>%
-  as_tibble()
+# df <- dbReadTable(
+#   conn = cnn, name = Id(schema = "Biosample", table = "Lookup_Gear")
+# ) %>%
+#   as_tibble()
 
 # Close the connection
 dbDisconnect(conn = cnn)

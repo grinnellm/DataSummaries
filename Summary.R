@@ -70,7 +70,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-# rm(list = ls()) # Clear the workspace
+rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -94,20 +94,20 @@ UsePackages <- function(pkgs, locn = "https://cran.rstudio.com/") {
 
 # Make packages available
 UsePackages(pkgs = c(
-  "tidyverse", "RODBC", "zoo", "Hmisc", "scales", "xtable", "cowplot", "grid",
-  "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "plyr",
-  "ggforce", "viridis", "ggthemes", "SpawnIndex", "tidyselect", "ggrepel",
-  "here", "rnaturalearth", "rnaturalearthhires", "sf"
+  "tidyverse", "zoo", "Hmisc", "scales", "xtable", "cowplot", "grid",
+  "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "ggforce",
+  "viridis", "ggthemes", "SpawnIndex", "tidyselect", "ggrepel", "rnaturalearth",
+  "rnaturalearthhires", "sf", "DBI", "odbc", "here", "plyr"
 ))
 
-# Suppress summarise info
-options(dplyr.summarise.inform = FALSE)
+# Set options
+options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 ##### Controls #####
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -162,6 +162,9 @@ send2sisca <- FALSE
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
 
+# Grab updated data from SQL databases
+get_sql <- list(catch = FALSE, bio = FALSE, spawn = FALSE)
+
 # Open 64-bit R in a separate window (to make the animation)
 system64 <- TRUE
 
@@ -178,21 +181,23 @@ inclTestGNBio <- FALSE
 inclSOKBio <- TRUE
 
 # Location of herring databases (catch, biosamples, spawn, etc)
-dirDBs <- file.path("..", "Data")
+dir_data <- file.path("..", "Data")
 
 # Location of the shapefiles
 # dirShape <- file.path( "\\\\dcbcpbsna01a", "hdata$", "Kristen",
 #    "Herring_Shapefiles" )
-dirShape <- file.path(dirDBs, "Polygons")
+dirShape <- file.path(dir_data, "Polygons")
 
 # Location of privacy data
-dirPriv <- file.path(dirDBs, "Privacy")
+dirPriv <- file.path(dir_data, "Privacy")
 
-# Databases: remote (i.e., H:\ for hdata$) or local (e.g., C:\)
-dbLoc <- "Local"
-
-# Database name
-dbName <- "HSA_Program_v6.2.mdb"
+# Database connection details
+db_conn <- list(
+  driver = "SQL Server Native Client 11.0",
+  server = "DFBCV9TWVASP001\\SQLEXPRESS16",
+  database = "Herring",
+  trusted = "Yes"
+)
 
 # Input coordinate reference system
 inCRS <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
@@ -322,32 +327,43 @@ q <- tribble(
 
 # File name for dive transect XY
 diveLoc <- list(
-  loc = dirDBs,
+  loc = dir_data,
   fn = "dive_transects_with_lat_long_June2_2017.xlsx"
 )
 
 # Location and names of lookup tables with catch codes
 codesLoc <- list(
-  loc = dirDBs,
+  loc = dir_data,
   fns = list(
     tDisposal = "tDisposal.csv", tGear = "tGear.csv", tSource = "tSource.csv",
     tPeriod = "tPeriod.csv", tGroup = "tGroup.csv"
   )
 )
 
+# TODO: Organize these better (all of the *Loc lists) and fix the way they're
+# called in the functions
 # Location and name of the location database and tables
 areaLoc <- list(
-  loc = file.path(dirDBs, dbLoc),
-  db = dbName,
-  fns = list(sections = "Sections", locations = "Location")
+  schema = "Location",
+  tables = list(sections = "Sections", locations = "Location"),
+  columns = list(
+    sections = c("SAR", "Section"),
+    locations = c(
+      "Loc_Code", "Location", "StatArea", "Section", "Bed", "Location_Latitude",
+      "Location_Longitude")
+  )
 )
 
-# Location and name of tables for widths.
+# Location and name of tables for widths
 widthLoc <- list(
-  loc = file.path(dirDBs, dbLoc),
-  db = dbName,
-  fns = list(
+  schema = "Location",
+  tables = list(
     region_std = "RegionStd", section_std = "SectionStd", pool_std = "PoolStd"
+  ),
+  columns = list(
+    region_std = c("REGION", "WIDMED"),
+    section_std = c("SECTION", "WIDMED"),
+    pool_std = c("SECTION", "BED", "WIDMED")
   )
 )
 
@@ -360,51 +376,114 @@ shapesLoc <- list(
 
 # Location and name of the catch database and tables
 catchLoc <- list(
-  loc = file.path(dirDBs, dbLoc),
-  db = dbName,
-  fns = list(
+  schema = "Catch",
+  tables = list(
     tCatch = "tCatchData", hCatch = "HailCatch", sokCatch = "SpawnOnKelp"
+  ),
+  columns = list(
+    tCatch = c(
+      "Season", "LocationCode","GearCode", "DisposalCode", "Catch", "Date"
+    ),
+    hCatch = c(
+      "Active", "Season", "Section", "GearCode", "DisposalCode", "CatchTons"
+    ),
+    sokCatch = c(
+      "Season", "Section", "GearCode", "DisposalCode", "ProductLanded"
+    )
   )
 )
 
 # Location and name of the biological database and tables
 bioLoc <- list(
-  loc = file.path(dirDBs, dbLoc),
-  db = dbName,
-  fns = list(samples = "sample", fish = "fish", bmc = "BMcCarter")
+  schema = "Biosample",
+  tables = list(samples = "sample", fish = "fish"),
+  columns = list(
+    samples = c(
+      "season", "loc_code", "Set_Longitude", "Set_Latitude", "isamp", "month",
+      "Representative_Set", "source_code", "gear_code"
+    ),
+    fish = c(
+      "season", "isamp", "fish", "len", "wgt", "sex_alpha", "mat_code", "age",
+      "dual_age", "gonad_len", "gonad_wgt"
+    )
+  )
 )
 
 # Location and name of the surface database and tables
 surfLoc <- list(
-  loc = file.path(dirDBs, dbLoc),
-  db = dbName,
-  fns = list(surface = "tSSSurface", all_spawn = "tSSAllspawn")
+  schema = "Spawn",
+  tables = list(surface = "Surface", all_spawn = "Allspawn"),
+  columns = list(
+    surface = c(
+      "Loc_Code", "Spawn_Number", "Year", "Lay_Grass", "Grass_Percent",
+      "Lay_Rockweed", "Rockweed_Percent", "Lay_Kelp", "Kelp_Percent",
+      "Lay_Brown_Algae", "Brown_Algae_Percent", "Lay_Leafy_Red",
+      "Leafy_Red_Percent", "Lay_Stringy_Red", "Stringy_Red_Percent", "Lay_Rock",
+      "Rock_Percent", "Lay_Other", "Other_Percent", "Intensity"
+    ),
+    all_spawn = c(
+      "Loc_Code", "Spawn_Number", "Width", "Method", "Year", "Length"
+    )
+  )
 )
 
 # Location and name of the macrocystis database and tables
 macroLoc <- list(
-  loc = file.path(dirDBs, dbLoc),
-  db = dbName,
-  fns = list(
-    all_spawn = "tSSAllspawn", plants = "tSSMacPlant", transects = "tSSMacTrans"
+  schema = "Spawn",
+  tables = list(
+    all_spawn = "Allspawn", plants = "MacPlant", transects = "MacTrans"
+  ),
+  columns = list(
+    all_spawn = c(
+      "Loc_Code", "Spawn_Number", "Length_Macrocystis", "Method", "Year",
+      "Length"
+    ),
+    plants = c("Loc_Code", "Spawn_Number", "Year", "Transect", "Mature"),
+    transects = c(
+      "Loc_Code", "Spawn_Number", "Transect", "Year", "Height", "Width",
+      "Layers"
+    )
   )
 )
 
 # Location and name of the macrocystis database and tables
 underLoc <- list(
-  loc = file.path(dirDBs, dbLoc),
-  db = dbName,
-  fns = list(
-    all_spawn = "tSSAllspawn", alg_trans = "tSSVegTrans",
-    stations = "tSSStations", algae = "tSSVegetation"
+  schema = "Spawn",
+  tables = list(
+    all_spawn = "Allspawn", alg_trans = "VegTrans", stations = "Stations",
+    algae = "Vegetation"
+  ),
+  columns = list(
+    all_spawn = c(
+      "Loc_Code", "Spawn_Number", "Length_Vegetation", "Method", "Year", 
+      "Length"
+    ),
+    alg_trans = c(
+      "Year", "Loc_Code", "Spawn_Number", "Quadrat_Size", "Width_Recorded",
+      "Transect"
+    ),
+    stations = c(
+      "Loc_Code", "Spawn_Number", "Layers_Bottom", "Year", "Percent_Bottom",
+      "Transect", "Station"
+    ),
+    algae = c(
+      "Loc_Code", "Spawn_Number", "Type_Vegetation", "Layers_Vegetation",
+      "Year", "Percent_Vegetation", "Transect", "Station"
+    )
   )
 )
 
 # Location and name of the all spawn tables
 allLoc <- list(
-  loc = file.path(dirDBs, dbLoc),
-  db = dbName,
-  fns = list(all_spawn = "tSSAllspawn", stations = "tSSStations")
+  schema = "Spawn",
+  tables = list(all_spawn = "Allspawn", stations = "Stations"),
+  columns = list(
+    all_spawn = c(
+      "Loc_Code", "Spawn_Number", "Start", "[End]", "Method", "Year", "Length",
+      "Width"
+    ),
+    stations = c("Loc_Code", "Spawn_Number", "Depth", "Year")
+  )
 )
 
 # Location and name of catch and harvest privacy data
@@ -415,7 +494,7 @@ privLoc <- list(
 
 # Location and name of incidental catch data
 icLoc <- list(
-  loc = dirDBs,
+  loc = dir_data,
   fn = "Herring Data Request.xlsx",
   sheets = list(ic = "IC", wm = "WM")
 )
@@ -580,9 +659,15 @@ tGroup <- read_csv(
 )
 
 # Load herring areas
-areas <- load_area_data(where = areaLoc, reg = region, sec_sub = sectionSub,
-                      groups = tGroup)
-all_areas <- load_area_data(where = areaLoc, reg = "All")
+areas <- load_area_data(
+  db = db_conn, where = areaLoc, reg = region, sec_sub = sectionSub,
+  groups = tGroup
+)
+
+# Load herring areas (all)
+all_areas <- load_area_data(
+  db = db_conn, where = areaLoc, reg = "All", groups = tGroup, quiet = TRUE
+)
 
 # Use herring sections from SpawnIndex package
 data(sections)
@@ -642,19 +727,28 @@ reg_coast <- st_read(dsn = file.path("..", "Data", "Polygons"),
 #   st_intersection(y = reg_bbox)
 
 # Load median widths to correct surface spawns
-barWidth <- load_width(where = widthLoc, a = areas)
+barWidth <- load_width(db = db_conn, where = widthLoc, a = areas)
 
 # Load raw catch data, and some light wrangling
-LoadCatchData <- function(where, area_table) {
+LoadCatchData <- function(db, where, area_table) {
   # This function loads the tree types of herring catch data, drops unnecessary
   # rows and columns, and combines the data frames for the region(s) in
   # question.
   # Progress message
   cat("Loading catch data... ")
-  # Establish connection with access
-  accessDB <- odbcConnectAccess(access.file = file.path(where$loc, where$db))
+  # Establish database connection
+  cnn <- dbConnect(odbc::odbc(),
+                   Driver = db$driver,
+                   Server = db$server,
+                   Database = db$database,
+                   Trusted_Connection = db$trusted)
+  # SQL query
+  sql_t <- paste(
+    "SELECT", paste(where$columns$tCatch, collapse = ", "),
+    "FROM", paste(where$schema, where$tables$tCatch, sep = ".")
+  )
   # Access the tCatch worksheet
-  tCatch <- sqlFetch(channel = accessDB, sqtable = where$fns$tCatch)
+  tCatch <- dbGetQuery(conn = cnn, statement = sql_t)
   # Error if data was not fetched
   if (class(tCatch) != "data.frame") {
     stop("No data available in MS Access connection")
@@ -674,12 +768,17 @@ LoadCatchData <- function(where, area_table) {
       Date=date(Date)
     ) %>%
     left_join(y = areas, by = "LocationCode") %>%
-    filter(Section %in% areas$Section) %>%
+    # filter(Section %in% areas$Section) %>%
     group_by(Year, Source, Section, GearCode, DisposalCode, Date) %>%
     summarise(Catch = SumNA(Catch)) %>%
     ungroup()
+  # SQL query
+  sql_h <- paste(
+    "SELECT", paste(where$columns$hCatch, collapse = ", "),
+    "FROM", paste(where$schema, where$tables$hCatch, sep = ".")
+  )
   # Access the hail worksheet
-  hCatch <- sqlFetch(channel = accessDB, sqtable = where$fns$hCatch)
+  hCatch <- dbGetQuery(conn = cnn, statement = sql_h)
   # Error if data was not fetched
   if (class(hCatch) != "data.frame") {
     stop("No data available in MS Access connection")
@@ -687,7 +786,7 @@ LoadCatchData <- function(where, area_table) {
   # Wrangle catch
   hCatch <- hCatch %>%
     mutate(Section = formatC(Section, width=3, format="d", flag="0")) %>%
-    filter(Active == 1, Section %in% areas$Section) %>%
+    filter(Active == 1) %>%  # , Section %in% areas$Section
     mutate(
       Year = Season2Year(Season), Catch = CatchTons * convFac$st2t,
       Source = rep("Hail", times = n()), Date = as.Date(NA)
@@ -695,8 +794,13 @@ LoadCatchData <- function(where, area_table) {
     group_by(Year, Source, Section, GearCode, DisposalCode, Date) %>%
     summarise(Catch = SumNA(Catch)) %>%
     ungroup()
+  # SQL query
+  sql_sok <- paste(
+    "SELECT", paste(where$columns$sokCatch, collapse = ", "),
+    "FROM", paste(where$schema, where$tables$sokCatch, sep = ".")
+  )
   # Access the sok worksheet
-  sokCatch <- sqlFetch(channel = accessDB, sqtable = where$fns$sokCatch)
+  sokCatch <- dbGetQuery(conn = cnn, statement = sql_sok)
   # Error if data was not fetched
   if (class(sokCatch) != "data.frame") {
     stop("No data available in MS Access connection")
@@ -709,7 +813,7 @@ LoadCatchData <- function(where, area_table) {
       Section = formatC(Section, width=3, format="d", flag="0")
     ) %>%
     rename(Catch = ProductLanded) %>%
-    filter(Section %in% areas$Section) %>%
+    # filter(Section %in% areas$Section) %>%
     group_by(Year, Source, Section, GearCode, DisposalCode, Date) %>%
     summarise(Catch = SumNA(Catch)) %>%
     ungroup()
@@ -740,28 +844,49 @@ LoadCatchData <- function(where, area_table) {
   res <- res %>%
     filter(Year %in% yrRange)
   # Close the connection
-  odbcClose(accessDB)
+  dbDisconnect(conn = cnn)
+  # Save data for next time
+  saveRDS(res, file = here("..", "Data", "Raw", "CatchRaw.rds"))
   # Update progress message
   cat("done\n")
   # Return the data
   return(res)
 } # End LoadCatchData function
 
-# Load raw catch data
-catchRaw <- LoadCatchData(where = catchLoc, area_table = areas)
+# Catch data: get updated data if old data is not present or if requested
+if(!file.exists(here("..", "Data", "Raw", "CatchRaw.rds")) | get_sql$catch) {
+  # Update raw catch data
+  catchRaw <- LoadCatchData(
+    db = db_conn, where = catchLoc, area_table = all_areas
+  ) %>%
+    filter(Section %in% areas$Section)
+} else { # Otherwise, use saved data
+  # Load raw catch data
+  catchRaw <- readRDS(here("..", "Data", "Raw", "CatchRaw.rds")) %>%
+    filter(Section %in% areas$Section)
+} # End catch data
 
 # Load biological data, and some light wrangling
-LoadBioData <- function(where, XY) {
+LoadBioData <- function(db, where, area_table, XY) {
   # This function loads the herring biosample data: one table with general
   # sample information, and the other with fish measurements. Unnecessary
   # rows and columns are dropped. The output is a data frame of the two merged
   # tables for the region(s) in question.
   # Progress message
   cat("Loading biosample data... ")
-  # Establish connection with access
-  accessDB <- odbcConnectAccess(access.file = file.path(where$loc, where$db))
+  # Establish database connection
+  cnn <- dbConnect(odbc::odbc(),
+                   Driver = db$driver,
+                   Server = db$server,
+                   Database = db$database,
+                   Trusted_Connection = db$trusted)
+  # SQL query
+  sql_s <- paste(
+    "SELECT", paste(where$columns$sample, collapse = ", "),
+    "FROM", paste(where$schema, where$tables$samples, sep = ".")
+  )
   # Access the sample worksheet
-  sampleDat <- sqlFetch(channel = accessDB, sqtable = where$fns$samples)
+  sampleDat <- dbGetQuery(conn = cnn, statement = sql_s)
   # Error if data was not fetched
   if (class(sampleDat) != "data.frame") {
     stop("No data available in MS Access connection")
@@ -801,8 +926,13 @@ LoadBioData <- function(where, XY) {
       SourceCode, GearCode
     ) %>%
     as_tibble()
+  # SQL query
+  sql_f <- paste(
+    "SELECT", paste(where$columns$fish, collapse = ", "),
+    "FROM", paste(where$schema, where$tables$fish, sep = ".")
+  )
   # Access the fish worksheet
-  fish <- sqlFetch(channel = accessDB, sqtable = where$fns$fish)
+  fish <- dbGetQuery(conn = cnn, statement = sql_f)
   # Error if data was not fetched
   if (class(fish) != "data.frame") {
     stop("No data available in MS Access connection")
@@ -828,8 +958,8 @@ LoadBioData <- function(where, XY) {
   fishSamples <- full_join(x = samples, y = fish, by = c("Year", "Sample"))
   # More wrangling: filter to region(s)
   raw <- fishSamples %>%
-    filter(LocationCode %in% areas$LocationCode) %>%
-    left_join(y = areas, by = "LocationCode") %>%
+    # filter(LocationCode %in% areas$LocationCode) %>%
+    left_join(y = area_table, by = "LocationCode") %>%
     # mutate(
       # Eastings = ifelse(is.na(Eastings.x), Eastings.y, Eastings.x),
       # Northings = ifelse(is.na(Northings.x), Northings.y, Northings.x),
@@ -895,18 +1025,32 @@ LoadBioData <- function(where, XY) {
   res <- res %>%
     filter(Year %in% yrRange)
   # Close the connection
-  odbcClose(accessDB)
+  dbDisconnect(conn = cnn)
+  # Save data for next time
+  saveRDS(res, file = here("..", "Data", "Raw", "BioRaw.rds"))
   # Update progress message
   cat("done\n")
   # Return the data
   return(res)
 } # End LoadBioData function
 
-# Load raw biological data
-bioRaw <- LoadBioData(where = bioLoc, XY = transectXY)
+# Bio data: get updated data if old data is not present or if requested
+if(!file.exists(here("..", "Data", "Raw", "BioRaw.rds")) | get_sql$bio) {
+  # Update raw bio data
+  bioRaw <- LoadBioData(
+    db = db_conn, where = bioLoc, area_table = all_areas, XY = transectXY
+  ) %>%
+    filter(LocationCode %in% areas$LocationCode)
+} else { # Otherwise, use saved data
+  # Load raw bio data
+  bioRaw <- readRDS(here("..", "Data", "Raw", "BioRaw.rds")) %>%
+    filter(LocationCode %in% areas$LocationCode)
+} # End bio data
 
 # Load spawn data, and some light wrangling
-LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
+LoadSpawnData <- function(
+  whereSurf, whereMacro, whereUnder, area_table, XY
+) {
   # This function loads the herring spawn data, and drops unnecessary rows and
   # columns. The output is a data frame for the region(s) in question.
   # Progress message
@@ -917,26 +1061,29 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
   cat("\tsurface...\n")
   # Access and calculate surface spawn
   surface <- calc_surf_index(
-    where = whereSurf, areas = areas, widths = barWidth, years = yrRange,
-    quiet = TRUE
+    db = db_conn, where = whereSurf, areas = area_table, widths = barWidth,
+    years = yrRange, quiet = TRUE
   )
   # Progress message
   cat("\tmacrocystis...\n")
   # Access and calculate macrocystis spawn
   macrocystis <- calc_macro_index(
-    where = whereMacro, areas = areas, years = yrRange, quiet = TRUE
+    db = db_conn, where = whereMacro, areas = area_table, years = yrRange,
+    quiet = TRUE
   )
   # Progress message
   cat("\tunderstory...\n")
   # Access and calculate understory spawn
   understory <- calc_under_index(
-    where = whereUnder, areas = areas, years = yrRange, quiet = TRUE
+    db = db_conn, where = whereUnder, areas = area_table, years = yrRange,
+    quiet = TRUE
   )
   # Update progress message
   cat("\ttotal... ")
   # Load the all spawn data
   allSpawn <- load_all_spawn(
-    where = allLoc, areas = areas, years = yrRange, ft2m = convFac$ft2m
+    db = db_conn, where = allLoc, areas = area_table, years = yrRange,
+    ft2m = convFac$ft2m
   )
   # Combine the spawn types (by spawn number)
   raw <- surface$biomass_spawn %>%
@@ -1019,25 +1166,35 @@ LoadSpawnData <- function(whereSurf, whereMacro, whereUnder, XY) {
     )
   }
   # Add a column to indicate the survey period
-  raw <- raw %>%
+  res <- raw %>%
     mutate(
       Survey = ifelse(Year < pars$years$dive, "Surface", "Dive"),
       Survey = factor(Survey, levels = c("Surface", "Dive"))
     ) %>%
     filter(Year %in% yrRange)
   # Spatial
-  st_crs(raw) <- st_crs(areas)
+  st_crs(res) <- st_crs(areas)
+  # Save data for next time
+  saveRDS(res, file = here("..", "Data", "Raw", "SpawnRaw.rds"))
   # Update the progress message
   cat("done\n")
   # Return the data
-  return(raw)
+  return(res)
 } # End LoadSpawnData function
 
-# Load spawn data
-spawnRaw <- LoadSpawnData(
-  whereSurf = surfLoc, whereMacro = macroLoc, whereUnder = underLoc,
-  XY = transectXY
-)
+# Spawn data: get updated data if old data is not present or if requested
+if(!file.exists(here("..", "Data", "Raw", "SpawnRaw.rds")) | get_sql$spawn) {
+  # Update raw spawn data
+  spawnRaw <- LoadSpawnData(
+    whereSurf = surfLoc, whereMacro = macroLoc, whereUnder = underLoc,
+    area_table = all_areas, XY = transectXY
+  ) %>%
+    filter(LocationCode %in% areas$LocationCode)
+} else { # Otherwise, use saved data
+  # Load raw spawn data
+  spawnRaw <- readRDS(here("..", "Data", "Raw", "SpawnRaw.rds")) %>%
+    filter(LocationCode %in% areas$LocationCode)
+} # End spawn data
 
 # Load incidental catch
 LoadIncidentalCatch <- function(file, a = areas) {
@@ -2272,8 +2429,8 @@ harvestSOK <- privDat$region %>%
   right_join(y = harvestSOK, by = "Year") %>%
   replace_na(replace = list(Private = FALSE)) %>%
   mutate(
-    Harvest = format(Harvest, big.mark = ",", digits = 0, scientific = FALSE),
-    Biomass = format(Biomass, big.mark = ",", digits = 0, scientific = FALSE),
+    Harvest = label_comma()(round(Harvest)),
+    Biomass = label_comma()(round(Biomass)),
     Harvest = ifelse(Private, "WP", Harvest),
     Biomass = ifelse(Private, "WP", Biomass)
   ) %>%
@@ -2287,7 +2444,7 @@ catchCommUseYr <- catchPriv %>%
   summarise(Catch = SumNA(Catch), Private = all(isTRUE(Private))) %>%
   ungroup() %>%
   mutate(Catch = ifelse(Private, "WP",
-                        format(Catch, big.mark = ",", digits = 0, scientific = FALSE)
+                        formatC(Catch, big.mark = ",", digits = 0)
   )) %>%
   select(Gear, Catch)
 
@@ -3357,7 +3514,8 @@ if (makeFrench) {
     ) +
     geom_point(data = shapes$extAllDF, colour = "transparent") +
     geom_path(
-      data = shapes$regAllDF, aes(group = Region), size = 0.75, colour = "black"
+      data = shapes$regAllDF, aes(group = Region), linewidth = 0.75,
+      colour = "black"
     ) +
     geom_label(
       data = shapes$regCentDF, alpha = 0.5, mapping = aes(label = RegionFR)
@@ -3506,7 +3664,7 @@ if (exists("weightCatchFig")) {
     scale_fill_viridis(discrete = TRUE) +
     geom_hline(
       data = weightCatchFigMu, mapping = aes(yintercept = MuWeight),
-      size = 0.25, linetype = "dashed"
+      linewidth = 0.25, linetype = "dashed"
     ) +
     expand_limits(x = c(firstYrTab, max(yrRange))) +
     myTheme +
@@ -3532,7 +3690,7 @@ if (exists("weightCatchFig")) {
   #   scale_fill_viridis(discrete = TRUE) +
   #   geom_hline(
   #     data = weightCatchFigMu, mapping = aes(yintercept = MuLength),
-  #     size = 0.25, linetype = "dashed"
+  #     linewidth = 0.25, linetype = "dashed"
   #   ) +
   #   expand_limits(x = c(firstYrTab, max(yrRange))) +
   #   myTheme +
@@ -4239,7 +4397,7 @@ spawnPercentSecStackPlot <- ggplot(
 #   data = spawnYrSecCC, mapping = aes(x=Year, y=Biomass)
 # ) +
 #   geom_point(mapping = aes(shape = Survey), size = 1) +
-#   geom_line(mapping = aes(group = Survey), size = 0.5) +
+#   geom_line(mapping = aes(group = Survey), linewidth = 0.5) +
 #   labs(y = expression(paste("Scaled abundance (t" %*% 10^3, ")", sep = ""))) +
 #   scale_x_continuous(breaks = yrBreaks) +
 #   scale_y_continuous(labels = function(x) comma(x / 1000)) +
@@ -4847,8 +5005,8 @@ xHarvestSOK <- harvestSOK %>%
   arrange(Year) %>%
   mutate(
     Year = as.integer(Year),
-    Harvest = format(Harvest, big.mark = ",", digits = 0, scientific = FALSE),
-    Biomass = format(Biomass, big.mark = ",", digits = 0, scientific = FALSE)
+    # Harvest = label_comma()(round(Harvest)),
+    # Biomass = label_comma()(round(Biomass))
   ) %>%
   rename("Harvest (lb)" = Harvest, "Spawning biomass (t)" = Biomass) %>%
   xtable()
@@ -5008,8 +5166,8 @@ if (exists("weightAgeGroupN")) {
   # Format weight-at-age
   xWeightAgeGroupN <- weightAgeGroupN %>%
     mutate(
-      Previous = format(Previous, big.mark = ",", scientific = FALSE),
-      Recent = format(Recent, big.mark = ",", scientific = FALSE)
+      Previous = formatC(Previous, big.mark = ","),
+      Recent = formatC(Recent, big.mark = ",")
     ) %>%
     rename("Previous decade" = Previous, "Recent decade" = Recent) %>%
     xtable(digits = c(0, 0, 0, 0, 0))
@@ -5024,13 +5182,10 @@ if (exists("weightAgeGroupN")) {
 # Format spawn summary
 xSpawnYrTab <- spawnYrTab %>%
   mutate(
-    TotalLength = format(TotalLength,
-                         big.mark = ",", digits = 0,
-                         scientific = FALSE
-    ),
-    MeanWidth = format(MeanWidth, big.mark = ",", digits = 0),
-    MeanLayers = format(MeanLayers, big.mark = ",", digits = 1),
-    TotalSI = format(TotalSI, big.mark = ",", digits = 0, scientific = FALSE)
+    TotalLength = formatC(TotalLength, big.mark = ",", digits = 0),
+    MeanWidth = formatC(MeanWidth, big.mark = ",", digits = 0),
+    MeanLayers = formatC(MeanLayers, big.mark = ",", digits = 1),
+    TotalSI = formatC(TotalSI, big.mark = ",", digits = 0)
   ) %>%
   rename(
     "Total length" = TotalLength, "Mean width" = MeanWidth,
@@ -5067,7 +5222,7 @@ if (nrow(spawnByLoc) >= 1) {
       StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
       Section = formatC(Section, width = 3, format = "d", flag = "0"),
       Start = format(Start, format = "%B %d"),
-      TotalSI = format(TotalSI, big.mark = ",", digits = 0, scientific = FALSE)
+      TotalSI = formatC(TotalSI, big.mark = ",", digits = 0)
     ) %>%
     rename(
       "Statistical Area" = StatArea, "Location name" = LocationName,
@@ -5330,7 +5485,7 @@ if (region == "All") {
            Macrocystis = ifelse(StatisticalArea %in% c(10, 28), NA, Macrocystis),
            Understory = ifelse(StatisticalArea %in% c(10, 28), NA, Understory)) %>%
     write_csv(file = file.path(regName, "FIND.csv")) %>%
-    select(-Survey) %>%
+    # select(-Survey) %>%
     write_csv(file = file.path(regName, "OpenDataEng.csv")) %>%
     mutate(Method = ifelse(Method=="Dive", "Plongée", Method),
            Method = ifelse(Method=="Incomplete", "Incomplet", Method)) %>%
