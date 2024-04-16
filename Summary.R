@@ -165,8 +165,8 @@ makeAnimation <- FALSE
 # Grab updated data from SQL databases
 get_sql <- list(catch = FALSE, bio = FALSE, spawn = FALSE)
 
-# Open 64-bit R in a separate window (to make the animation)
-system64 <- TRUE
+# # Open 64-bit R in a separate window (to make the animation)
+# system64 <- FALSE
 
 # Include test fishery catch
 inclTestCatch <- TRUE
@@ -2279,7 +2279,7 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
     filter(Year %in% yrs) %>%
     replace_na(replace = list(SurfSI = 0, MacroSI = 0, UnderSI = 0)) %>%
     mutate(TotalSI = SurfSI + MacroSI + UnderSI) %>%
-    group_by_(.dots = c("Year", g)) %>%
+    group_by(.dots = c("Year", g)) %>%
     summarise(TotalSI = SumNA(TotalSI)) %>%
     group_by(Year) %>%
     mutate(Proportion = TotalSI / SumNA(TotalSI)) %>%
@@ -2309,7 +2309,7 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
   # Full join and wrangle
   res <- pSpawn %>%
     select(-TotalSI) %>%
-    spread_(key = g, value = "Proportion") %>%
+    spread(key = g, value = "Proportion") %>%
     full_join(y = tSpawn, by = "Year") %>%
     arrange(Year) %>%
     mutate(
@@ -3528,7 +3528,7 @@ if (makeFrench) {
       geom = "text", x = 650000, y = 550000, label = "Océan\nPacifique",
       size = 5
     ) +
-    coord_equal() +
+    # coord_equal() +
     labs(x = "Abcsisses (km)", y = "Ordonnées (km)", caption = geoProj) +
     scale_x_continuous(
       labels = function(x) comma(x / 1000, big.mark = " "), expand = c(0, 0)
@@ -3550,7 +3550,7 @@ BaseMap <- ggplot(data = reg_coast) +
     data = shapes$regions, fill = "transparent", linewidth = 0.75,
     colour = "black", linetype = "dashed"
   ) +
-  coord_equal() +
+  # coord_equal() +
   labs(x = "Longitude", y = "Latitude") +
   myTheme
 
@@ -3600,10 +3600,12 @@ showCatchZoom <- ifelse(max(catchPriv$Year) >= firstYrFig, TRUE, FALSE)
 catchGearPlot <- ggplot(
   data = catchPriv, mapping = aes(x = Year, y = CatchPriv)
 ) +
-  geom_bar(stat = "identity", position = "stack", aes(fill = Gear)) +
+  geom_bar(
+    stat = "identity", position = "stack", aes(fill = Gear), na.rm = TRUE
+  ) +
   geom_point(
     data = filter(catchPriv, Private),
-    mapping = aes(x = Year, shape = Gear), y = 0
+    mapping = aes(x = Year, shape = Gear), y = 0, na.rm = TRUE
   ) +
   labs(y = expression(paste("Catch (t" %*% 10^3, ")", sep = ""))) +
   scale_x_continuous(breaks = yrBreaks) +
@@ -3618,12 +3620,14 @@ catchGearPlot <- ggplot(
   myTheme +
   theme(legend.position = "top")
 if(showCatchZoom){
-  # Zoom into recent time
-  catchGearPlotZoom <- catchGearPlot + 
+  # Zoom into recent time (suppress message about a second scale for x)
+  suppressMessages(
+    catchGearPlotZoom <- catchGearPlot + 
     scale_x_continuous(
       breaks = yrBreaks, limits = c(firstYrFig, max(yrRange) + 1)
     ) +
     guides(fill = "none", shape = "none")
+  )
   # Add zoom to plot
   catchGearPlot <- plot_grid(
     catchGearPlot, catchGearPlotZoom, align = "v", ncol = 1, 
@@ -4498,7 +4502,7 @@ PlotPCSecSA <- function(dat) {
   nPlots <- length(uGroups)
   # Get the maximum y range
   yUpper <- dat %>%
-    group_by_("Year", gName) %>%
+    group_by("Year", gName) %>%
     summarise(Total = SumNA(PercSI, omitNA = TRUE)) %>%
     ungroup()
   # Get the y limits
@@ -4875,21 +4879,22 @@ PlotLocationsYear <- function(dat) {
 if (makeAnimation || 
     !paste("SpawnIndexAnimation", regName, "pdf", sep = ".") %in% 
     list.files(path = "Animations")) {
-  # Use 64-bit R if you encounter memory issues
-  if(system64) {
-    # Location of script
-    scriptLoc <- "C:/Grinnell/Git/DataSummaries/MakeAnimation.R"
-    # Save the workspace image
-    save.image(file = "Temp.RData")
-    # Call R via system: takes a few mins
-    system(paste0(Sys.getenv("R_HOME"), "/bin/x64/Rscript.exe ", scriptLoc), 
-           wait = TRUE, invisible = FALSE, intern = TRUE)
-    # Remove the image
-    file.remove(file = "Temp.RData")
-  } else { # End if 64-bit, otherwise
-    # Show spawn locations (this takes a few minutes!)
-    PlotLocationsYear(dat = siYearLoc)
-  } # End if 32-bit
+  # # Use 64-bit R if you encounter memory issues
+  # if(system64) {
+  #   # Location of script
+  #   scriptLoc <- "C:/Grinnell/Git/DataSummaries/MakeAnimation.R"
+  #   # Save the workspace image
+  #   save.image(file = "Temp.RData")
+  #   # Call R via system: takes a few mins
+  #   system(paste0(Sys.getenv("R_HOME"), "/bin/x64/Rscript.exe ", scriptLoc), 
+  #          wait = TRUE, invisible = FALSE, intern = TRUE)
+  #   # Remove the image
+  #   file.remove(file = "Temp.RData")
+  # } else { # End if 64-bit, otherwise
+  # Make the animation (twice to remove empty first page; takes a few minutes)
+  PlotLocationsYear(dat = filter(siYearLoc, Year %in% yrRange[1:2]))
+  PlotLocationsYear(dat = siYearLoc)
+  # } # End if 32-bit
 } else { # End if making the animation, otherwise
   # Copy the saved version
   file.copy(
