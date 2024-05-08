@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -620,8 +620,8 @@ if (!"Animations" %in% list.files()) dir.create(path = "Animations")
 if (regName %in% list.files()) {
   # Remove the old directory
   unlink(x = regName, recursive = TRUE)
-  # Warning: remove previous summary output
-  warning("Removed existing directory '", regName, "'", call. = FALSE)
+  # # Warning: remove previous summary output
+  # warning("Removed existing directory '", regName, "'", call. = FALSE)
   # Create the main directory for output
   dir.create(path = regName)
 } else { # End if directory exists, otherwise
@@ -1202,6 +1202,7 @@ LoadIncidentalCatch <- function(file, a = areas) {
   next_yr <- c("Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
   # Subset area data
   a_sm <- a %>%
+    as_tibble() %>%
     select(Region, StatArea) %>%
     unique()
   # Grab incidental catch and wrangle
@@ -2150,13 +2151,19 @@ CalcSpawnSummary <- function(dat, g) {
   if (all(c("Year", "StatArea") %in% g)) {
     yrsFull <- expand.grid(Year = yrRange, StatArea = unique(dat$StatArea)) %>%
       tibble() %>%
-      mutate(StatArea = formatC(StatArea, width=2, format="d", flag="0"))
+      mutate(
+        StatArea = as.character(StatArea),
+        StatArea = formatC(StatArea, width=2, format="d", flag="0")
+      )
   }
   # Get the full year range and sections
   if (all(c("Year", "Section") %in% g)) {
     yrsFull <- expand.grid(Year = yrRange, Section = unique(dat$Section)) %>%
       tibble() %>%
-      mutate(Section = formatC(Section, width=3, format="d", flag="0"))
+      mutate(
+        Section = as.character(Section),
+        Section = formatC(Section, width=3, format="d", flag="0")
+      )
   }
   # Get the full year range and groups
   if (all(c("Year", "Group") %in% g)) {
@@ -2364,6 +2371,7 @@ spawnDecade <- spawnRaw %>%
 
 # Get table of stat area, section, and group
 spatialGroup <- areas %>%
+  as_tibble() %>%
   select(RegionName, StatArea, Section, Group) %>%
   distinct() %>%
   mutate(
@@ -3266,7 +3274,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     select(Year, Gear, Value) %>%
     pivot_wider(names_from = Gear, values_from = Value) %>%
     select(Year) %>%
-    top_n(n = 20) %>%
+    slice_max(n = 20, order_by = Year) %>%
     pull(Year) %>%
     min()
   # Determine ratio of catch since first year
@@ -3942,6 +3950,20 @@ if (exists("compNear") & exists("compNearSA") & exists("nSampleSA")) {
   )
 } # End if nearshore comparison
 
+# compNearNum <- compNear %>%
+#   as_tibble() %>%
+#   group_by(Year, Sample) %>%
+#   summarise(Number = sum(Number)) %>%
+#   ungroup() %>%
+#   write_csv(file = "CompNear.csv")
+
+# compNearSANum <- compNearSA %>%
+#   as_tibble() %>%
+#   group_by(Year, StatArea, Sample) %>%
+#   summarise(Number = sum(Number)) %>%
+#   ungroup() %>%
+#   write_csv(file = "CompNearSA.csv")
+
 # Different plot for major vs others
 if(regionType == "major"){
   # Plot weight- and length-at-age by year
@@ -4155,6 +4177,7 @@ spawnDecadePlot <- BaseMap +
   scale_colour_viridis(labels = comma) +
   scale_size(breaks = pretty_breaks(), guide = guide_legend(order = 2)) +
   labs(colour = "Mean spawn\nindex (t)") +
+     # title = paste(unique(spawnDecade$Decade)))
   coord_sf(
     xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
     ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE) +
@@ -4569,10 +4592,10 @@ spawnPercentPanelPlot <- ggplot(
   scale_fill_grey(start = 0.5, end = 0) +
   expand_limits(x = c(firstYrFig, max(yrRange))) +
   facet_wrap(~Section, labeller = label_both, drop = TRUE, ncol = 3) +
-  myTheme +
-  theme(
-    legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)
-  ) 
+  # myTheme +
+   theme(
+     legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)
+   ) 
 ggsave(
   spawnPercentPanelPlot, filename = file.path(regName, "SpawnPercentPanel.png"),
   width = figWidth, dpi = figRes,
@@ -4591,10 +4614,43 @@ spawnIndexPanelPlot <- ggplot(
   scale_fill_grey(start = 0.5, end = 0) +
   expand_limits(x = c(firstYrFig, max(yrRange))) +
   facet_wrap(~Section, labeller = label_both, drop = TRUE, ncol = 3) +
-  myTheme +
-  theme(legend.position = "none") 
+  # myTheme +
+  theme(
+    legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)
+  ) 
 ggsave(
   spawnIndexPanelPlot, filename = file.path(regName, "SpawnIndexPanel.png"),
+  width = figWidth, dpi = figRes,
+  height = min(7.9, 1.5 * (ceiling(n_distinct(spawnYrSec$Section) / 3)))
+)
+
+# Scale by q
+q <- read_csv(file = "qPars.csv", col_types = cols()) %>%
+  filter(Region == region) %>%
+  select(Median, Survey)
+spawnYrSec <- spawnYrSec %>%
+  mutate(Survey = as.character(Survey)) %>%
+  left_join(y = q, by = "Survey") %>%
+  mutate(Abund = TotalSI / Median)
+
+# Scaled abundance in each section and year
+abundPanelPlot <- ggplot(
+  data = spawnYrSec,
+  mapping = aes(x = Year, y = Abund, fill = Year == max(yrRange))
+) +
+  geom_bar(stat = "identity") +
+  labs(y = expression(paste("Scaled abundance (t" %*% 10^3, ")", sep = ""))) +
+  scale_x_continuous(breaks = yrBreaks) +
+  scale_y_continuous(labels = function(x) comma(x / 1000)) +
+  scale_fill_grey(start = 0.5, end = 0) +
+  expand_limits(x = c(firstYrFig, max(yrRange))) +
+  facet_wrap(~Section, labeller = label_both, drop = TRUE, ncol = 3) +
+  # myTheme +
+  theme(
+    legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)
+  ) 
+ggsave(
+  abundPanelPlot, filename = file.path(regName, "AbundancePanel.png"),
   width = figWidth, dpi = figRes,
   height = min(7.9, 1.5 * (ceiling(n_distinct(spawnYrSec$Section) / 3)))
 )
@@ -5244,7 +5300,6 @@ if (nrow(spawnByLoc) >= 1) {
 # Format the spatial table
 xSpatialGroup <- spatialGroup %>%
   tibble() %>%
-  select(-geometry) %>%
   rename(Region = RegionName, "Statistical Area" = StatArea) %>%
   xtable()
 # Write the spatial table (longtable) to disc
@@ -5466,6 +5521,7 @@ if (region == "All") {
   # Get coordinates
   # TODO: Make a function that takes in a spatial tibble (points) and outputs a
   # non-spatial tibble with columns for Longitude and Latitude
+  # TODO: Check for zeros in spawn index values (should have NAs but not zeros)
   sr_coords <- st_coordinates(spawnRaw)
   # Write spawn data to a csv for Open Data portal (English and French) and FIND
   spawnRaw %>%
