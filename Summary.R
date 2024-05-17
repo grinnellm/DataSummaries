@@ -298,6 +298,9 @@ yrsRatioHist <- 1994:2013
 # Years to fix using historic ratio of biosample effort (Central Coast)
 yrsRatioFix <- c(2014, 2015)
 
+# Years to include for incidental catch
+yrsIC <- 2014:max(yrRange)
+
 # Transect swath (i.e., width of the transect in m; used for macrocystis spawn)
 transectSwath <- 2
 
@@ -1184,6 +1187,9 @@ LoadSpawnData <- function(
 
 # Spawn data: get updated data if old data is not present or if requested
 if(!file.exists(here("..", "Data", "Raw", "SpawnRaw.rds")) | get_sql$spawn) {
+  # Error
+  if(region != "All")
+    stop("Set `region` to `All` to update spawn data.", call. = FALSE)
   # Update raw spawn data
   spawnRaw <- LoadSpawnData(
     whereSurf = surfLoc, whereMacro = macroLoc, whereUnder = underLoc,
@@ -1195,6 +1201,26 @@ if(!file.exists(here("..", "Data", "Raw", "SpawnRaw.rds")) | get_sql$spawn) {
   spawnRaw <- readRDS(here("..", "Data", "Raw", "SpawnRaw.rds")) %>%
     filter(LocationCode %in% areas$LocationCode)
 } # End spawn data
+
+# spawnRawCC <- readRDS(here("..", "Data", "Raw", "SpawnRawCC.rds"))
+# spawnRawPRD <- readRDS(here("..", "Data", "Raw", "SpawnRawPRD.rds"))
+# CC <- as_tibble(spawnRawCC) %>%
+#   select(Year, Region, StatArea, Section, LocationCode, SpawnNumber, Length,
+#          Width, SurfSI) %>%
+#   rename(SurfCC = SurfSI)
+# PRD <- as_tibble(spawnRawPRD) %>%
+#   select(Year, Region, StatArea, Section, LocationCode, SpawnNumber, Length,
+#          Width, SurfSI) %>%
+#   rename(SurfPRD = SurfSI)
+# for(i in 1:ncol(CC)){
+#   ans <- all(CC[,i] == PRD[,i])
+#   print(ans)
+# }
+# spRaw <- CC %>%
+#   full_join(PRD) %>%
+#   filter(SurfCC != SurfPRD)
+# ggplot(data = spRaw, mapping = aes(x = SurfCC, y = SurfPRD)) +
+#   geom_point()
 
 # Load incidental catch
 LoadIncidentalCatch <- function(file, a = areas) {
@@ -1249,7 +1275,8 @@ LoadIncidentalCatch <- function(file, a = areas) {
 } # End LoadIncidentalCatch function
 
 # Load incidental catch
-incidental <- LoadIncidentalCatch(file = icLoc)
+incidental <- LoadIncidentalCatch(file = icLoc) %>%
+  filter(Year %in% yrsIC)
 
 # # For Lynn Lee (HG and A2W)
 # spawnRaw %>%
@@ -5030,6 +5057,25 @@ PlotFoodBait <- function(dat) {
 # Plot food and bait
 # PlotFoodBait(dat = catchFB)
 
+# Determine whether or not to show incidental catch
+showCatchIC <- ifelse(nrow(incidental) >= 1, TRUE, FALSE)
+
+# Plot incidental catch if any
+if(showCatchIC) {
+  catchIC <- ggplot(
+    data = incidental, mapping = aes(x = Year, y = Number, fill = Type)
+  ) +
+    geom_col(position = "dodge") +
+    labs(y = "Number of fish (thousands)") +
+    scale_fill_viridis_d() +
+    scale_y_continuous(labels = function(x) comma(x / 1000)) +
+    theme(legend.position = "top")
+  ggsave(
+    catchIC, filename = file.path(regName, "CatchIC.png"), width = figWidth,
+    height = 4, dpi = figRes
+  )
+}
+
 # Update progress
 cat("done\n")
 
@@ -5339,6 +5385,8 @@ tfSpatialGroup <- "\\togglefalse{spatialGroup}"
 tfSpecialRegion <- "\\togglefalse{specialRegion}"
 # Turn the toggle to false: catch zoom
 tfShowCatchZoom <- "\\togglefalse{showCatchZoom}"
+# Turn the toggle to false: incidental catch
+tfShowCatchIC <- "\\togglefalse{showCatchIC}"
 
 # Group name
 spawnIndexGroupName <- list(a = "Statistical Area", b = "Statistical Area (SA)")
@@ -5395,6 +5443,9 @@ if (exists("weightCatchFig")) tfWeightCatch <- "\\toggletrue{weightCatch}"
 if (exists("catchStatArea")) {
   tfCatchStatArea <- "\\toggletrue{catchStatArea}"
 }
+
+# If there is incidental catch: set toggle to true
+if(showCatchIC) tfShowCatchIC <- "\\toggletrue{showCatchIC}"
 
 # If the region is Strait of Georgia
 if (region == "SoG") {
@@ -5661,14 +5712,14 @@ if(regName %in% c("CC", "A27")) {
                                   sep = "")))
 }
 
-# write incidental catch to a csv
-if(regName %in% c("HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W", "A10")){
-  write_csv(
-    x = incidental,
-    file = file.path(srLoc, paste("incidental-", tolower(regName), ".csv",
-                                  sep = ""))
-  )
-}
+# # write incidental catch to a csv
+# if(regName %in% c("HG", "PRD", "CC", "SoG", "WCVI", "A27", "A2W", "A10")){
+#   write_csv(
+#     x = incidental,
+#     file = file.path(srLoc, paste("incidental-", tolower(regName), ".csv",
+#                                   sep = ""))
+#   )
+# }
 
 ## Format the spawn summary
 # spawnYrF <- spawnYr %>%
