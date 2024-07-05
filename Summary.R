@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -221,7 +221,7 @@ srLoc <- file.path("..", "herringsr", "data")
 data(pars)
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- pars$year$assess:2023
+yrRange <- pars$year$assess:2024
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -1853,8 +1853,11 @@ FormatPropAtAge <- function(dat) {
   return(res)
 } # End FormatPropAtAge function
 
-# Format proportion-at-aget dc
-propAgedYearTab <- FormatPropAtAge(dat = numAgedYear)
+# Format proportion-at-age
+propAgedYearTab <- numAgedYear %>%
+  as_tibble() %>%
+  select(Year, Age, Number, Proportion) %>%
+  FormatPropAtAge()
 
 # Determine weighted mean and approximate CI age by year
 qAgedYear <- numAgedYear %>%
@@ -2266,6 +2269,7 @@ spawnYrTypeProp <- spawnYrType %>%
 # Smaller subset for table: spawn by year
 spawnYrTab <- spawnYr %>%
   filter(Year >= firstYrTab) %>%
+  arrange(Year) %>%
   select(Year, TotalLength, MeanWidth, MeanLayers, TotalSI)
 
 # Calculate spawn summary by year and section
@@ -2358,7 +2362,7 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
 
 # Calculate spawn summary in current year by location code
 spawnByLocXY <- spawnRaw %>%
-  filter(Year == max(yrRange)) %>%
+  filter(Year == max(yrRange) - 1) %>% # TODO: Need to revert this!
   group_by(StatArea, Section, LocationCode, LocationName) %>%
   summarise(
     Start = MinNA(Start), TotalSI = SumNA(c(MacroSI, SurfSI, UnderSI)),
@@ -2478,8 +2482,8 @@ catchCommUseYr <- catchPriv %>%
   group_by(Gear) %>%
   summarise(Catch = SumNA(Catch), Private = all(isTRUE(Private))) %>%
   ungroup() %>%
-  mutate(Catch = ifelse(Private, "WP",
-                        formatC(Catch, big.mark = ",", digits = 0)
+  mutate(Catch = ifelse(
+    Private, "WP", formatC(Catch, big.mark = ",", format = "d")
   )) %>%
   select(Gear, Catch)
 
@@ -3625,7 +3629,7 @@ RegionMap <- RegionMap +
 
 ggsave(
   RegionMap, filename = file.path(regName, "Region.png"), width = figWidth,
-  height = min(7.5, 6.5 / reg_ratio_small), dpi = figRes
+  height = min(7.5, 8 / reg_ratio_small), dpi = figRes
 )
 
 # Determine whether or not to show the catch zoom
@@ -4556,7 +4560,7 @@ PlotPCSecSA <- function(dat) {
     summarise(Total = SumNA(PercSI, omitNA = TRUE)) %>%
     ungroup()
   # Get the y limits
-  yLims <- c(0, max(yUpper$Total, na.rm = TRUE))
+  yLims <- c(0, 100) # max(yUpper$Total, na.rm = TRUE)
   # Loop over groups
   for (i in 1:nPlots) {
     # Subset the data
@@ -5289,10 +5293,10 @@ if (exists("weightAgeGroupN")) {
 # Format spawn summary
 xSpawnYrTab <- spawnYrTab %>%
   mutate(
-    TotalLength = formatC(TotalLength, big.mark = ",", digits = 0),
-    MeanWidth = formatC(MeanWidth, big.mark = ",", digits = 0),
-    MeanLayers = formatC(MeanLayers, big.mark = ",", digits = 1),
-    TotalSI = formatC(TotalSI, big.mark = ",", digits = 0)
+    TotalLength = formatC(TotalLength, big.mark = ",", format = "d"),
+    MeanWidth = formatC(MeanWidth, big.mark = ",", format = "d"),
+    MeanLayers = formatC(MeanLayers, big.mark = ",", digits = 1, format = "f"),
+    TotalSI = formatC(TotalSI, big.mark = ",", format = "d")
   ) %>%
   rename(
     "Total length" = TotalLength, "Mean width" = MeanWidth,
@@ -5329,7 +5333,7 @@ if (nrow(spawnByLoc) >= 1) {
       StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
       Section = formatC(Section, width = 3, format = "d", flag = "0"),
       Start = format(Start, format = "%B %d"),
-      TotalSI = formatC(TotalSI, big.mark = ",", digits = 0)
+      TotalSI = formatC(TotalSI, big.mark = ",", format = "d")
     ) %>%
     rename(
       "Statistical Area" = StatArea, "Location name" = LocationName,
