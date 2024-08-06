@@ -97,7 +97,7 @@ UsePackages(pkgs = c(
   "tidyverse", "zoo", "Hmisc", "scales", "xtable", "cowplot", "grid",
   "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "ggforce",
   "viridis", "ggthemes", "SpawnIndex", "tidyselect", "ggrepel", "rnaturalearth",
-  "rnaturalearthhires", "sf", "DBI", "odbc", "here", "plyr"
+  "rnaturalearthhires", "sf", "DBI", "odbc", "here", "plyr", "staplr"
 ))
 
 # Set options
@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -162,8 +162,8 @@ send2sisca <- FALSE
 # Make the spawn animation (takes 5--8 mins per SAR); see issue #3
 makeAnimation <- FALSE
 
-# Grab updated data from SQL databases
-get_sql <- list(catch = FALSE, bio = FALSE, spawn = FALSE)
+# Grab updated data from SQL databases (takes a few mins)
+get_sql <- list(catch = TRUE, bio = TRUE, spawn = FALSE)
 
 # # Open 64-bit R in a separate window (to make the animation)
 # system64 <- FALSE
@@ -415,7 +415,7 @@ bioLoc <- list(
 # Location and name of the surface database and tables
 surfLoc <- list(
   schema = "Spawn",
-  tables = list(surface = "Surface", all_spawn = "Allspawn"),
+  tables = list(surface = "Surface", all_spawn = "AllSpawn"),
   columns = list(
     surface = c(
       "Loc_Code", "Spawn_Number", "Year", "Lay_Grass", "Grass_Percent",
@@ -434,7 +434,8 @@ surfLoc <- list(
 macroLoc <- list(
   schema = "Spawn",
   tables = list(
-    all_spawn = "Allspawn", plants = "MacPlant", transects = "MacTrans"
+    all_spawn = "AllSpawn", plants = "macplantNEW", transects = "MacTrans",
+    transects_2024 = "MacTrans2024"
   ),
   columns = list(
     all_spawn = c(
@@ -453,8 +454,9 @@ macroLoc <- list(
 underLoc <- list(
   schema = "Spawn",
   tables = list(
-    all_spawn = "Allspawn", alg_trans = "VegTrans", stations = "Stations",
-    algae = "Vegetation"
+    all_spawn = "AllSpawn", alg_trans = "vegtransNEW", stations = "Stations",
+    algae = "vegetationNEW",
+    stations_2024 = "stations2024", algae_2024 = "Vegetation2024"
   ),
   columns = list(
     all_spawn = c(
@@ -501,9 +503,6 @@ icLoc <- list(
   fn = "Herring Data Request.xlsx",
   sheets = list(ic = "IC", wm = "WM")
 )
-
-# TODO: Load and save data from SQL, then re-load and re-save only if desired,
-# to save time (instead of re-loading each time). Save as *.RData objects.
 
 ##### Functions #####
 
@@ -2362,7 +2361,7 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
 
 # Calculate spawn summary in current year by location code
 spawnByLocXY <- spawnRaw %>%
-  filter(Year == max(yrRange) - 1) %>% # TODO: Need to revert this!
+  filter(Year == max(yrRange)) %>%
   group_by(StatArea, Section, LocationCode, LocationName) %>%
   summarise(
     Start = MinNA(Start), TotalSI = SumNA(c(MacroSI, SurfSI, UnderSI)),
@@ -3629,7 +3628,7 @@ RegionMap <- RegionMap +
 
 ggsave(
   RegionMap, filename = file.path(regName, "Region.png"), width = figWidth,
-  height = min(7.5, 8 / reg_ratio_small), dpi = figRes
+  height = min(7.5, 9 / reg_ratio_small), dpi = figRes
 )
 
 # Determine whether or not to show the catch zoom
@@ -3830,7 +3829,7 @@ if (nrow(bioLocations) > 0) {
     )
   ggsave(
     bioLocPlot, filename = file.path(regName, "BioLocations.png"),
-    width = figWidth, height = min(7.5, 6.5 / reg_ratio_small), dpi = figRes
+    width = figWidth, height = min(7.5, 9 / reg_ratio_small), dpi = figRes
   )
 }
 
@@ -4187,7 +4186,7 @@ if(!all(is.na(spawnByLocXY$TotalSI))){
 }
 ggsave(
   spawnByLocPlot, filename = file.path(regName, "SpawnByLoc.png"),
-  width = figWidth, height = min(7.5, 6.5 / reg_ratio_small),
+  width = figWidth, height = min(7.5, 9 / reg_ratio_small),
   dpi = figRes
 )
 
@@ -4224,7 +4223,7 @@ spawnDecadePlot <- BaseMap +
   ) 
 ggsave(
   spawnDecadePlot, filename = file.path(regName, "SpawnDecade.png"),
-  width = figWidth, height = min(7.5, 6.5 / reg_ratio_small), dpi = figRes
+  width = figWidth, height = min(7.5, 9 / reg_ratio_small), dpi = figRes
 )
 
 # Basic spawn timing plot
@@ -4898,7 +4897,7 @@ PlotLocationsYear <- function(dat) {
   # Start the PDF
   pdf(
     file = file.path(regName, "SpawnIndexAnimation.pdf"), width = figWidth,
-    height = min(6.75, 6.5 / reg_ratio_small)
+    height = min(6.75, 9 / reg_ratio_small)
   )
   # Loop over pages/years
   for (i in 1:length(uPages)) {
@@ -4951,6 +4950,13 @@ PlotLocationsYear <- function(dat) {
   } # End i loop over years
   # Turn the device off
   dev.off()
+  # Remove fist page
+  remove_pages(
+    rmpages = 1,
+    input_filepath = file.path(regName, "SpawnIndexAnimation.pdf"),
+    output_filepath = file.path(regName, "SpawnIndexAnimation.pdf"),
+    overwrite = TRUE
+  )
   # Save a copy (for later, if desired)
   file.copy(
     from = file.path(regName, "SpawnIndexAnimation.pdf"),
@@ -4978,8 +4984,7 @@ if (makeAnimation ||
   #   # Remove the image
   #   file.remove(file = "Temp.RData")
   # } else { # End if 64-bit, otherwise
-  # Make the animation (twice to remove empty first page; takes a few minutes)
-  PlotLocationsYear(dat = filter(siYearLoc, Year %in% yrRange[1:2]))
+  # Make the animation (takes a few minutes)
   PlotLocationsYear(dat = siYearLoc)
   # } # End if 32-bit
 } else { # End if making the animation, otherwise
