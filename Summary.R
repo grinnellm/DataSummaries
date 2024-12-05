@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -163,7 +163,7 @@ send2sisca <- FALSE
 makeAnimation <- FALSE
 
 # Grab updated data from SQL databases (takes a few mins)
-get_sql <- list(catch = TRUE, bio = TRUE, spawn = FALSE)
+get_sql <- list(catch = FALSE, bio = FALSE, spawn = FALSE)
 
 # # Open 64-bit R in a separate window (to make the animation)
 # system64 <- FALSE
@@ -4871,6 +4871,104 @@ if (nrow(lenAge) > 0) {
   )
 }
 
+# Section centroids
+centSec <- shapes$sections %>%
+  st_centroid() %>%
+  st_coordinates() %>%
+  as_tibble() %>%
+  rename(Longitude = X, Latitude = Y) %>%
+  mutate(Section = shapes$sections$Section) %>%
+  select(Section, Longitude, Latitude) %>%
+  arrange(Latitude)
+
+# Spawn time plot data
+stData <- spawnRaw %>%
+  as_tibble() %>%
+  filter(
+    !is.na(StartDOY)#,
+    # Method != "Incomplete"
+    ) %>%
+  replace_na(replace = list(SurfSI = 0, MacroSI = 0, UnderSI = 0)) %>%
+  left_join(centSec, by = "Section") %>%
+  arrange(Latitude) %>%
+  mutate(
+    Method = factor(Method, levels = c("Surface", "Dive", "Incomplete")),
+    StartDOY = ifelse(StartDOY > 334, StartDOY - 365, StartDOY),
+    MeanStart = mean(StartDOY, na.rm = TRUE),
+    Spawn = SurfSI + MacroSI + UnderSI,
+    Section = factor(Section, levels = centSec$Section))
+
+# Spawn time plot data by decade
+stDataDecade <- stData %>%
+  group_by(Decade) %>%
+  summarise(
+    FirstYear = min(Year) - 0.5, LastYear = max(Year) + 0.5,
+    MeanStart = mean(StartDOY, na.rm = TRUE),
+    SDStart = sd(StartDOY, na.rm = TRUE),
+    Lower = MeanStart - SDStart, Upper = MeanStart + SDStart
+  ) %>%
+  ungroup() %>%
+  select(Decade, FirstYear, LastYear, Lower, Upper)
+
+# Spawn time plot data by year
+stDataYear <- stData %>%
+  group_by(Year) %>%
+  summarise(MeanStart = mean(StartDOY, na.rm = TRUE),
+            Decade = unique(Decade)) %>%
+  ungroup() %>%
+  mutate(
+    RollMeanStart = rollmean(
+      x = MeanStart, k = nRoll, align = "right", na.pad = TRUE
+    )
+  )
+
+# Spawn timing plot by location
+spawnTimeLocPlot <- ggplot(data = stData) +
+  geom_rect(
+    data = stDataDecade, fill = "lightgrey",
+    mapping = aes(xmin = Lower, xmax = Upper, ymin = FirstYear, ymax = LastYear)
+  ) +
+  geom_point(
+    mapping = aes(x = StartDOY, y = Year, colour = Group, shape = Method,
+                  size = Spawn)
+  ) +
+  geom_vline(
+    xintercept = stData$MeanStart, linewidth = 1, linetype = "dashed",
+    alpha = 0.75
+  ) +
+  geom_path(
+    data = stDataYear, mapping = aes(x = RollMeanStart, y = Year),
+    linewidth = 1.5, colour = "red", alpha = 0.5, na.rm = TRUE
+  ) +
+  scale_colour_viridis_d(alpha = 0.7) +
+  scale_size_continuous(label = scales::comma) +
+  labs(x = "Date", size = "Spawn index (t)") +
+  scale_x_continuous(
+    breaks = c(1, 32, 61, 92, 122, 153),
+    labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun") 
+  )
+ggsave(
+  spawnTimeLocPlot, filename = file.path(regName, "SpawnTimeLoc.png"),
+  width = figWidth, height = figWidth * 0.67, dpi = figRes
+)
+
+# Spawn timing plot by section
+spawnTimeSecPlot <- ggplot(
+  data = stData,
+  mapping = aes(x = StartDOY, y = Section, group = Section, fill = Group)
+) +
+  geom_boxplot() +
+  scale_colour_viridis_d(alpha = 0.7) +
+  labs(x = "Date") +
+  scale_x_continuous(
+    breaks = c(1, 32, 61, 92, 122, 153),
+    labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun") 
+  )
+ggsave(
+  spawnTimeSecPlot, filename = file.path(regName, "spawnTimeSec.png"),
+  width = figWidth, height = figWidth * 0.67, dpi = figRes
+)
+  
 # Show spawn index by locations by year
 PlotLocationsYear <- function(dat) {
   # Wrangle data for spawn index by year
