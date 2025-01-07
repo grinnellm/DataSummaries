@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -2361,7 +2361,7 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
 
 # Calculate spawn summary in current year by location code
 spawnByLocXY <- spawnRaw %>%
-  filter(Year == max(yrRange)) %>%
+  # filter(Year == max(yrRange)) %>%
   group_by(StatArea, Section, LocationCode, LocationName) %>%
   summarise(
     Start = MinNA(Start), TotalSI = SumNA(c(MacroSI, SurfSI, UnderSI)),
@@ -3507,10 +3507,9 @@ cat("Printing figures... ")
 # Plot the BC coast and regions
 BCMap <- ggplot(data = bc_coast) +
   geom_sf(fill = "lightgrey") +
-  geom_sf(
-    data = all_regions, linewidth = 0.5, fill = "transparent", colour = "black"
-  ) +
-  geom_sf_label(data = all_regions, alpha = 0.5, aes(label = Region)) +
+  # geom_sf(
+  #   data = all_regions, linewidth = 0.5, fill = "transparent", colour = "black"
+  # ) +
   annotate(
     geom = "text", x = -125, y = 52, label = "British\nColumbia", size = 5
   ) +
@@ -3584,10 +3583,10 @@ if (makeFrench) {
 # Create a base map for the region
 BaseMap <- ggplot(data = reg_coast) +
   geom_sf(fill = "lightgrey", colour = "transparent") +
-  geom_sf(
-    data = shapes$regions, fill = "transparent", linewidth = 0.75,
-    colour = "black", linetype = "dashed"
-  ) +
+  # geom_sf(
+  #   data = shapes$regions, fill = "transparent", linewidth = 0.75,
+  #   colour = "black", linetype = "dashed"
+  # ) +
   # coord_equal() +
   labs(x = "Longitude", y = "Latitude") +
   myTheme
@@ -4143,43 +4142,44 @@ subPlot <- ggplot(data = datYr, mapping = aes(x = Year, y = SITotal)) +
 subGrob <- ggplotGrob(x = subPlot)
 
 # Plot the spawn index locations
-spawnByLocPlot <- BaseMap +
+spawnByLocPlot <- BCMap +
+  # geom_sf(
+  #   data = shapes$section, linewidth = 0.25, fill = "transparent",
+  #   colour = "black"
+  # ) +
+  # geom_sf_text(
+  #   data = shapes$section, alpha = 0.6, size = 2,
+  #   mapping = aes(label = paste("Sec", Section, sep = " "))
+  # ) +
   geom_sf(
-    data = shapes$section, linewidth = 0.25, fill = "transparent",
-    colour = "black"
-  ) +
-  geom_sf_text(
-    data = shapes$section, alpha = 0.6, size = 2,
-    mapping = aes(label = paste("Sec", Section, sep = " "))
-  ) +
-  geom_sf(
-    data = spawnByLocXY, mapping = aes(colour = TotalSI),
-    alpha = 0.75, size = 4
-  ) +
-  labs(colour = "Spawn\nindex (t)") +
-  theme(
-    legend.justification = c(0, 0),
-    legend.position = if (region == "PRD") "right" else c(0.01, 0.01)
-  ) +
-  annotation_custom(
-    grob = subGrob,
-    xmin = max(reg_bbox_small$xmax) -
-      (reg_bbox_small$xmax - reg_bbox_small$xmin) / 2.5,
-    xmax = Inf,
-    ymin = max(reg_bbox_small$ymax) -
-      (reg_bbox_small$ymax - reg_bbox_small$ymin) / 5,
-    ymax = Inf
-  )
+    data = spawnByLocXY, 
+    alpha = 0.5, size = 1
+  ) 
+  # geom_sf_label(data = all_regions, alpha = 0.5, aes(label = Region)) 
+  # labs(colour = "Spawn\nindex (t)") +
+  # theme(
+  #   legend.justification = c(0, 0),
+  #   legend.position = if (region == "PRD") "right" else c(0.01, 0.01)
+  # ) #+
+  # annotation_custom(
+  #   grob = subGrob,
+  #   xmin = max(reg_bbox_small$xmax) -
+  #     (reg_bbox_small$xmax - reg_bbox_small$xmin) / 2.5,
+  #   xmax = Inf,
+  #   ymin = max(reg_bbox_small$ymax) -
+  #     (reg_bbox_small$ymax - reg_bbox_small$ymin) / 5,
+  #   ymax = Inf
+  # )
 
 if(!all(is.na(spawnByLocXY$TotalSI))){ 
   spawnByLocPlot <- spawnByLocPlot + 
-    scale_colour_viridis_c(labels = comma, na.value = "darkgrey") +
+    # scale_colour_viridis_c(labels = comma, na.value = "darkgrey") +
     coord_sf(
       xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
       ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
 } else {
   spawnByLocPlot <- spawnByLocPlot + 
-    scale_colour_viridis_d(labels = comma, na.value = "darkgrey") +
+    # scale_colour_viridis_d(labels = comma, na.value = "darkgrey") +
     coord_sf(
       xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
       ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
@@ -4871,6 +4871,14 @@ if (nrow(lenAge) > 0) {
   )
 }
 
+# Julian days (non-leap years) - start of herring season is July 1
+doy_days <- tibble(
+  DOY = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+  Month = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+            "Oct", "Nov", "Dec")
+) %>%
+  mutate(DOY_herring = DOY - 181)
+
 # Section centroids
 centSec <- shapes$sections %>%
   st_centroid() %>%
@@ -4892,9 +4900,10 @@ stData <- spawnRaw %>%
   left_join(centSec, by = "Section") %>%
   arrange(Latitude) %>%
   mutate(
+    # Put December spawns close to January spawns
+    StartDOY = ifelse(StartDOY > 335, StartDOY - 364, StartDOY),
     Method = factor(Method, levels = c("Surface", "Dive", "Incomplete")),
-    StartDOY = ifelse(StartDOY > 334, StartDOY - 365, StartDOY),
-    MeanStart = mean(StartDOY, na.rm = TRUE),
+    StartDOY = StartDOY, MeanStart = mean(StartDOY),
     Spawn = SurfSI + MacroSI + UnderSI,
     Section = factor(Section, levels = centSec$Section))
 
@@ -4903,8 +4912,7 @@ stDataDecade <- stData %>%
   group_by(Decade) %>%
   summarise(
     FirstYear = min(Year) - 0.5, LastYear = max(Year) + 0.5,
-    MeanStart = mean(StartDOY, na.rm = TRUE),
-    SDStart = sd(StartDOY, na.rm = TRUE),
+    MeanStart = mean(StartDOY), SDStart = sd(StartDOY),
     Lower = MeanStart - SDStart, Upper = MeanStart + SDStart
   ) %>%
   ungroup() %>%
@@ -4913,8 +4921,43 @@ stDataDecade <- stData %>%
 # Spawn time plot data by year
 stDataYear <- stData %>%
   group_by(Year) %>%
-  summarise(MeanStart = mean(StartDOY, na.rm = TRUE),
-            Decade = unique(Decade)) %>%
+  summarise(MeanStart = mean(StartDOY), Decade = unique(Decade)) %>%
+  ungroup() %>%
+  mutate(
+    RollMeanStart = rollmean(
+      x = MeanStart, k = nRoll, align = "right", na.pad = TRUE
+    )
+  )
+
+# Catch time plot data
+ctData <- catch %>%
+  mutate(
+    StartDOY = yday(Date), Year = year(Date), 
+    Decade = paste(Year %/% 10 * 10, "s", sep = "")
+  ) %>%
+  filter(!is.na(StartDOY)) %>%
+  left_join(centSec, by = "Section") %>%
+  arrange(Latitude) %>%
+  mutate(
+    MeanStart = mean(StartDOY),
+    Section = factor(Section, levels = centSec$Section)
+  )
+
+# Catch time plot data by decade
+ctDataDecade <- ctData %>%
+  group_by(Decade) %>%
+  summarise(
+    FirstYear = min(Year) - 0.5, LastYear = max(Year) + 0.5,
+    MeanStart = mean(StartDOY), SDStart = sd(StartDOY),
+    Lower = MeanStart - SDStart, Upper = MeanStart + SDStart
+  ) %>%
+  ungroup() %>%
+  select(Decade, FirstYear, LastYear, Lower, Upper)
+
+# Catch time plot data by year
+ctDataYear <- ctData %>%
+  group_by(Year) %>%
+  summarise(MeanStart = mean(StartDOY), Decade = unique(Decade)) %>%
   ungroup() %>%
   mutate(
     RollMeanStart = rollmean(
@@ -4942,11 +4985,8 @@ spawnTimeLocPlot <- ggplot(data = stData) +
   ) +
   scale_colour_viridis_d(alpha = 0.7) +
   scale_size_continuous(label = scales::comma) +
-  labs(x = "Date", size = "Spawn index (t)") +
-  scale_x_continuous(
-    breaks = c(1, 32, 61, 92, 122, 153),
-    labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun") 
-  )
+  labs(x = "Day of year", size = "Spawn index (t)") +
+  scale_x_continuous(breaks = doy_days$DOY, labels = doy_days$Month)
 ggsave(
   spawnTimeLocPlot, filename = file.path(regName, "SpawnTimeLoc.png"),
   width = figWidth, height = figWidth * 0.67, dpi = figRes
@@ -4958,17 +4998,58 @@ spawnTimeSecPlot <- ggplot(
   mapping = aes(x = StartDOY, y = Section, group = Section, fill = Group)
 ) +
   geom_boxplot() +
-  scale_colour_viridis_d(alpha = 0.7) +
-  labs(x = "Date") +
-  scale_x_continuous(
-    breaks = c(1, 32, 61, 92, 122, 153),
-    labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun") 
-  )
+  scale_fill_viridis_d(alpha = 0.7) +
+  labs(x = "Day of yearr") +
+  scale_x_continuous(breaks = doy_days$DOY, labels = doy_days$Month)
 ggsave(
-  spawnTimeSecPlot, filename = file.path(regName, "spawnTimeSec.png"),
+  spawnTimeSecPlot, filename = file.path(regName, "SpawnTimeSec.png"),
   width = figWidth, height = figWidth * 0.67, dpi = figRes
 )
-  
+
+# Catch timing plot by section
+catchTimeLocPlot <- ggplot(
+  data = ctData #%>%
+    # filter(Year >= 1970, Gear == "Other")
+) +
+  # geom_rect(
+  #   data = ctDataDecade, fill = "lightgrey",
+  #   mapping = aes(xmin = Lower, xmax = Upper, ymin = FirstYear, ymax = LastYear)
+  # ) +
+  geom_point(
+    mapping = aes(x = StartDOY, y = Year, colour = Group, shape = Gear,
+                  size = Catch)
+  ) +
+  # geom_vline(
+  #   xintercept = ctData$MeanStart, linewidth = 1, linetype = "dashed",
+  #   alpha = 0.75
+  # ) +
+  # geom_path(
+  #   data = ctDataYear, mapping = aes(x = RollMeanStart, y = Year),
+  #   linewidth = 1.5, colour = "red", alpha = 0.5, na.rm = TRUE
+  # ) +
+  scale_colour_viridis_d(alpha = 0.7) +
+  scale_size_continuous(label = scales::comma) +
+  labs(x = "Day of year", size = "Catch (t)") +
+  scale_x_continuous(breaks = doy_days$DOY, labels = doy_days$Month)
+ggsave(
+  catchTimeLocPlot, filename = file.path(regName, "CatchTimeLoc.png"),
+  width = figWidth, height = figWidth * 0.67, dpi = figRes
+)
+
+# Catch timing plot by section
+catchTimeSecPlot <- ggplot(
+  data = ctData,
+  mapping = aes(x = StartDOY, y = Section, group = Section, fill = Group)
+) +
+  geom_boxplot() +
+  scale_fill_viridis_d(alpha = 0.7) +
+  labs(x = "Day of year") +
+  scale_x_continuous(breaks = doy_days$DOY, labels = doy_days$Month)
+ggsave(
+  catchTimeSecPlot, filename = file.path(regName, "CatchTimeSec.png"),
+  width = figWidth, height = figWidth * 0.67, dpi = figRes
+)
+
 # Show spawn index by locations by year
 PlotLocationsYear <- function(dat) {
   # Wrangle data for spawn index by year
