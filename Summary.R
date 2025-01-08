@@ -2361,7 +2361,7 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
 
 # Calculate spawn summary in current year by location code
 spawnByLocXY <- spawnRaw %>%
-  # filter(Year == max(yrRange)) %>%
+  filter(Year == max(yrRange)) %>%
   group_by(StatArea, Section, LocationCode, LocationName) %>%
   summarise(
     Start = MinNA(Start), TotalSI = SumNA(c(MacroSI, SurfSI, UnderSI)),
@@ -3507,9 +3507,10 @@ cat("Printing figures... ")
 # Plot the BC coast and regions
 BCMap <- ggplot(data = bc_coast) +
   geom_sf(fill = "lightgrey") +
-  # geom_sf(
-  #   data = all_regions, linewidth = 0.5, fill = "transparent", colour = "black"
-  # ) +
+  geom_sf(
+    data = all_regions, linewidth = 0.5, fill = "transparent", colour = "black"
+  ) +
+  geom_sf_label(data = all_regions, alpha = 0.5, aes(label = Region)) +
   annotate(
     geom = "text", x = -125, y = 52, label = "British\nColumbia", size = 5
   ) +
@@ -3583,10 +3584,10 @@ if (makeFrench) {
 # Create a base map for the region
 BaseMap <- ggplot(data = reg_coast) +
   geom_sf(fill = "lightgrey", colour = "transparent") +
-  # geom_sf(
-  #   data = shapes$regions, fill = "transparent", linewidth = 0.75,
-  #   colour = "black", linetype = "dashed"
-  # ) +
+  geom_sf(
+    data = shapes$regions, fill = "transparent", linewidth = 0.75,
+    colour = "black", linetype = "dashed"
+  ) +
   # coord_equal() +
   labs(x = "Longitude", y = "Latitude") +
   myTheme
@@ -4142,44 +4143,43 @@ subPlot <- ggplot(data = datYr, mapping = aes(x = Year, y = SITotal)) +
 subGrob <- ggplotGrob(x = subPlot)
 
 # Plot the spawn index locations
-spawnByLocPlot <- BCMap +
-  # geom_sf(
-  #   data = shapes$section, linewidth = 0.25, fill = "transparent",
-  #   colour = "black"
-  # ) +
-  # geom_sf_text(
-  #   data = shapes$section, alpha = 0.6, size = 2,
-  #   mapping = aes(label = paste("Sec", Section, sep = " "))
-  # ) +
+spawnByLocPlot <- BaseMap +
   geom_sf(
-    data = spawnByLocXY, 
-    alpha = 0.5, size = 1
-  ) 
-  # geom_sf_label(data = all_regions, alpha = 0.5, aes(label = Region)) 
-  # labs(colour = "Spawn\nindex (t)") +
-  # theme(
-  #   legend.justification = c(0, 0),
-  #   legend.position = if (region == "PRD") "right" else c(0.01, 0.01)
-  # ) #+
-  # annotation_custom(
-  #   grob = subGrob,
-  #   xmin = max(reg_bbox_small$xmax) -
-  #     (reg_bbox_small$xmax - reg_bbox_small$xmin) / 2.5,
-  #   xmax = Inf,
-  #   ymin = max(reg_bbox_small$ymax) -
-  #     (reg_bbox_small$ymax - reg_bbox_small$ymin) / 5,
-  #   ymax = Inf
-  # )
+    data = shapes$section, linewidth = 0.25, fill = "transparent",
+    colour = "black"
+  ) +
+  geom_sf_text(
+    data = shapes$section, alpha = 0.6, size = 2,
+    mapping = aes(label = paste("Sec", Section, sep = " "))
+  ) +
+  geom_sf(
+    data = spawnByLocXY, mapping = aes(colour = TotalSI),
+    alpha = 0.75, size = 4
+  ) +
+  labs(colour = "Spawn\nindex (t)") +
+  theme(
+    legend.justification = c(0, 0),
+    legend.position = if (region == "PRD") "right" else c(0.01, 0.01)
+  ) +
+  annotation_custom(
+    grob = subGrob,
+    xmin = max(reg_bbox_small$xmax) -
+      (reg_bbox_small$xmax - reg_bbox_small$xmin) / 2.5,
+    xmax = Inf,
+    ymin = max(reg_bbox_small$ymax) -
+      (reg_bbox_small$ymax - reg_bbox_small$ymin) / 5,
+    ymax = Inf
+  )
 
 if(!all(is.na(spawnByLocXY$TotalSI))){ 
   spawnByLocPlot <- spawnByLocPlot + 
-    # scale_colour_viridis_c(labels = comma, na.value = "darkgrey") +
+    scale_colour_viridis_c(labels = comma, na.value = "darkgrey") +
     coord_sf(
       xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
       ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
 } else {
   spawnByLocPlot <- spawnByLocPlot + 
-    # scale_colour_viridis_d(labels = comma, na.value = "darkgrey") +
+    scale_colour_viridis_d(labels = comma, na.value = "darkgrey") +
     coord_sf(
       xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
       ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
