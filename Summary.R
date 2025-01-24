@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -3499,19 +3499,6 @@ WriteInputFile(
   wADMB = weightAgeADMB
 )
 
-##### Genetics #####
-
-# Genetics data
-genetics <- read_csv(file = "Genetics.csv", col_types = cols()) %>%
-  rename(Location = population_name, Region = region, Year = collection_year,
-         Date = collection_date, Samples = n_samples, Latitude = lat_dd,
-         Longitude = lon_dd) %>%
-  mutate(Year = as.character(Year)) %>%
-  select(Location, Region, Year, Date, Samples, Latitude, Longitude) %>%
-  st_as_sf(coords = c("Longitude", "Latitude"), crs = inCRS) 
-genetics_region <- genetics %>%
-  filter(Region == regName)
-
 ##### Figures #####
 
 # Progress message
@@ -3524,7 +3511,6 @@ BCMap <- ggplot(data = bc_coast) +
     data = all_regions, linewidth = 0.5, fill = "transparent", colour = "black"
   ) +
   geom_sf_label(data = all_regions, alpha = 0.5, aes(label = Region)) +
-  geom_sf(data = genetics, mapping = aes(shape = Year), size = 2) +
   annotate(
     geom = "text", x = -125, y = 52, label = "British\nColumbia", size = 5
   ) +
@@ -3535,9 +3521,7 @@ BCMap <- ggplot(data = bc_coast) +
   coord_sf(
     xlim = c(bc_bbox_small$xmin, bc_bbox_small$xmax),
     ylim = c(bc_bbox_small$ymin, bc_bbox_small$ymax), expand = FALSE) +
-  myTheme +
-  theme(legend.position = c(0.95, 0.95), 
-        legend.justification = c("right", "top"))
+  myTheme 
 ggsave(
   BCMap, filename = file.path(regName, "BC.png"), width = figWidth,
   height = min(6.9, 5.75 / bc_ratio_small), dpi = figRes
@@ -3618,26 +3602,16 @@ RegionMap <- BaseMap +
     data = shapes$sections, linewidth = 0.25, fill = "transparent",
     colour = "black", linetype = "dotted"
   ) +
-  geom_sf(
-    data = genetics_region, mapping = aes(shape = Year), size = 3, alpha = 0.7
-  ) +
-  # ggrepel::geom_label_repel(
-  #   data = genetics,
-  #   aes(label = Location, geometry = geometry),
-  #   stat = "sf_coordinates",
-  #   min.segment.length = 0, max.overlaps = 20, max.iter = 100000
-  # ) +
-  # geom_sf_label(data = genetics, alpha = 0.5, aes(label = Location)) +
-  # scale_fill_viridis(discrete = TRUE) +
+  scale_fill_viridis(discrete = TRUE) +
   labs(fill = "Group") +
   theme(legend.position = c(0.01, 0.01), legend.justification = c(0, 0))
 
-# if (!all(is.na(shapes$groups$Group)) & region %in% c("CC", "SoG", "All")) {
-#   RegionMap <- RegionMap +
-#     geom_sf(
-#       data = shapes$groups, mapping = aes(fill = Group), alpha = 0.25
-#     )
-# }
+if (!all(is.na(shapes$groups$Group)) & region %in% c("CC", "SoG", "All")) {
+  RegionMap <- RegionMap +
+    geom_sf(
+      data = shapes$groups, mapping = aes(fill = Group), alpha = 0.25
+    )
+}
 
 if (nrow(shapes$stat_areas) >= 1) {
   RegionMap <- RegionMap +
@@ -4230,7 +4204,6 @@ spawnDecadePlot <- BaseMap +
     data = spawnDecade, mapping = aes(colour = MeanSI, size = Frequency),
     alpha = 0.75
   ) +
-  geom_sf(data = genetics, mapping = aes(shape = Year)) +
   scale_colour_viridis(labels = comma) +
   scale_size(breaks = pretty_breaks(), guide = guide_legend(order = 2)) +
   labs(colour = "Mean spawn\nindex (t)") +
