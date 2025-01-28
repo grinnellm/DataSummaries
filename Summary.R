@@ -145,11 +145,12 @@ SoGN <- c(132, 135, 140:143, 171, 172, 151, 152, 161:165, 280, 291, 292)
 SoGS <- c(173, 181, 182, 191:193)
 Swift <- c(201, 202, 211, 220, 230:233, 239)
 Tlaamin <- c(135, 141, 151, 152, 161:163)
+ATlegay <- c(121, 123, 127, 131:133, 135, 136, 141:143, 151, 152, 161, 163, 172)
 
 # Select a subset of sections (or NULL for all)
 sectionSub <- NULL
 secSubNum <- 1
-secSubName <- "Swift"
+secSubName <- "ATlegay"
 
 # if(is.null(sectionSub)){
 #   secSubNum <- 1
@@ -1312,6 +1313,44 @@ incidental <- LoadIncidentalCatch(file = icLoc) %>%
 #   pivot_wider(names_from = c(Disposal, Gear), values_from = Catch,
 #               values_fill=list(Catch=0)) %>%
 #   write_csv(file="DisposalGear.csv")
+
+##### FN territory #####
+
+# ATlegay
+if(secSubName == "ATlegay") {
+  # Get layers
+  FN_layers <- st_layers(here("..", "Data", "FN", "ATlegay.kml"))
+  # Start a list
+  FN_list <- list()
+  # Loop over elements
+  for(i in 1:length(FN_layers$name)) {
+    # Populate the list: load the shapefile
+    FN_list[[i]] <- st_read(
+      dsn = here("..", "Data", "FN", "ATlegay.kml"), layer = FN_layers$name[i],
+      quiet = TRUE
+    )
+    # Name the item
+    FN_list[[i]]$Name <- FN_layers$name[i]
+  }
+  # Combine the features
+  FN_map <- FN_list[[1]] %>%
+    st_union() %>%
+    st_sf()
+  # Loop over elements
+  for(j in 2:length(FN_layers$name)) {
+    # Simplify the feature
+    FN_add <- FN_list[[j]] %>%
+      st_union() %>%
+      st_sf()
+    # Combine the features
+    FN_map <- rbind(x = FN_map, y = FN_add)
+  }
+  # Dissolve polygons
+  FN_map <- FN_map %>%
+    mutate(FN = "ATlegay") %>%
+    group_by(FN) %>%
+    st_union()
+} # End if ATlegay
 
 ##### Update #####
 
@@ -3591,6 +3630,13 @@ BaseMap <- ggplot(data = reg_coast) +
   # coord_equal() +
   labs(x = "Longitude", y = "Latitude") +
   myTheme
+
+if(exists("FN_map")) {
+  BaseMap <- BaseMap +
+    geom_sf(
+      data = FN_map, colour = "blue", fill = "transparent", linewidth = 0.5
+    )
+}
 
 # Plot the region, and statistical areas
 RegionMap <- BaseMap +
