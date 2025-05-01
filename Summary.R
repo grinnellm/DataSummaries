@@ -97,7 +97,7 @@ UsePackages(pkgs = c(
   "tidyverse", "zoo", "Hmisc", "scales", "xtable", "cowplot", "grid",
   "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "ggforce",
   "viridis", "ggthemes", "SpawnIndex", "tidyselect", "ggrepel", "rnaturalearth",
-  "rnaturalearthhires", "sf", "DBI", "odbc", "here", "plyr", "staplr"
+  "rnaturalearthhires", "sf", "DBI", "odbc", "here", "plyr"
 ))
 
 # Set options
@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
