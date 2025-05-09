@@ -14,21 +14,25 @@ nearshore <- bioRaw %>%
   ) %>%
   mutate(Type = "Nearshore")
 
-# Years for nearshore data
-yrsNearshore <- nearshore %>%
-  pull(Year) %>%
-  unique()
+# # Years for nearshore data
+# yrsNearshore <- nearshore %>%
+#   pull(Year) %>%
+#   unique()
 
+# TODO: Add seine test data for 2000-2015
 # Grab seine data
 seine <- bioRaw %>%
   # as_tibble() %>%
-  filter(GearCode == 29, Year %in% yrsNearshore) %>%
+  filter(GearCode == 29, Year %in% 1995:2024) %>%
   mutate(Type = "Seine test")
 
 # Combine nearshore and seine data
 all_dat <- bind_rows(nearshore, seine) %>%
   left_join(y = tGear %>% select(GearCode, Gear), by = "GearCode") %>%
-  mutate(Period = ifelse(Year %in% 1995:2000, "Early","Recent")) %>%
+  mutate(
+    Period = ifelse(Year %in% 1995:2000, "Early",
+                    ifelse(Year %in% 2001:2014, "Middle", "Recent"))
+  ) %>%
   select(
     Year, Month, Period, Region, StatArea, Group, Section, LocationCode,
     LocationName, Sample, SourceCode, GearCode, Gear, Type, Fish, Length,
@@ -65,10 +69,9 @@ plot_map <- RegionMap +
   ) +
   scale_colour_viridis_c() +
   labs(colour = "Number of\nsamples") +
-  facet_grid(Period ~ Type, labeller = "label_both") +
+  facet_grid(Type ~ Period, labeller = "label_both") +
   coord_sf(expand = FALSE) +
-  theme(legend.position = "right") +
-  geom_jitter()
+  theme(legend.position = "right")
 if(print_figs)  ggsave(filename = here(out_folder, "Map.png"))
 print(plot_map)
 
