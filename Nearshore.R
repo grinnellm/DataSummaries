@@ -1,16 +1,18 @@
 # Controls
-print_figs <- TRUE
+print_figs <- FALSE
 out_folder <- "Nearshore"
 
 # CRS
 st_crs(bioRaw) <- st_crs(shapes$sections)
+
+time_periods <- list(Early = 1995:2000, Middle = 2001:2014, Recent = 2014:2024)
 
 # Grab nearshore data
 nearshore <- bioRaw %>%
   # as_tibble() %>%
   filter(
     SourceCode == 2 & GearCode == 1 |
-      SourceCode == 4 & GearCode %in% c(21, 70) & Year %in% 1995:2000
+      SourceCode == 4 & GearCode %in% c(21, 70) & Year %in% time_periods$Early
   ) %>%
   mutate(Type = "Nearshore")
 
@@ -19,24 +21,29 @@ nearshore <- bioRaw %>%
 #   pull(Year) %>%
 #   unique()
 
-# TODO: Add seine test data for 2000-2015
 # Grab seine data
 seine <- bioRaw %>%
   # as_tibble() %>%
-  filter(GearCode == 29, Year %in% 1995:2024) %>%
+  filter(GearCode == 29, Year %in% unlist(time_periods)) %>%
   mutate(Type = "Seine test")
 
 # Combine nearshore and seine data
 all_dat <- bind_rows(nearshore, seine) %>%
   left_join(y = tGear %>% select(GearCode, Gear), by = "GearCode") %>%
-  mutate(
-    Period = ifelse(Year %in% 1995:2000, "Early",
-                    ifelse(Year %in% 2001:2014, "Middle", "Recent"))
+  left_join(
+    y = tSource %>% select(SourceCode, SampleSource), by = "SourceCode"
   ) %>%
+  rename(MonthCode = Month, Source = SampleSource) %>%
+  mutate(
+    Period = ifelse(Year %in% time_periods$Early, "Early",
+                    ifelse(Year %in% time_periods$Middle, "Middle", "Recent")),
+    Month = month(MonthCode, label = TRUE)
+  ) %>%
+  filter(Year < 2014 | Representative == 1) %>%
   select(
     Year, Month, Period, Region, StatArea, Group, Section, LocationCode,
-    LocationName, Sample, SourceCode, GearCode, Gear, Type, Fish, Length,
-    Weight, Sex, MaturityCode, Age
+    LocationName, Sample, Source, Gear, Type, Fish, Length, Weight, Sex,
+    MaturityCode, Age
   ) %>%
   na.omit() %>%
   st_crop(y = reg_bbox)  # TODO: This might remove some samples that should stay
@@ -50,8 +57,8 @@ num_samp <- all_dat %>%
 # Number of samples
 samples <- all_dat %>%
   group_by(
-    Year, Period, Region, StatArea, Group, Section, LocationCode, LocationName,
-    Type
+    Year, Month, Period, Region, StatArea, Group, Section, LocationCode,
+    LocationName, Type
   ) %>%
   summarise(Number = length(unique(Sample))) %>%
   ungroup()
@@ -61,11 +68,16 @@ prop_age <- all_dat %>%
   group_by(Type, Year, StatArea, Age) %>%
   summarise(Number = n()) %>%
   mutate(Proportion = Number / sum(Number)) %>%
-  ungroup()
+  ungroup() %>%
+  group_by(Type, Year, StatArea) %>%
+  mutate(Mean = weighted.mean(x = Age, w = Proportion)) %>%
+  ungroup() %>%
+  complete(Type, Year, StatArea, Age)
 
 plot_map <- RegionMap + 
   geom_sf(
-    data = samples, alpha = 0.5, mapping = aes(colour = Number), size = 3
+    data = samples, alpha = 0.85, size = 3, show.legend = "point",
+    mapping = aes(colour = Number, shape = Month)
   ) +
   scale_colour_viridis_c() +
   labs(colour = "Number of\nsamples") +
@@ -83,7 +95,8 @@ plot_num_fish <- ggplot(
   scale_y_continuous(labels = label_comma()) +
   scale_fill_viridis_d() +
   labs(y = "Number of fish") +
-  facet_grid(StatArea ~ Type, labeller = "label_both")
+  facet_grid(StatArea ~ Type, labeller = "label_both") +
+  theme(legend.position = "top")
 if(print_figs)  ggsave(filename = here(out_folder, "NumFish.png"))
 print(plot_num_fish)
 
@@ -94,7 +107,8 @@ plot_num_samp <- ggplot(
   scale_x_continuous(breaks = pretty_breaks()) +
   scale_fill_viridis_d() +
   labs(y = "Number of samples") +
-  facet_grid(StatArea ~ Type, labeller = "label_both")
+  facet_grid(StatArea ~ Type, labeller = "label_both") +
+  theme(legend.position = "top")
 if(print_figs)  ggsave(filename = here(out_folder, "NumSamp.png"))
 print(plot_num_samp)
 
@@ -104,9 +118,11 @@ plot_prop_age <- ggplot(
 ) +
   geom_point(
     shape = 21, color = "black", position = position_dodge(0.7), alpha = 0.7
-    ) + 
+  ) + 
+  geom_line(mapping = aes(x = Year, y = Mean, colour = Type), size = 1) +
   scale_x_continuous(breaks = pretty_breaks()) +
   scale_fill_viridis_d() +
+  scale_colour_viridis_d() +
   scale_size(range = c(1, 5), breaks = 1:7/10) +
   facet_grid(StatArea ~ ., labeller = "label_both")
 if(print_figs)  ggsave(filename = here(out_folder, "PropAge.png"))
@@ -121,7 +137,8 @@ plot_length_age <- ggplot(
   scale_x_continuous(breaks = pretty_breaks()) +
   scale_fill_viridis_d() +
   labs(y = "Length (mm)") +
-  facet_grid(StatArea ~ Period, labeller = "label_both")
+  facet_grid(StatArea ~ Period, labeller = "label_both") +
+  theme(legend.position = "top")
 if(print_figs)  ggsave(filename = here(out_folder, "LengthAge.png"))
 print(plot_length_age)
 
@@ -134,7 +151,8 @@ plot_weight_age <- ggplot(
   scale_x_continuous(breaks = pretty_breaks()) +
   scale_fill_viridis_d() +
   labs(y = "Weight (g)") +
-  facet_grid(StatArea ~ Period, labeller = "label_both")
+  facet_grid(StatArea ~ Period, labeller = "label_both") +
+  theme(legend.position = "top")
 if(print_figs)  ggsave(filename = here(out_folder, "WeightAge.png"))
 print(plot_weight_age)
 
@@ -146,6 +164,7 @@ plot_length_weight <- ggplot(
   geom_density2d(alpha = 0.6, linewidth = 1) +
   scale_colour_viridis_d() +
   labs(x = "Length (mm)", y = "Weight (g)") +
-  facet_grid(StatArea ~ Period, labeller = "label_both")
+  facet_grid(StatArea ~ Period, labeller = "label_both") +
+  theme(legend.position = "top")
 if(print_figs)  ggsave(filename = here(out_folder, "LengthWeight.png"))
 print(plot_length_weight)
