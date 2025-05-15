@@ -1,5 +1,5 @@
 # Controls
-print_figs <- FALSE
+print_figs <- TRUE
 out_folder <- "Nearshore"
 
 # CRS
@@ -68,11 +68,11 @@ prop_age <- all_dat %>%
   group_by(Type, Year, StatArea, Age) %>%
   summarise(Number = n()) %>%
   mutate(Proportion = Number / sum(Number)) %>%
-  ungroup() %>%
-  group_by(Type, Year, StatArea) %>%
-  mutate(Mean = weighted.mean(x = Age, w = Proportion)) %>%
-  ungroup() %>%
-  complete(Type, Year, StatArea, Age)
+  ungroup() #%>%
+  # group_by(Type, Year, StatArea) %>%
+  # mutate(Mean = weighted.mean(x = Age, w = Proportion)) %>%
+  # ungroup() #%>%
+  # complete(Type, Year, StatArea, Age)
 
 plot_map <- RegionMap + 
   geom_sf(
@@ -119,11 +119,11 @@ plot_prop_age <- ggplot(
   geom_point(
     shape = 21, color = "black", position = position_dodge(0.7), alpha = 0.7
   ) + 
-  geom_line(mapping = aes(x = Year, y = Mean, colour = Type), size = 1) +
+  # geom_line(mapping = aes(x = Year, y = Mean, colour = Type), size = 1) +
   scale_x_continuous(breaks = pretty_breaks()) +
   scale_fill_viridis_d() +
   scale_colour_viridis_d() +
-  scale_size(range = c(1, 5), breaks = 1:7/10) +
+  scale_size(range = c(1, 5), breaks = 1:6/10) +
   facet_grid(StatArea ~ ., labeller = "label_both")
 if(print_figs)  ggsave(filename = here(out_folder, "PropAge.png"))
 print(plot_prop_age)
