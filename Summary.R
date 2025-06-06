@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "WCVI"
+if (!exists("region")) region <- "A27"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -216,7 +216,7 @@ srLoc <- file.path("..", "herringsr", "data")
 data(pars)
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- pars$year$assess:2024
+yrRange <- pars$year$assess:2025
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -342,7 +342,7 @@ codesLoc <- list(
 # called in the functions
 # Location and name of the location database and tables
 areaLoc <- list(
-  schema = "Location",
+  schema = "dbo",
   tables = list(sections = "Sections", locations = "Location"),
   columns = list(
     sections = c("SAR", "Section"),
@@ -354,7 +354,7 @@ areaLoc <- list(
 
 # Location and name of tables for widths
 widthLoc <- list(
-  schema = "Location",
+  schema = "dbo",
   tables = list(
     region_std = "RegionStd", section_std = "SectionStd", pool_std = "PoolStd"
   ),
@@ -409,7 +409,7 @@ bioLoc <- list(
 
 # Location and name of the surface database and tables
 surfLoc <- list(
-  schema = "Spawn",
+  schema = "Spawn2025",
   tables = list(surface = "Surface", all_spawn = "AllSpawn"),
   columns = list(
     surface = c(
@@ -427,10 +427,9 @@ surfLoc <- list(
 
 # Location and name of the macrocystis database and tables
 macroLoc <- list(
-  schema = "Spawn",
+  schema = "Spawn2025",
   tables = list(
-    all_spawn = "AllSpawn", plants = "macplantNEW", transects = "MacTrans",
-    transects_2024 = "MacTrans2024"
+    all_spawn = "AllSpawn", plants = "MacPlant", transects = "Mactrans"
   ),
   columns = list(
     all_spawn = c(
@@ -447,11 +446,10 @@ macroLoc <- list(
 
 # Location and name of the macrocystis database and tables
 underLoc <- list(
-  schema = "Spawn",
+  schema = "Spawn2025",
   tables = list(
-    all_spawn = "AllSpawn", alg_trans = "vegtransNEW", stations = "Stations",
-    algae = "vegetationNEW",
-    stations_2024 = "stations2024", algae_2024 = "Vegetation2024"
+    all_spawn = "AllSpawn", alg_trans = "VegTrans", stations = "Stations",
+    algae = "vegetation"
   ),
   columns = list(
     all_spawn = c(
@@ -475,7 +473,7 @@ underLoc <- list(
 
 # Location and name of the all spawn tables
 allLoc <- list(
-  schema = "Spawn",
+  schema = "Spawn2025",
   tables = list(all_spawn = "Allspawn", stations = "Stations"),
   columns = list(
     all_spawn = c(
@@ -4219,7 +4217,7 @@ if(!all(is.na(spawnByLocXY$TotalSI))){
       ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
 } else {
   spawnByLocPlot <- spawnByLocPlot + 
-    scale_colour_viridis_d(labels = comma, na.value = "darkgrey") +
+    scale_colour_viridis_d(na.value = "darkgrey") +
     coord_sf(
       xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
       ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
