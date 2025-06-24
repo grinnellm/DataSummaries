@@ -1,11 +1,21 @@
-# Controls
-print_figs <- TRUE
-out_folder <- "Nearshore"
-
 # CRS
 st_crs(bioRaw) <- st_crs(shapes$sections)
 
-time_periods <- list(Early = 1995:2000, Middle = 2001:2014, Recent = 2014:2024)
+# Time periods: CC
+if(region == "CC") {
+  time_periods <- list(Recent = 2017:2024)
+  time_years <- list(Recent = paste(range(time_periods$Recent), collapse = "-"))
+}
+
+# Time periods: WCVI
+if(region == "WCVI") {
+  time_periods <- list(
+    Early = 1995:2000, Middle = 2001:2014, Recent = 2014:2025
+  )
+  time_years <- list(Early = paste(range(time_periods$Early), collapse = "-"),
+                     Middle = paste(range(time_periods$Middle), collapse = "-"),
+                     Recent = paste(range(time_periods$Recent), collapse = "-"))
+}
 
 # Grab nearshore data
 nearshore <- bioRaw %>%
@@ -15,11 +25,6 @@ nearshore <- bioRaw %>%
       SourceCode == 4 & GearCode %in% c(21, 70) & Year %in% time_periods$Early
   ) %>%
   mutate(Type = "Nearshore")
-
-# # Years for nearshore data
-# yrsNearshore <- nearshore %>%
-#   pull(Year) %>%
-#   unique()
 
 # Grab seine data
 seine <- bioRaw %>%
@@ -35,8 +40,11 @@ all_dat <- bind_rows(nearshore, seine) %>%
   ) %>%
   rename(MonthCode = Month, Source = SampleSource) %>%
   mutate(
-    Period = ifelse(Year %in% time_periods$Early, "Early",
-                    ifelse(Year %in% time_periods$Middle, "Middle", "Recent")),
+    Period = ifelse(Year %in% time_periods$Early,
+                    paste0("Early (", time_years$Early, ")"),
+                    ifelse(Year %in% time_periods$Middle,
+                           paste0("Middle (", time_years$Middle, ")"), 
+                           paste0("Recent (", time_years$Recent, ")"))),
     Month = month(MonthCode, label = TRUE)
   ) %>%
   filter(Year < 2014 | Representative == 1) %>%
@@ -74,20 +82,31 @@ prop_age <- all_dat %>%
   # ungroup() #%>%
   # complete(Type, Year, StatArea, Age)
 
-plot_map <- RegionMap + 
+plot_near_map <- RegionMap + 
   geom_sf(
-    data = samples, alpha = 0.85, size = 3, show.legend = "point",
+    data = samples, alpha = 0.85, size = 2, show.legend = "point",
     mapping = aes(colour = Number, shape = Month)
   ) +
   scale_colour_viridis_c() +
   labs(colour = "Number of\nsamples") +
-  facet_grid(Type ~ Period, labeller = "label_both") +
   coord_sf(expand = FALSE) +
-  theme(legend.position = "right")
-if(print_figs)  ggsave(filename = here(out_folder, "Map.png"))
-print(plot_map)
+  guides(shape = guide_legend(nrow = 2), fill = guide_legend(nrow = 2)) +
+  theme(
+    legend.position = "top", axis.text.x = element_text(angle = 30, hjust = 1)
+  )
+if(region %in% c("CC")) {
+  plot_near_map <- plot_near_map +
+    facet_grid(Period ~ Type, labeller = "label_both")
+} else {
+  plot_near_map <- plot_near_map +
+    facet_grid(Type ~ Period, labeller = "label_both")
+}
+ggsave(
+  plot_near_map, filename = here(regName, "NearMap.png"),
+  width = figWidth, height = 6, dpi = figRes
+)
 
-plot_num_fish <- ggplot(
+plot_near_num_fish <- ggplot(
   data = all_dat, mapping = aes(x = Year, fill = Gear)
 ) +
   geom_bar() + 
@@ -97,10 +116,12 @@ plot_num_fish <- ggplot(
   labs(y = "Number of fish") +
   facet_grid(StatArea ~ Type, labeller = "label_both") +
   theme(legend.position = "top")
-if(print_figs)  ggsave(filename = here(out_folder, "NumFish.png"))
-print(plot_num_fish)
+ggsave(
+  plot_near_num_fish, filename = here(regName, "NearNumFish.png"),
+  width = figWidth, height = 5, dpi = figRes
+)
 
-plot_num_samp <- ggplot(
+plot_near_num_samp <- ggplot(
   data = num_samp, mapping = aes(x = Year, y = Num, fill = Gear)
 ) +
   geom_col() + 
@@ -109,62 +130,71 @@ plot_num_samp <- ggplot(
   labs(y = "Number of samples") +
   facet_grid(StatArea ~ Type, labeller = "label_both") +
   theme(legend.position = "top")
-if(print_figs)  ggsave(filename = here(out_folder, "NumSamp.png"))
-print(plot_num_samp)
+ggsave(
+  plot_near_num_samp, filename = here(regName, "NearNumSamp.png"),
+  width = figWidth, height = 5, dpi = figRes
+)
 
-plot_prop_age <- ggplot(
+plot_near_prop_age <- ggplot(
   data = prop_age,
   mapping = aes(x = Year, y = Age, size = Proportion, fill = Type)
 ) +
   geom_point(
     shape = 21, color = "black", position = position_dodge(0.7), alpha = 0.7
   ) + 
-  # geom_line(mapping = aes(x = Year, y = Mean, colour = Type), size = 1) +
   scale_x_continuous(breaks = pretty_breaks()) +
   scale_fill_viridis_d() +
   scale_colour_viridis_d() +
-  scale_size(range = c(1, 5), breaks = 1:6/10) +
-  facet_grid(StatArea ~ ., labeller = "label_both")
-if(print_figs)  ggsave(filename = here(out_folder, "PropAge.png"))
-print(plot_prop_age)
+  scale_size(range = c(0.5, 2), breaks = 1:6/10) +
+  facet_grid(StatArea ~ ., labeller = "label_both") +
+  theme(legend.position = "top")
+ggsave(
+  plot_near_prop_age, filename = here(regName, "NearPropAge.png"),
+  width = figWidth, height = 5, dpi = figRes
+)
 
-plot_length_age <- ggplot(
+plot_near_length_age <- ggplot(
   data = all_dat,
   mapping = aes(x = Age, y = Length, group = interaction(Age, Type),
                 fill = Type)
 ) +
-  geom_violin() + 
+  geom_boxplot(outlier.colour = "black", size = 0.25) + 
   scale_x_continuous(breaks = pretty_breaks()) +
   scale_fill_viridis_d() +
   labs(y = "Length (mm)") +
   facet_grid(StatArea ~ Period, labeller = "label_both") +
   theme(legend.position = "top")
-if(print_figs)  ggsave(filename = here(out_folder, "LengthAge.png"))
-print(plot_length_age)
+ggsave(
+  plot_near_length_age, filename = here(regName, "NearLengthAge.png"),
+  width = figWidth, height = 5, dpi = figRes
+)
 
-plot_weight_age <- ggplot(
+plot_near_weight_age <- ggplot(
   data = all_dat,
   mapping = aes(x = Age, y = Weight, group = interaction(Age, Type),
                 fill = Type)
 ) +
-  geom_violin() + 
+  geom_boxplot(outlier.colour = "black", size = 0.25) + 
   scale_x_continuous(breaks = pretty_breaks()) +
   scale_fill_viridis_d() +
   labs(y = "Weight (g)") +
   facet_grid(StatArea ~ Period, labeller = "label_both") +
   theme(legend.position = "top")
-if(print_figs)  ggsave(filename = here(out_folder, "WeightAge.png"))
-print(plot_weight_age)
+ggsave(
+  plot_near_weight_age, filename = here(regName, "NearWeightAge.png"),
+  width = figWidth, height = 5, dpi = figRes
+)
 
-plot_length_weight <- ggplot(
+plot_near_length_weight <- ggplot(
   data = all_dat,
   mapping = aes(x = Length, y = Weight, group = Type, colour = Type)
 ) +
-  # geom_point() + 
   geom_density2d(alpha = 0.6, linewidth = 1) +
   scale_colour_viridis_d() +
   labs(x = "Length (mm)", y = "Weight (g)") +
   facet_grid(StatArea ~ Period, labeller = "label_both") +
   theme(legend.position = "top")
-if(print_figs)  ggsave(filename = here(out_folder, "LengthWeight.png"))
-print(plot_length_weight)
+ggsave(
+  plot_near_length_weight, filename = here(regName, "NearLengthWeight.png"),
+  width = figWidth, height = 5, dpi = figRes
+)
