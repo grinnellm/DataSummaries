@@ -2644,7 +2644,8 @@ if (region == "CC") {
     summarise(Number = n(), Weight = MeanNA(Weight), Length = MeanNA(Length)) %>%
     group_by(SampleSource2) %>%
     mutate(Proportion = Number / SumNA(Number)) %>%
-    select(SampleSource2, Age, Number, Proportion, Weight, Length)
+    select(SampleSource2, Age, Number, Proportion, Weight, Length) %>%
+    na.omit()
   # Calculate total: number, proportion, and weight-at-age
   npwAgeTot <- bioRaw %>%
     filter(
@@ -2656,7 +2657,8 @@ if (region == "CC") {
     summarise(Number = n(), Weight = MeanNA(Weight), Length = MeanNA(Length)) %>%
     ungroup() %>%
     mutate(Proportion = Number / SumNA(Number)) %>%
-    select(SampleSource2, Age, Number, Proportion, Weight, Length)
+    select(SampleSource2, Age, Number, Proportion, Weight, Length) %>%
+    na.omit()
   # Combine the grouped statistics with the total statistics
   npwAge <- bind_rows(npwAgeGrp, npwAgeTot) %>%
     complete(
@@ -2700,7 +2702,8 @@ if (region == "CC") {
     mutate(Proportion = Number / SumNA(Number)) %>%
     ungroup() %>%
     mutate(Year = as.character(Year)) %>%
-    select(Year, Age, Number, Proportion, Weight, Length)
+    select(Year, Age, Number, Proportion, Weight, Length) %>%
+    na.omit()
   # Get nearshore data: total
   nearAge <- bioRaw %>%
     filter(SourceCode == 2, GearCode == 1, Representative == 1) %>%
@@ -2711,7 +2714,8 @@ if (region == "CC") {
     mutate(Proportion = Number / SumNA(Number)) %>%
     ungroup() %>%
     mutate(Year = "Total") %>%
-    select(Year, Age, Number, Proportion, Weight, Length)
+    select(Year, Age, Number, Proportion, Weight, Length) %>%
+    na.omit()
   # Combine totals with annual stats
   nearAll <- bind_rows(nearYearAge, nearAge) %>%
     complete(Age = all_of(ageRange)) %>%
