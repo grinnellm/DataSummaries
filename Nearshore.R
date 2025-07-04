@@ -26,6 +26,18 @@ nearshore <- bioRaw %>%
   ) %>%
   mutate(Type = "Nearshore")
 
+# cc_coords <- st_coordinates(nearshore) %>%
+#   as_tibble() %>%
+#   rename(Longitude = X, Latitude = Y)
+# cc_out <- nearshore %>%
+#   as_tibble() %>%
+#   bind_cols(cc_coords) %>%
+#   select(Year, Month, Region, StatArea, Section, LocationCode, LocationName,
+#          Longitude, Latitude, Sample, Representative, SourceCode, GearCode,
+#          Fish, Length, Weight, Sex, MaturityCode, Age, DualAge, GonadLength,
+#          GonadWeight) %>%
+#   write_csv(file = "nearshore.csv")
+
 # Grab seine data
 seine <- bioRaw %>%
   # as_tibble() %>%
