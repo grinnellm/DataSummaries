@@ -70,7 +70,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-rm(list = ls()) # Clear the workspace
+# rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "WCVI"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -159,6 +159,9 @@ makeAnimation <- FALSE
 
 # Grab updated data from SQL databases (takes a few mins)
 get_sql <- list(catch = FALSE, bio = FALSE, spawn = FALSE)
+
+# Show genetics samples
+do_genetics <- ifelse(region %in% c("CC", "SoG", "WCVI", "All"), TRUE, FALSE)
 
 # # Open 64-bit R in a separate window (to make the animation)
 # system64 <- FALSE
@@ -3534,6 +3537,41 @@ WriteInputFile(
   wADMB = weightAgeADMB
 )
 
+##### Genetics #####
+
+# Timing
+timing <- tribble(
+  ~Month, ~Timing,
+  "Jan", "Early",
+  "Feb", "Early",
+  "Mar", "Mid",
+  "Apr", "Mid",
+  "May", "Late",
+  "Jun", "Late",
+  "Jul", "Late"
+)
+
+# Genetics data
+genetics <- read_csv(
+  file = file.path("..", "Data", "Genetics", "Genetics.csv"), col_types = cols()
+) %>%
+  rename(
+    Location = population_name, Region = region, Year = collection_year,
+    Date = collection_date, Samples = n_samples, Latitude = lat_dd,
+    Longitude = lon_dd
+  ) %>%
+  mutate(
+    Location = str_to_title(Location), Year = as.character(Year),
+    Month = month(Date, label = TRUE)
+  ) %>%
+  left_join(y = timing, by = "Month") %>%
+  mutate(Timing = factor(Timing, levels = unique(timing$Timing))) %>%
+  select(
+    Location, Region, Date, Year, Timing, Samples, Latitude, Longitude
+  ) %>%
+  filter(Region == regName) %>%
+  st_as_sf(coords = c("Longitude", "Latitude"), crs = inCRS) 
+
 ##### Figures #####
 
 # Progress message
@@ -3672,6 +3710,20 @@ ggsave(
   RegionMap, filename = file.path(regName, "Region.png"), width = figWidth,
   height = min(7.5, 9 / reg_ratio_small), dpi = figRes
 )
+
+# Show genetics sampling locations if requested
+if(do_genetics) {
+  GeneticsMap <- RegionMap + 
+    geom_sf(
+      data = genetics, mapping = aes(shape = Year, colour = Timing), size = 3, alpha = 0.67
+    ) +
+    coord_sf(
+      xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
+      ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
+  ggsave(
+    GeneticsMap, filename = file.path(regName, "GeneticsMap.png"),
+    width = figWidth, height = min(7.5, 9 / reg_ratio_small), dpi = figRes)
+}
 
 # Determine whether or not to show the catch zoom
 showCatchZoom <- ifelse(max(catchPriv$Year) >= firstYrFig, TRUE, FALSE)
@@ -5595,6 +5647,10 @@ thisSeason <- paste(yrRange[nYrs - 1], yrRange[nYrs], sep = "/")
 # Toggle for major vs not major SAR
 tfMajor <- ifelse(
   regionType == "major", "\\toggletrue{major}", "\\togglefalse{major}"
+)
+# Toggle for genetics sampling project
+tfGenetics <- ifelse(
+  do_genetics, "\\toggletrue{do_genetics}", "\\togglefalse{do_genetics}"
 )
 # Turn the toggle to true: biosamples
 tfBiosamples <- "\\toggletrue{biosamples}"
