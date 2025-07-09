@@ -70,7 +70,7 @@
 # General options
 # Tesing automatic solution to commenting out rm( list=ls() )
 # if( basename(sys.frame(1)$ofile)=="Summary.R" )
-# rm(list = ls()) # Clear the workspace
+rm(list = ls()) # Clear the workspace
 sTime <- Sys.time() # Start the timer
 graphics.off() # Turn graphics off
 
@@ -3569,8 +3569,12 @@ genetics <- read_csv(
   select(
     Location, Region, Date, Year, Timing, Samples, Latitude, Longitude
   ) %>%
-  filter(Region == regName) %>%
-  st_as_sf(coords = c("Longitude", "Latitude"), crs = inCRS) 
+  st_as_sf(coords = c("Longitude", "Latitude"), crs = inCRS)
+
+if(region != "All"){
+  genetics <- genetics %>%
+    filter(Region == regName)
+}
 
 ##### Figures #####
 
@@ -3720,6 +3724,10 @@ if(do_genetics) {
     coord_sf(
       xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
       ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
+  if(region == "All") {
+    GeneticsMap <- GeneticsMap +
+      guides(fill = "none")
+  }
   ggsave(
     GeneticsMap, filename = file.path(regName, "GeneticsMap.png"),
     width = figWidth, height = min(7.5, 9 / reg_ratio_small), dpi = figRes)
