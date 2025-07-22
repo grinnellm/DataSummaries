@@ -724,6 +724,10 @@ reg_coast <- st_read(dsn = file.path("..", "Data", "Polygons"),
 # reg_coast <- bc_coast %>%
 #   st_intersection(y = reg_bbox)
 
+# reg_coast <- ptolemy::npac(resolution = "f") %>%
+#   st_transform(crs = st_crs(all_shapes$sections)) %>%
+#   st_crop(y = reg_bbox)
+
 # Load median widths to correct surface spawns
 barWidth <- load_width(db = db_conn, where = widthLoc, a = areas)
 
