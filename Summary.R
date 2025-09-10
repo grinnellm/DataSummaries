@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -654,7 +654,8 @@ tPeriod <- read_csv(
 # Load groups
 tGroup <- read_csv(
   file = file.path(codesLoc$loc, codesLoc$fns$tGroup), col_types = cols()
-)
+) %>%
+  mutate(Group = str_pad(Group, width = 2, side = "left", pad = "0"))
 
 # Load herring areas
 areas <- load_area_data(
@@ -2619,7 +2620,10 @@ if (region == "CC") {
       y = areas,
       by = c("Region", "StatArea", "Section", "LocationCode", "Group")
     ) %>%
-    mutate(Decade = ifelse(Year >= max(yrRange) - 9, "Recent", "Previous")) %>%
+    mutate(
+      Decade = ifelse(Year >= max(yrRange) - 9, "Recent", "Previous"),
+      Group = str_pad(Group, width = 2, side = "left", pad = "0")
+    ) %>%
     select(Year, Age, Weight, Group, Decade) %>%
     na.omit()
   # Determine sample sizes
@@ -2631,10 +2635,10 @@ if (region == "CC") {
   #  # Average length-at-age by year and statistical area
   #  lengthAgeSA <- bio %>%
   #      filter( GearCode == 29, Year >= pars$years$dive ) %>%
+  #      summarise( MeanLength=mean(Length) ) %>%
   #      select( Year, StatArea, Age, Length ) %>%
   #      na.omit( ) %>%
   #      group_by( Year, StatArea, Age ) %>%
-  #      summarise( MeanLength=mean(Length) ) %>%
   #      ungroup( ) %>%
   #      spread( key=Age, value=MeanLength )
   # Plot spawn timing by Stat Area
@@ -5571,7 +5575,8 @@ if (exists("weightAgeGroupN")) {
   xWeightAgeGroupN <- weightAgeGroupN %>%
     mutate(
       Previous = formatC(Previous, big.mark = ","),
-      Recent = formatC(Recent, big.mark = ",")
+      Recent = formatC(Recent, big.mark = ","),
+      Group = str_pad(Group, width = 2, side = "left", pad = "0")
     ) %>%
     rename("Previous decade" = Previous, "Recent decade" = Recent) %>%
     xtable(digits = c(0, 0, 0, 0, 0))
