@@ -3,14 +3,14 @@ st_crs(bioRaw) <- st_crs(shapes$sections)
 
 # Time periods: CC
 if(region == "CC") {
-  time_periods <- list(Recent = 2017:2024)
+  time_periods <- list(Recent = 2017:max(yrRange))
   time_years <- list(Recent = paste(range(time_periods$Recent), collapse = "-"))
 }
 
 # Time periods: WCVI
 if(region == "WCVI") {
   time_periods <- list(
-    Early = 1995:2000, Middle = 2001:2014, Recent = 2014:2025
+    Early = 1995:2000, Middle = 2001:2014, Recent = 2014:max(yrRange)
   )
   time_years <- list(Early = paste(range(time_periods$Early), collapse = "-"),
                      Middle = paste(range(time_periods$Middle), collapse = "-"),
