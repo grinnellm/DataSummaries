@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "HG"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -189,12 +189,21 @@ dirShape <- file.path(dir_data, "Polygons")
 # Location of privacy data
 dirPriv <- file.path(dir_data, "Privacy")
 
-# Database connection details
+# # Database connection details
+# db_conn <- list(
+#   driver   = "SQL Server Native Client 11.0",
+#   server   = "DFBCV9TWVASP001\\SQLEXPRESS16",
+#   database = "Herring",
+#   trusted  = "Yes"
+# )
+
+# Database connection details (updated Sept 2025)
 db_conn <- list(
-  driver = "SQL Server Native Client 11.0",
-  server = "DFBCV9TWVASP001\\SQLEXPRESS16",
+  driver   = "SQL Server",
+  server   = "DFBCV9TWVASP003",
   database = "Herring",
-  trusted = "Yes"
+  uid      = "HerringUser",
+  pwd      = "H3rr1ngUs3r"
 )
 
 # Input coordinate reference system
@@ -741,10 +750,11 @@ LoadCatchData <- function(db, where, area_table) {
   cat("Loading catch data... ")
   # Establish database connection
   cnn <- dbConnect(odbc::odbc(),
-                   Driver = db$driver,
-                   Server = db$server,
-                   Database = db$database,
-                   Trusted_Connection = db$trusted)
+                   driver = db$driver,
+                   server = db$server,
+                   database = db$database,
+                   uid = db$uid,
+                   pwd = db$pwd)
   # SQL query
   sql_t <- paste(
     "SELECT", paste(where$columns$tCatch, collapse = ", "),
@@ -882,7 +892,8 @@ LoadBioData <- function(db, where, area_table, XY) {
                    Driver = db$driver,
                    Server = db$server,
                    Database = db$database,
-                   Trusted_Connection = db$trusted)
+                   uid = db$uid,
+                   pwd = db$pwd)
   # SQL query
   sql_s <- paste(
     "SELECT", paste(where$columns$sample, collapse = ", "),
