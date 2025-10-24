@@ -140,6 +140,7 @@ SoGS <- c(173, 181, 182, 191:193)
 Swift <- c(201, 202, 211, 220, 230:233, 239)
 Tlaamin <- c(135, 141, 151, 152, 161:163)
 ATlegay <- c(121, 123, 127, 131:133, 135, 136, 141:143, 151, 152, 161, 163, 172)
+Gitxaala <- c(52)
 
 # Select a subset of sections (or NULL for all)
 sectionSub <- NULL
@@ -199,11 +200,8 @@ dirPriv <- file.path(dir_data, "Privacy")
 
 # Database connection details (updated Sept 2025)
 db_conn <- list(
-  driver   = "SQL Server",
-  server   = "DFBCV9TWVASP003",
-  database = "Herring",
-  uid      = "HerringUser",
-  pwd      = "H3rr1ngUs3r"
+  driver = "SQL Server", server = "DFBCV9TWVASP003",
+  database = "Herring", uid = "HerringUser", pwd = "H3rr1ngUs3r"
 )
 
 # Input coordinate reference system
