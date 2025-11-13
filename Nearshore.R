@@ -1,6 +1,12 @@
 # CRS
 st_crs(bioRaw) <- st_crs(shapes$sections)
 
+# Time periods: PRD
+if(region == "PRD") {
+  time_periods <- list(Recent = 1995:max(yrRange))
+  time_years <- list(Recent = paste(range(time_periods$Recent), collapse = "-"))
+}
+
 # Time periods: CC
 if(region == "CC") {
   time_periods <- list(Recent = 2017:max(yrRange))

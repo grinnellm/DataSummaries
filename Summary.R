@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "HG"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
