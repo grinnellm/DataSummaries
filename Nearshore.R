@@ -13,15 +13,37 @@ if(region == "CC") {
   time_years <- list(Recent = paste(range(time_periods$Recent), collapse = "-"))
 }
 
+# Time periods: SoG
+if(region == "SoG") {
+  time_periods <- list(Recent = 2023:2023)
+  time_years <- list(Recent = paste(range(time_periods$Recent), collapse = "-"))
+}
+
 # Time periods: WCVI
 if(region == "WCVI") {
   time_periods <- list(
     Early = 1995:2000, Middle = 2001:2014, Recent = 2014:max(yrRange)
   )
-  time_years <- list(Early = paste(range(time_periods$Early), collapse = "-"),
-                     Middle = paste(range(time_periods$Middle), collapse = "-"),
-                     Recent = paste(range(time_periods$Recent), collapse = "-"))
+  time_years <- list(
+    Early = paste(range(time_periods$Early), collapse = "-"),
+    Middle = paste(range(time_periods$Middle), collapse = "-"),
+    Recent = paste(range(time_periods$Recent), collapse = "-")
+  )
 }
+
+# Load genetics data from CSV (will come from SQL databases next year)
+# nearshore <- read_csv(here("..", "Data", "Genetics", "SoG.csv")) %>%
+#   select(Year, Month, Region, StatArea, Group, Section, LocationCode,
+#          LocationName, Sample, Representative, SourceCode, GearCode, Fish,
+#          Length, Weight, Sex, MaturityCode, Age, DualAge, GonadLength, 
+#          GonadWeight, Longitude, Latitude) %>%
+#   st_as_sf(coords = c("Longitude", "Latitude"), crs = inCRS) %>%
+#   mutate(
+#     StatArea = as.character(StatArea), Section = as.character(Section),
+#     Age = as.integer(Age), GonadLength = as.numeric(GonadLength),
+#     GonadWeight = as.numeric(GonadWeight),
+#     Type = "Nearshore"
+#   )
 
 # Grab nearshore data
 nearshore <- bioRaw %>%
@@ -207,7 +229,8 @@ plot_near_length_weight <- ggplot(
   data = all_dat,
   mapping = aes(x = Length, y = Weight, group = Type, colour = Type)
 ) +
-  geom_density2d(alpha = 0.6, linewidth = 1) +
+  geom_point(alpha = 0.5) +
+  # geom_density2d(alpha = 0.6, linewidth = 1) +
   scale_colour_viridis_d() +
   labs(x = "Length (mm)", y = "Weight (g)") +
   facet_grid(StatArea ~ Period, labeller = "label_both") +
