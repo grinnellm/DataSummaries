@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "SoG"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -138,7 +138,7 @@ SDodd <- c(173, 180:182, 190:193 )
 SoGN <- c(132, 135, 140:143, 171, 172, 151, 152, 161:165, 280, 291, 292)
 SoGS <- c(173, 181, 182, 191:193)
 Swift <- c(201, 202, 211, 220, 230:233, 239)
-Tlaamin <- c(135, 141, 151, 152, 161:163)
+Tlaamin <- c(151, 152, 161:163)
 ATlegay <- c(121, 123, 127, 131:133, 135, 136, 141:143, 151, 152, 161, 163, 172)
 Gitxaala <- c(52)
 
@@ -3736,7 +3736,8 @@ ggsave(
 if(do_genetics) {
   GeneticsMap <- RegionMap + 
     geom_sf(
-      data = genetics, mapping = aes(shape = Year, colour = Timing), size = 3, alpha = 0.67
+      data = genetics, mapping = aes(shape = Year, colour = Timing),
+      linewidth = 3, alpha = 0.67
     ) +
     coord_sf(
       xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
@@ -5086,10 +5087,10 @@ ctDataYear <- ctData %>%
 
 # Spawn timing plot by location
 spawnTimeLocPlot <- ggplot(data = stData) +
-  geom_rect(
-    data = stDataDecade, fill = "lightgrey",
-    mapping = aes(xmin = Lower, xmax = Upper, ymin = FirstYear, ymax = LastYear)
-  ) +
+  # geom_rect(
+  #   data = stDataDecade, fill = "lightgrey",
+  #   mapping = aes(xmin = Lower, xmax = Upper, ymin = FirstYear, ymax = LastYear)
+  # ) +
   geom_point(
     mapping = aes(x = StartDOY, y = Year, colour = Group, shape = Method,
                   size = Spawn)
@@ -5103,7 +5104,8 @@ spawnTimeLocPlot <- ggplot(data = stData) +
     linewidth = 1.5, colour = "red", alpha = 0.5, na.rm = TRUE
   ) +
   scale_colour_viridis_d(alpha = 0.7) +
-  scale_size_continuous(label = scales::comma) +
+  scale_size_continuous(label = scales::comma, breaks = pretty(stData$Spawn)) +
+  expand_limits(y = yrRange) +
   labs(x = "Day of year", size = "Spawn index (t)") +
   scale_x_continuous(breaks = doy_days$DOY, labels = doy_days$Month)
 ggsave(
@@ -5118,7 +5120,7 @@ spawnTimeSecPlot <- ggplot(
 ) +
   geom_boxplot() +
   scale_fill_viridis_d(alpha = 0.7) +
-  labs(x = "Day of yearr") +
+  labs(x = "Day of year") +
   scale_x_continuous(breaks = doy_days$DOY, labels = doy_days$Month)
 ggsave(
   spawnTimeSecPlot, filename = file.path(regName, "SpawnTimeSec.png"),
@@ -5147,8 +5149,9 @@ catchTimeLocPlot <- ggplot(
   #   linewidth = 1.5, colour = "red", alpha = 0.5, na.rm = TRUE
   # ) +
   scale_colour_viridis_d(alpha = 0.7) +
-  scale_size_continuous(label = scales::comma) +
+  scale_size_continuous(label = scales::comma, breaks = pretty(ctData$Catch)) +
   labs(x = "Day of year", size = "Catch (t)") +
+  expand_limits(y = yrRange) +
   scale_x_continuous(breaks = doy_days$DOY, labels = doy_days$Month)
 ggsave(
   catchTimeLocPlot, filename = file.path(regName, "CatchTimeLoc.png"),
@@ -5384,7 +5387,7 @@ if(showCatchIC) {
 }
 
 # Nearshore figures if requested
-if(regName %in% c("CC", "WCVI")) source(here("Nearshore.R"))
+if(regName %in% c("CC", "SoG", "WCVI")) source(here("Nearshore.R"))
 
 # Update progress
 cat("done\n")
