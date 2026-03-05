@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "SoG"
+if (!exists("region")) region <- "PRD"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -887,9 +887,9 @@ LoadBioData <- function(db, where, area_table, XY) {
   cat("Loading biosample data... ")
   # Establish database connection
   cnn <- dbConnect(odbc::odbc(),
-                   Driver = db$driver,
-                   Server = db$server,
-                   Database = db$database,
+                   driver = db$driver,
+                   server = db$server,
+                   database = db$database,
                    uid = db$uid,
                    pwd = db$pwd)
   # SQL query
