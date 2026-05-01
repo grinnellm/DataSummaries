@@ -2214,7 +2214,7 @@ CalcSpawnSummary <- function(dat, g) {
       UnderLyrs, MacroSI, SurfSI, UnderSI
     ) %>%
     mutate(Group = as.character(Group)) %>%
-    group_by(.dots = g) %>%
+    group_by(across(all_of(g))) %>%
     summarise(
       TotalLength = SumNA(Length), MeanWidth = MeanNA(Width),
       MeanLayers = MeanNA(c(SurfLyrs, MacroLyrs, UnderLyrs)),
@@ -2364,7 +2364,7 @@ CalcPropSpawn <- function(dat, g, yrs = yrRange) {
     filter(Year %in% yrs) %>%
     replace_na(replace = list(SurfSI = 0, MacroSI = 0, UnderSI = 0)) %>%
     mutate(TotalSI = SurfSI + MacroSI + UnderSI) %>%
-    group_by(.dots = c("Year", g)) %>%
+    group_by(across(all_of(c("Year", g)))) %>%
     summarise(TotalSI = SumNA(TotalSI)) %>%
     group_by(Year) %>%
     mutate(Proportion = TotalSI / SumNA(TotalSI)) %>%
@@ -3421,7 +3421,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     x = paste("#", paste(colnames(cADMB), collapse = "\t")), file = out,
     append = TRUE
   )
-  write_delim(x = cADMB, path = out, delim = "\t", append = TRUE)
+  write_delim(x = cADMB, file = out, delim = "\t", append = TRUE)
   
   # Write header for spawn data
   write(x = "#\n##### Spawn (t*10^3) #####", file = out, append = TRUE)
@@ -3452,7 +3452,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     x = paste("#", paste(colnames(sADMB), collapse = "\t")), file = out,
     append = TRUE
   )
-  write_delim(x = sADMB, path = out, delim = "\t", append = TRUE)
+  write_delim(x = sADMB, file = out, delim = "\t", append = TRUE)
   
   # Write header for number-at-age data
   write(x = "#\n##### Number-at-age #####", file = out, append = TRUE)
@@ -3499,7 +3499,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     x = paste("#", paste(colnames(nADMB), collapse = "\t")), file = out,
     append = TRUE
   )
-  write_delim(x = nADMB, path = out, delim = "\t", append = TRUE)
+  write_delim(x = nADMB, file = out, delim = "\t", append = TRUE)
   
   # Write header for weight-at-age data
   write(x = "#\n##### Weight-at-age (kg) #####", file = out, append = TRUE)
@@ -3518,7 +3518,7 @@ WriteInputFile <- function(pADMB, cADMB, sADMB, nADMB, wADMB) {
     x = paste("#", paste(colnames(wADMB), collapse = "\t")), file = out,
     append = TRUE
   )
-  write_delim(x = wADMB, path = out, delim = "\t", append = TRUE)
+  write_delim(x = wADMB, file = out, delim = "\t", append = TRUE)
   
   # Write header for annual mean weight data
   write(
