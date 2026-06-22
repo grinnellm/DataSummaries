@@ -226,7 +226,7 @@ srLoc <- file.path("..", "herringsr", "data")
 data(pars)
 
 # Year range to include data (data starts at 1928; 1951 for stock assessment)
-yrRange <- pars$year$assess:2025
+yrRange <- pars$year$assess:2026
 
 # Age range: omit below, plus group above
 ageRange <- 2:10
@@ -352,7 +352,7 @@ codesLoc <- list(
 # called in the functions
 # Location and name of the location database and tables
 areaLoc <- list(
-  schema = "dbo",
+  schema = "Location",
   tables = list(sections = "Sections", locations = "Location"),
   columns = list(
     sections = c("SAR", "Section"),
@@ -364,7 +364,7 @@ areaLoc <- list(
 
 # Location and name of tables for widths
 widthLoc <- list(
-  schema = "dbo",
+  schema = "Location",
   tables = list(
     region_std = "RegionStd", section_std = "SectionStd", pool_std = "PoolStd"
   ),
@@ -419,7 +419,7 @@ bioLoc <- list(
 
 # Location and name of the surface database and tables
 surfLoc <- list(
-  schema = "Spawn2025",
+  schema = "Spawn",
   tables = list(surface = "Surface", all_spawn = "AllSpawn"),
   columns = list(
     surface = c(
@@ -437,7 +437,7 @@ surfLoc <- list(
 
 # Location and name of the macrocystis database and tables
 macroLoc <- list(
-  schema = "Spawn2025",
+  schema = "Spawn",
   tables = list(
     all_spawn = "AllSpawn", plants = "MacPlant", transects = "Mactrans"
   ),
@@ -456,7 +456,7 @@ macroLoc <- list(
 
 # Location and name of the macrocystis database and tables
 underLoc <- list(
-  schema = "Spawn2025",
+  schema = "Spawn",
   tables = list(
     all_spawn = "AllSpawn", alg_trans = "VegTrans", stations = "Stations",
     algae = "vegetation"
@@ -483,7 +483,7 @@ underLoc <- list(
 
 # Location and name of the all spawn tables
 allLoc <- list(
-  schema = "Spawn2025",
+  schema = "Spawn",
   tables = list(all_spawn = "Allspawn", stations = "Stations"),
   columns = list(
     all_spawn = c(
