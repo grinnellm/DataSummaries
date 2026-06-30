@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "PRD"
+if (!exists("region")) region <- "All"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -3572,8 +3572,9 @@ timing <- tribble(
 genetics <- read_csv(
   file = file.path("..", "Data", "Genetics", "Genetics.csv"), col_types = cols()
 ) %>%
+  mutate(collection_date = paste(year, month, day, sep = "-")) %>%
   rename(
-    Location = population_name, Region = region, Year = collection_year,
+    Location = population_name, Region = region, Year = year,
     Date = collection_date, Samples = n_samples, Latitude = lat_dd,
     Longitude = lon_dd
   ) %>%
