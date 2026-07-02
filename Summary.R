@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "All"
+if (!exists("region")) region <- "CC"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -5787,7 +5787,7 @@ if (region == "CC") {
   histYrs <- paste(range(yrsRatioHist), collapse = " and ")
   # Get print friendly values: historic ratio
   histRat <- propNumBioHist %>%
-    filter(Group == "8") %>%
+    filter(Group == "08") %>%
     mutate(SampWt = round(SampWt * 100, digits = 1)) %>%
     pull(SampWt)
   # Get print friendly values: years to fix
