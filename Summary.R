@@ -97,7 +97,7 @@ UsePackages(pkgs = c(
   "tidyverse", "zoo", "Hmisc", "scales", "xtable", "cowplot", "grid",
   "colorRamps", "RColorBrewer", "stringr", "lubridate", "readxl", "ggforce",
   "viridis", "ggthemes", "SpawnIndex", "tidyselect", "ggrepel", "rnaturalearth",
-  "rnaturalearthhires", "sf", "DBI", "odbc", "here", "plyr" #, "staplr"
+  "rnaturalearthhires", "sf", "DBI", "odbc", "here", "plyr", "gginnards" #, "staplr"
 ))
 
 # Set options
@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "CC"
+if (!exists("region")) region <- "PRD"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -4285,7 +4285,8 @@ spawnByLocPlot <- BaseMap +
   annotation_custom(
     grob = subGrob,
     xmin = max(reg_bbox_small$xmax) -
-      (reg_bbox_small$xmax - reg_bbox_small$xmin) / 2.5,
+      (reg_bbox_small$xmax - reg_bbox_small$xmin) / 
+      ifelse(regName == "PRD", 1, 2.5),
     xmax = Inf,
     ymin = max(reg_bbox_small$ymax) -
       (reg_bbox_small$ymax - reg_bbox_small$ymin) / 5,
@@ -5241,7 +5242,8 @@ PlotLocationsYear <- function(dat) {
       annotation_custom(
         grob = subGrob,
         xmin = max(reg_bbox_small$xmax) -
-          (reg_bbox_small$xmax - reg_bbox_small$xmin) / 2.5,
+          (reg_bbox_small$xmax - reg_bbox_small$xmin) / 
+          ifelse(regName == "PRD", 1, 2.5),
         xmax = Inf,
         ymin = max(reg_bbox_small$ymax) -
           (reg_bbox_small$ymax - reg_bbox_small$ymin) / 5,
@@ -5379,6 +5381,7 @@ if(showCatchIC) {
     geom_col(position = "dodge") +
     labs(y = "Number of fish (thousands)") +
     scale_fill_viridis_d() +
+    scale_x_continuous(breaks = pretty(incidental$Year)) +
     scale_y_continuous(labels = function(x) comma(x / 1000)) +
     theme(legend.position = "top")
   ggsave(

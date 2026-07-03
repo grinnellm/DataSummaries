@@ -22,7 +22,7 @@ if(region == "SoG") {
 # Time periods: WCVI
 if(region == "WCVI") {
   time_periods <- list(
-    Early = 1995:2000, Middle = 2001:2014, Recent = 2014:max(yrRange)
+    Early = 1995:2000, Middle = 2001:2014, Recent = 2015:max(yrRange)
   )
   time_years <- list(
     Early = paste(range(time_periods$Early), collapse = "-"),
@@ -88,6 +88,7 @@ all_dat <- bind_rows(nearshore, seine) %>%
     Month = month(MonthCode, label = TRUE)
   ) %>%
   filter(Year < 2014 | Representative == 1) %>%
+  filter(Month %in% c("Jan", "Feb", "Mar", "Apr")) %>%
   select(
     Year, Month, Period, Region, StatArea, Group, Section, LocationCode,
     LocationName, Sample, Source, Gear, Type, Fish, Length, Weight, Sex,
@@ -122,7 +123,10 @@ prop_age <- all_dat %>%
   # ungroup() #%>%
   # complete(Type, Year, StatArea, Age)
 
-plot_near_map <- RegionMap + 
+# Delete labels (last layer)
+RegionMapNoLab <- delete_layers(RegionMap, idx = num_layers(RegionMap))
+
+plot_near_map <- RegionMapNoLab + 
   geom_sf(
     data = samples, alpha = 0.85, size = 2, show.legend = "point",
     mapping = aes(colour = Number, shape = Month)
@@ -130,11 +134,11 @@ plot_near_map <- RegionMap +
   scale_colour_viridis_c() +
   labs(colour = "Number of\nsamples") +
   coord_sf(expand = FALSE) +
-  guides(shape = guide_legend(nrow = 2), fill = guide_legend(nrow = 2)) +
+  guides(shape = guide_legend(nrow = 3), fill = guide_legend(nrow = 3)) +
   theme(
     legend.position = "top", axis.text.x = element_text(angle = 30, hjust = 1)
   )
-if(region %in% c("CC")) {
+if(region %in% c("CC", "SoG")) {
   plot_near_map <- plot_near_map +
     facet_grid(Period ~ Type, labeller = "label_both")
 } else {
@@ -164,7 +168,7 @@ ggsave(
 plot_near_num_samp <- ggplot(
   data = num_samp, mapping = aes(x = Year, y = Num, fill = Gear)
 ) +
-  geom_col() + 
+  geom_col() +
   scale_x_continuous(breaks = pretty_breaks()) +
   scale_fill_viridis_d() +
   labs(y = "Number of samples") +
