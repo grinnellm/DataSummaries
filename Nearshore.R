@@ -86,6 +86,7 @@ all_dat <- bind_rows(nearshore, seine) %>%
                            paste0("Middle (", time_years$Middle, ")"), 
                            paste0("Recent (", time_years$Recent, ")"))),
     Month = month(MonthCode, label = TRUE)
+    # Type = factor(Type, levels = c("Nearshore", "Seine test"))
   ) %>%
   filter(Year < 2014 | Representative == 1) %>%
   filter(Month %in% c("Jan", "Feb", "Mar", "Apr")) %>%
@@ -233,8 +234,8 @@ plot_near_length_weight <- ggplot(
   data = all_dat,
   mapping = aes(x = Length, y = Weight, group = Type, colour = Type)
 ) +
-  geom_point(alpha = 0.5) +
-  # geom_density2d(alpha = 0.6, linewidth = 1) +
+  # geom_point(alpha = 0.3, size = 0.5) +
+  geom_density2d(alpha = 0.6, linewidth = 1) +
   scale_colour_viridis_d() +
   labs(x = "Length (mm)", y = "Weight (g)") +
   facet_grid(StatArea ~ Period, labeller = "label_both") +

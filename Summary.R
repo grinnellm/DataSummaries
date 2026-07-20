@@ -107,7 +107,7 @@ options(dplyr.summarise.inform = FALSE, scipen = 50)
 
 # Select region(s): major (HG, PRD, CC, SoG, WCVI); minor (A27, A2W); special
 # (JS, A10); or all (All)
-if (!exists("region")) region <- "PRD"
+if (!exists("region")) region <- "WCVI"
 
 # Sections to include for sub-stock analyses
 Sec002 <- c(2)
@@ -4606,17 +4606,6 @@ spawnChangePlot <- ggplot(
   guides(fill = FALSE) +
   myTheme
 
-# Arrange and save the index and proportion plots
-ipPlots <- plot_grid(spawnIndexPlot, spawnPercentSAStackPlot,
-                     spawnPercentSecStackPlot,
-                     align = "v", ncol = 1,
-                     rel_heights = c(2.1, 2.5, 2.5)
-) 
-ggsave(
-  ipPlots, filename = file.path(regName, "SpawnIndexPercent.png"),
-  width = figWidth, height = 6.7, dpi = figRes
-)
-
 # Arrange and save the spawn index and percent change plots
 pctPlots <- plot_grid(spawnIndexPlot, spawnChangePlot,
                       align = "v", ncol = 1, rel_heights = c(2.1, 2.1)
@@ -4634,6 +4623,17 @@ ggsave(
 #     filename = file.path(regName, "SpawnIndexChange.png"), width = figWidth,
 #     height = figWidth, dpi = figRes
 #   )
+
+# Arrange and save the index and proportion plots
+ipPlots <- plot_grid(spawnIndexPlot, spawnPercentSAStackPlot,
+                     spawnPercentSecStackPlot,
+                     align = "v", ncol = 1,
+                     rel_heights = c(2.1, 2.5, 3.5)
+) 
+ggsave(
+  ipPlots, filename = file.path(regName, "SpawnIndexPercent.png"),
+  width = figWidth, height = 7.5, dpi = figRes
+)
 
 # Plot proportion of spawn from surface vs dive surveys
 spawnTypePropPlot <- ggplot(
