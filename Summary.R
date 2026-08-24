@@ -3733,6 +3733,37 @@ ggsave(
   height = min(7.5, 9 / reg_ratio_small), dpi = figRes
 )
 
+# Section map for FSAR
+SectionMap <- BaseMap + 
+  geom_sf(
+    data = shapes$section, linewidth = 0.25, fill = "transparent",
+    colour = "black"
+  ) +
+  geom_sf_text(
+    data = shapes$section, alpha = 0.6, size = 2,
+    mapping = aes(label = paste("Sec", Section, sep = " "))
+  ) +
+  scale_fill_viridis(discrete = TRUE) +
+  labs(fill = "Group") +
+  theme(legend.position = c(0.01, 0.01), legend.justification = c(0, 0))
+
+if (!all(is.na(shapes$groups$Group)) & region %in% c("CC", "SoG", "All")) {
+  SectionMap <- SectionMap +
+    geom_sf(
+      data = shapes$groups, mapping = aes(fill = Group), alpha = 0.25
+    )
+}
+
+SectionMap <- SectionMap +
+  coord_sf(
+    xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
+    ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
+
+ggsave(
+  SectionMap, filename = file.path(regName, "sections-eng.jpg"),
+  width = figWidth, height = min(5, 9 / reg_ratio_small), dpi = figRes
+)
+
 # Show genetics sampling locations if requested
 if(do_genetics) {
   GeneticsMap <- RegionMap + 

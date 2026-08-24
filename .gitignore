@@ -4,6 +4,7 @@
 *.png
 *.csv
 *.dat
+*.jpg
 
 ### R files ###
 .Rhistory
