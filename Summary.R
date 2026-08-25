@@ -3734,35 +3734,68 @@ ggsave(
 )
 
 # Section map for FSAR
-SectionMap <- BaseMap + 
-  geom_sf(
-    data = shapes$section, linewidth = 0.25, fill = "transparent",
-    colour = "black"
-  ) +
-  geom_sf_text(
-    data = shapes$section, alpha = 0.6, size = 2,
-    mapping = aes(label = paste("Sec", Section, sep = " "))
-  ) +
-  scale_fill_viridis(discrete = TRUE) +
-  labs(fill = "Group") +
-  theme(legend.position = c(0.01, 0.01), legend.justification = c(0, 0))
-
-if (!all(is.na(shapes$groups$Group)) & region %in% c("CC", "SoG", "All")) {
-  SectionMap <- SectionMap +
+if(regionType == "major"){
+  SectionMap <- BaseMap + 
     geom_sf(
-      data = shapes$groups, mapping = aes(fill = Group), alpha = 0.25
-    )
+      data = shapes$section, linewidth = 0.1, fill = "transparent",
+      colour = "black"
+    ) +
+    geom_sf_text(
+      data = shapes$section %>% filter(Section != "141"), size = 3,
+      mapping = aes(label = paste("Sec", Section, sep = " "))
+    ) +
+    geom_sf_text(
+      data = shapes$section %>% filter(Section == "141"), size = 3,
+      mapping = aes(
+        label = paste("Sec", Section, sep = " ")
+      ),
+      x = -124.8, y = 49.75
+    ) +
+    scale_fill_viridis(discrete = TRUE) +
+    labs(fill = "Group") +
+    theme(legend.position = c(0.01, 0.01), legend.justification = c(0, 0))
+  
+  if (!all(is.na(shapes$groups$Group)) & region %in% c("CC", "SoG", "All")) {
+    SectionMap <- SectionMap +
+      geom_sf(
+        data = shapes$groups, mapping = aes(fill = Group), alpha = 0.25
+      )
+  }
+  
+  SectionMap <- SectionMap +
+    coord_sf(
+      xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
+      ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
+  
+  ggsave(
+    SectionMap, filename = here(
+      "..", "herring-OMs", toupper(regName), "EcosystemFigs", "sections-eng.jpg"
+    ),,
+    width = figWidth, height = ifelse(regName == "WCVI", 5, figWidth),
+    dpi = figRes
+  )
+  
+  # Translate N, S, E, and W
+  label_long <- function(x) {
+    ifelse(x < 0, paste0(abs(x), "°O"), 
+           ifelse(x > 0, paste0(x, "°E"), paste0(x, "°")))
+  }
+
+  # French version
+  SectionMapFr <- SectionMap +
+    labs(fill = "Groupe") + 
+    scale_x_continuous("Longitude", labels = label_long)
+  
+  # Save French map
+  ggsave(
+    SectionMapFr, 
+    filename = here(
+      "..", "herring-OMs", toupper(regName), "EcosystemFigs", "sections-fra.jpg"
+    ),
+    width = figWidth, height = ifelse(regName == "WCVI", 5, figWidth),
+    dpi = figRes
+  )
 }
-
-SectionMap <- SectionMap +
-  coord_sf(
-    xlim = c(reg_bbox_small$xmin, reg_bbox_small$xmax),
-    ylim = c(reg_bbox_small$ymin, reg_bbox_small$ymax), expand = FALSE)
-
-ggsave(
-  SectionMap, filename = file.path(regName, "sections-eng.jpg"),
-  width = figWidth, height = min(5, 9 / reg_ratio_small), dpi = figRes
-)
 
 # Show genetics sampling locations if requested
 if(do_genetics) {
