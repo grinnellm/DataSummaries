@@ -4699,6 +4699,15 @@ ggsave(
   width = figWidth, height = 7.5, dpi = figRes
 )
 
+# Short time series for JCs presentation
+# spawnIndexShort <- spawnIndexPlot +
+#   lims(x = c(1978, NA)) +
+#   theme(axis.text.x = element_text())
+# ggsave(
+#   spawnIndexShort, filename = file.path(regName, "SpawnIndexShort.png"),
+#   width = figWidth, height = 3, dpi = figRes
+# )
+
 # Plot proportion of spawn from surface vs dive surveys
 spawnTypePropPlot <- ggplot(
   data = spawnYrTypeProp, mapping = aes(x = Year, y = Prop, fill = Type)
@@ -5971,8 +5980,13 @@ if (region == "All") {
     ) %>%
     mutate(StatArea = formatC(StatArea, width = 2, format = "d", flag = "0"),
            Section = formatC(Section, width = 3, format = "d", flag = "0"),
+           Longitude = round(Longitude, 5),
+           Latitude = round(Latitude, 5),
            Longitude = ifelse(Longitude == 0, NA, Longitude),
-           Latitude = ifelse(Latitude == 0, NA, Latitude)) %>%
+           Latitude = ifelse(Latitude == 0, NA, Latitude),
+           SurfSI = round(SurfSI, digits = 3),
+           MacroSI = round(MacroSI, digits = 3),
+           UnderSI = round(UnderSI, digits = 3)) %>%
     rename(StatisticalArea = StatArea, StartDate = Start, EndDate = End,
            Surface = SurfSI, Macrocystis = MacroSI, Understory = UnderSI) %>%
     arrange(
